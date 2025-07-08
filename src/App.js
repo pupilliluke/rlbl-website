@@ -6,7 +6,9 @@ import PowerRankings from "./pages/PowerRankings";
 import Stats from "./pages/Stats";
 import Schedule from "./pages/Schedule";
 import Landing from "./pages/Landing";
+import Admin from "./pages/Admin";
 import Footer from "./components/Footer";
+
 
 
 import "./index.css";
@@ -59,6 +61,7 @@ function App() {
             <Route path="/power-rankings" element={<PowerRankings />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </div>
 
