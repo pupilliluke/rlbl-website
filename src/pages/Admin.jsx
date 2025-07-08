@@ -35,7 +35,7 @@ const Admin = () => {
   const [newItem, setNewItem] = useState({});
 
   const handleAuth = () => {
-    const isCorrect = password === import.meta.env.VITE_ADMIN_PASSWORD;
+    const isCorrect = password === process.env.REACT_APP_ADMIN_PASSWORD;
     if (isCorrect) {
       setAuthenticated(true);
       setError("");
