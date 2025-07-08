@@ -15,9 +15,9 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white font-sans">
-<nav className="relative backdrop-blur-md bg-[#1a1a2ecc] px-8 py-6 flex items-center border-b border-blue-800 shadow-md">
-  {/* Centered Links */}
-  <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-wrap gap-6">
+<nav className="backdrop-blur-md bg-[#1a1a2ecc] px-6 py-5 flex justify-between items-center border-b border-blue-800 shadow-md">
+  {/* Centered links */}
+  <div className="flex-1 flex justify-center gap-6 text-lg">
     {[
       ["League Info", "/leagueinfo"],
       ["Standings", "/standings"],
@@ -29,23 +29,22 @@ function App() {
       <Link
         key={path}
         to={path}
-        className="text-gray-300 hover:text-white text-lg px-4 py-2 rounded-full transition-all duration-200 hover:bg-gradient-to-r from-orange-400 to-pink-500 hover:shadow-md hover:scale-105"
+        className="text-gray-300 hover:text-white px-3 py-1 rounded-full transition duration-200 hover:bg-gradient-to-r from-orange-400 to-pink-500 hover:shadow-md hover:scale-105"
       >
         {label}
       </Link>
     ))}
   </div>
 
-  {/* Admin Sign In */}
-  <div className="ml-auto">
-    <Link
-      to="/admin"
-      className="text-white text-base bg-gradient-to-r from-orange-500 to-pink-500 px-5 py-2.5 rounded-full font-semibold hover:scale-105 shadow-lg transition duration-200"
-    >
-      Admin Sign In
-    </Link>
-  </div>
+  {/* Admin button aligned right */}
+  <Link
+    to="/admin"
+    className="ml-auto bg-gradient-to-r from-orange-400 to-pink-500 text-white font-semibold py-2 px-5 rounded-full shadow hover:scale-105 transition"
+  >
+    Admin Sign In
+  </Link>
 </nav>
+
 
 
 
