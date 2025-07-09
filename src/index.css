@@ -1,7 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-barlow: 'Barlow Condensed', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+/* Optional: Apply fonts to HTML elements */
+body {
+  font-family: var(--font-inter);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-barlow);
+}
 @keyframes zoomSlow {
   0% {
     transform: scale(1.05);

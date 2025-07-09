@@ -14,9 +14,9 @@ export default function TeamEntry({ team, body }) {
         <p className="text-gray-300 text-sm leading-relaxed">
           {expanded ? body : firstLine}
         </p>
-        <p className="mt-2 text-xs text-blue-300 italic">
+        {/* <p className="mt-2 text-xs text-blue-300 italic">
           {expanded ? "Click to collapse ▲" : "Click to expand ▼"}
-        </p>
+        </p> */}
       </div>
     </div>
   );

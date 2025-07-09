@@ -6,8 +6,11 @@ import PowerRankings from "./pages/PowerRankings";
 import Stats from "./pages/Stats";
 import Schedule from "./pages/Schedule";
 import Landing from "./pages/Landing";
+import Legacy from "./pages/Legacy";
 import Admin from "./pages/Admin";
 import Footer from "./components/Footer";
+
+import TeamStats from "./pages/TeamStats";
 
 
 
@@ -26,7 +29,8 @@ function App() {
       ["Teams", "/teams"],
       ["Power Rankings", "/power-rankings"],
       ["Stats", "/stats"],
-      ["Schedule", "/schedule"]
+      ["Schedule", "/schedule"],
+      ["Legacy", "/legacy"]
     ].map(([label, path]) => (
       <Link
         key={path}
@@ -61,7 +65,11 @@ function App() {
             <Route path="/power-rankings" element={<PowerRankings />} />
             <Route path="/stats" element={<Stats />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/legacy" element={<Legacy />} />
             <Route path="/admin" element={<Admin />} />
+
+            <Route path="/teams/:teamSlug" element={<TeamStats />} />
+
           </Routes>
         </div>
 

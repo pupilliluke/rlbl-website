@@ -17,20 +17,26 @@ export default function Footer() {
           <ul className=" flex flex-row gap-12 text-center justify-center">
             <li>Email: <a href="mailto:commissioner@rlbl.gg" className="text-blue-400 hover:underline">commissioner@rlbl.gg</a></li>
             <li>Support: <a href="mailto:support@rlbl.gg" className="text-blue-400 hover:underline">support@rlbl.gg</a></li>
-            <li>Discord: <a href="https://discord.gg/rlbl" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Join the server</a></li>
+            <li>Discord: <a href="https://discord.gg/t8WPe4YM" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Join the server</a></li>
           </ul>
         </div>
 
         {/* Row 3: Links */}
-        <div>
-          <h4 className="text-xl font-bold text-orange-400 mb-2">🔗 Quick Links</h4>
-          <div className="flex flex-wrap justify-center gap-6">
-            <a href="/standings" className="hover:text-white transition">Standings</a>
-            <a href="/schedule" className="hover:text-white transition">Schedule</a>
-            <a href="/power-rankings" className="hover:text-white transition">Power Rankings</a>
-            <a href="/stats" className="hover:text-white transition">Player Stats</a>
-          </div>
-        </div>
+     <div>
+      <h4 className="text-xl font-bold text-orange-400 mb-4 text-center">Quick Links</h4>
+      <div className="flex flex-wrap justify-center gap-4 text-sm font-medium text-blue-300">
+        <a href="/" className="hover:text-white transition">Home</a>
+        <a href="/leagueinfo" className="hover:text-white transition">League Info</a>
+        <a href="/standings" className="hover:text-white transition">Standings</a>
+        <a href="/teams" className="hover:text-white transition">Teams</a>
+        <a href="/power-rankings" className="hover:text-white transition">Power Rankings</a>
+        <a href="/stats" className="hover:text-white transition">Player Stats</a>
+        <a href="/schedule" className="hover:text-white transition">Schedule</a>
+        <a href="/legacy" className="hover:text-white transition">Legacy</a>
+        <a href="/admin" className="hover:text-white transition">Admin</a>
+      </div>
+    </div>
+
       </div>
 
       {/* Bottom Line */}
