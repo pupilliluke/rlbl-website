@@ -16,7 +16,7 @@ import { players } from "../data/players.js"; // Adjust the path as necessary
 
 
 const Stats = () => {
-  const [sortBy, setSortBy] = useState("points");
+  const [sortBy, setSortBy] = useState("season");
   const [filter, setFilter] = useState("");
 
   const sortedPlayers = [...players]
@@ -43,6 +43,15 @@ const Stats = () => {
           onChange={(e) => setSortBy(e.target.value)}
           className="px-4 py-2 rounded bg-[#2a2a3d] border border-blue-800 text-sm"
         >
+          <option value="points">2025</option>
+          <option value="ppg">2024</option>
+         
+        </select>
+           <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-2 rounded bg-[#2a2a3d] border border-blue-800 text-sm"
+        >
           <option value="points">Points</option>
           <option value="ppg">PPG</option>
           <option value="goals">Goals</option>
@@ -53,7 +62,7 @@ const Stats = () => {
           <option value="shPercent">Shooting %</option>
         </select>
       </div>
-
+      
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {sortedPlayers.map((p, i) => (
