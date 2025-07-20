@@ -9,7 +9,6 @@ import {
   Legend,
   CartesianGrid
 } from "recharts";
-import clsx from "clsx";
 
 import { players } from "../data/players.js"; // Adjust the path as necessary
 
