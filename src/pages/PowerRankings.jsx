@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import Footer from "../components/Footer.jsx";
+// import { Link } from "react-router-dom";
 import TeamEntry from "../components/PowerRankings/TeamEntry.jsx";
 import { powerRankings } from "../data/powerRankings.js";
 
