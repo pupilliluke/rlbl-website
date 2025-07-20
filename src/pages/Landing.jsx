@@ -18,7 +18,7 @@ export default function Landing() {
       <div className="relative z-20 flex items-center justify-center w-full h-full px-4">
         <div className="text-center max-w-3xl mx-auto">
           <h1 className="text-5xl md:text-6xl leading-[1.25] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 drop-shadow text-center animate-pulse transition duration-300">
-            RL BEER LEAGUE
+            ROCKET LEAGUE BEER LEAGUE
           </h1>
           <p className="mt-6 text-lg md:text-xl text-gray-300 font-light">
             Track matches, players, power rankings, and stats like a pro. Beer optional. Glory required.
