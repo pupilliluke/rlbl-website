@@ -86,6 +86,8 @@ Refactor standings logic to accept season filter
 
 Add season option for admin.jsx
 
+word
+
 ⏱ Time: 15 min
 
 🔲 Expandable Roster dropdowns on leagueinfo page
