@@ -1,15 +1,5 @@
 Dev plan rlbl 7.29
 
-✅ 1. High-Priority – Visible + Foundational (~2 hrs)
-🔲 Add Color-Coded Team Boxes (Landing / LeagueInfo)
-Modify LeagueInfo.jsx → style Homer/Garfield teams with matching color badges
-
-✅ Already partially done with bg-blue-500 and bg-orange-500
-
-⏱ Time: 15 min
-
-🧠 Use AI: Copilot/Cursor to refactor class names dynamically
-
 🔲 Stats DB Implementation (Admin.jsx)
 Use Admin panel to enter game-by-game stats (goals, assists, demos…)
 
@@ -21,7 +11,7 @@ Extend JSON schema in players.js or move to a real DB
 
 🧠 Use AI: GPT for formula → JS conversion
 
-🔲 Make Entire Site Mobile-Friendly
+🔲 Make Entire Site Mobile-Friendly -MASON
 Review FOOTER AND NAVBAR
 
 Use Tailwind’s sm:, md:, lg: classes + grid adjustments
@@ -94,6 +84,19 @@ Convert team preview blocks into expandable dropdowns
 Remove repeated team info on homepage
 
 ⏱ Time: 15 min
+
+
+✅ High-Priority – Visible + Foundational (~2 hrs)
+🔲 Add Color-Coded Team Boxes (Landing / LeagueInfo)
+Modify LeagueInfo.jsx → style Homer/Garfield teams with matching color badges
+
+✅ Already partially done with bg-blue-500 and bg-orange-500
+
+⏱ Time: 15 min
+
+🧠 Use AI: Copilot/Cursor to refactor class names dynamically
+
+
 
 ✅ Optional / Stretch Goals (As Time Allows)
 🟡 Add drag-and-drop stat leader ordering (Stats.jsx)
