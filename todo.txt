@@ -86,7 +86,7 @@ Refactor standings logic to accept season filter
 
 Add season option for admin.jsx
 
-word
+word yo
 
 ⏱ Time: 15 min
 
