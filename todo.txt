@@ -1,0 +1,103 @@
+Dev plan rlbl 7.29
+
+✅ 1. High-Priority – Visible + Foundational (~2 hrs)
+🔲 Add Color-Coded Team Boxes (Landing / LeagueInfo)
+Modify LeagueInfo.jsx → style Homer/Garfield teams with matching color badges
+
+✅ Already partially done with bg-blue-500 and bg-orange-500
+
+⏱ Time: 15 min
+
+🧠 Use AI: Copilot/Cursor to refactor class names dynamically
+
+🔲 Stats DB Implementation (Admin.jsx)
+Use Admin panel to enter game-by-game stats (goals, assists, demos…)
+
+Write logic to compute totals (GPG, PPG, etc.) based on Google Sheet formulas
+
+Extend JSON schema in players.js or move to a real DB
+
+⏱ Time: 30–45 min
+
+🧠 Use AI: GPT for formula → JS conversion
+
+🔲 Make Entire Site Mobile-Friendly
+Review FOOTER AND NAVBAR
+
+Use Tailwind’s sm:, md:, lg: classes + grid adjustments
+
+⏱ Time: 30–45 min
+
+🧠 Use AI: GPT to suggest breakpoints based on layout
+
+✅ 2. Core League Functionality (~1.5 hrs)
+🔲 Standings Page Legend (Standings.jsx)
+Add 🟢 = Clinched, 🔴 = Eliminated, ⭐ = #1
+
+Add tooltip or legend UI component
+
+⏱ Time: 15–20 min
+
+🔲 Sortable Stats Page (Stats.jsx)
+Use existing sortBy state
+
+Add column-dragging (consider react-beautiful-dnd)
+
+Move Points next to Shots via drag or permanent layout
+
+⏱ Time: 30 min
+
+🧠 Use AI: Cursor for dragHandleProps setup
+
+🔲 Add Team Stats Option (TeamStats.jsx)
+Add tab or filter in Stats.jsx to show team aggregates (already styled!)
+
+Pull from teamStats.js via dropdown
+
+⏱ Time: 20 min
+
+✅ 3. Media, Polish, and Weekly Updates (~1 hr)
+🔲 Change “Power Rankings” Tab → WEEKLY updates tab (PowerRankings.jsx)
+Update route label + page title
+
+Add 3 Stars of the Week, image embeds, stat summaries
+
+Link to Google Doc and game footage
+
+⏱ Time: 30 min
+
+🧠 Use AI: GPT for automatic summary templates
+
+🔲 Format Player Profile as "Name (Gamertag)"
+Update display names in Stats.jsx, Teams.jsx, etc.
+
+⏱ Time: <10 min
+
+🔲 Show Team Players on Team Slug Page
+Already pulling players in Teams.jsx → ensure slug route shows player list
+
+⏱ Time: 10 min
+
+✅ 4. Admin & UX Enhancements (~30 min)
+🔲 Season Dropdown in Standings
+Add season toggle (2024, 2025, All-Time)
+
+Refactor standings logic to accept season filter
+
+Add season option for admin.jsx
+
+⏱ Time: 15 min
+
+🔲 Expandable Roster dropdowns on leagueinfo page
+Convert team preview blocks into expandable dropdowns
+
+Remove repeated team info on homepage
+
+⏱ Time: 15 min
+
+✅ Optional / Stretch Goals (As Time Allows)
+🟡 Add drag-and-drop stat leader ordering (Stats.jsx)
+
+🟡 Dynamic “Add Season” logic to Schedule.jsx
+
+🟡 MVP “All Stats Page” showing full history across seasons (reuse Stats.jsx layout)

@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { homerConference, garfieldConference, overall } from "../data/standings.js"; // Adjust the path as necessary
 // import PlayoffBracket from "../components/PlayoffBracket.jsx";
 
