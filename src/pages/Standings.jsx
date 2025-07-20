@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { homerConference, garfieldConference, overall } from "../data/standings.js"; // Adjust the path as necessary
-// import PlayoffBracket from "../components/PlayoffBracket.jsx";
+import PlayoffBracket from "../components/PlayoffBracket.jsx";
 
 const Table = ({ title, data }) => (
   <section className="mb-10">
@@ -45,7 +45,7 @@ export default function Standings() {
       <div className="max-w-6xl mx-auto px-4 py-10">
 
         {/* 🏆 Playoff Bracket Section */}
-        {/* <PlayoffBracket /> */}
+        <PlayoffBracket />
 
         {/* Page Content */}
         <h1 className="text-4xl font-bold text-blue-400 mb-8">📊 Season 2 Standings</h1>
