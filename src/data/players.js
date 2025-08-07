@@ -61,6 +61,7 @@ export const players = [
   },
   {
     player: "Sam",
+    gamertag: "Sam", // Added missing gamertag field
     team: "Double Bogey",
     points: 6997,
     goals: 22,
@@ -80,6 +81,7 @@ export const players = [
   },
   {
     player: "Jake C.",
+    gamertag: "Jake C.", // Added missing gamertag field
     team: "Drunken Goats",
     points: 11429,
     goals: 40,
