@@ -4,10 +4,10 @@ import { historicalStandingsData } from "../data/historicalStandings.js";
 
 const Table = ({ title, data, showSymbols = false }) => (
   <section className="mb-10">
-    <h2 className="text-xl md:text-2xl font-bold text-orange-400 mb-4">{title}</h2>
-    <div className="overflow-x-auto rounded shadow bg-[#1f1f2e] border border-blue-800">
+    <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent mb-4">{title}</h2>
+    <div className="overflow-x-auto rounded-xl shadow-2xl bg-gray-800/90 backdrop-blur-sm border border-orange-500/30">
       <table className="min-w-full text-sm text-left text-gray-200">
-        <thead className="bg-blue-900 border-b border-blue-700">
+        <thead className="bg-gray-900/90 border-b border-orange-500/30">
           <tr>
             <th className="py-3 px-2 md:px-3 font-bold text-white">Pos</th>
             <th className="py-3 px-2 md:px-3 font-bold text-white">Team</th>
@@ -44,7 +44,7 @@ const Table = ({ title, data, showSymbols = false }) => (
             }
             
             return (
-              <tr key={i} className="hover:bg-[#2a2a3d] transition-colors border-b border-gray-700">
+              <tr key={i} className="hover:bg-gray-700/50 transition-colors border-b border-gray-600/50">
                 <td className="py-2 md:py-3 px-2 md:px-3 font-semibold">
                   <span className="mr-1">{position}</span>
                   <span className={symbolClass}>{symbol}</span>
@@ -120,11 +120,11 @@ export default function Standings() {
   const currentData = getCurrentSeasonData();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">📊 RLBL Standings</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">📊 RLBL Standings</h1>
           <p className="text-blue-200 text-sm md:text-base">
             {currentData.notStarted 
               ? "Preparing for Season 3 - Summer 25" 
@@ -141,7 +141,7 @@ export default function Standings() {
             <select
               value={selectedSeason}
               onChange={(e) => setSelectedSeason(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm md:text-base"
+              className="px-4 py-2 rounded-lg glass-dark border border-white/20 text-sm md:text-base"
             >
               {Object.entries(seasons).map(([key, season]) => (
                 <option key={key} value={key}>{season.name}</option>
@@ -151,10 +151,10 @@ export default function Standings() {
             {/* Symbol Toggle */}
             <button
               onClick={() => setShowSymbols(!showSymbols)}
-              className={`px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-all ${
                 showSymbols 
-                  ? "bg-blue-600 text-white" 
-                  : "bg-[#2a2a3d] text-gray-300 hover:bg-gray-700"
+                  ? "glass border-blue-500/50 text-white shadow-lg" 
+                  : "glass-dark border-white/20 text-gray-300 hover:border-blue-500/30"
               }`}
             >
               {showSymbols ? "Hide Symbols" : "Show Symbols"}
@@ -164,8 +164,8 @@ export default function Standings() {
 
         {/* Legend */}
         {showSymbols && (
-          <div className="bg-[#1f1f2e] rounded-lg p-4 md:p-6 mb-8 border border-blue-800">
-            <h3 className="text-lg md:text-xl font-bold text-blue-400 mb-4">Legend</h3>
+          <div className="glass section-card shadow-executive border border-white/10 mb-8">
+            <h3 className="text-lg md:text-xl font-bold holographic mb-4">Legend</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm md:text-base">
               <div className="flex items-center gap-2">
                 <span className="text-yellow-400 text-lg">👑</span>
@@ -185,15 +185,15 @@ export default function Standings() {
 
         {/* Empty State for Season 3 */}
         {currentData.notStarted && (
-          <div className="bg-[#1f1f2e] rounded-xl p-12 border border-blue-800 text-center">
+          <div className="glass section-card shadow-executive border border-white/10 text-center">
             <div className="mb-8">
-              <h3 className="text-3xl font-bold text-blue-400 mb-4">🚀 Season 3 - Summer 25</h3>
+              <h3 className="text-3xl font-bold holographic mb-4">🚀 Season 3 - Summer 25</h3>
               <p className="text-xl text-gray-300 mb-4">Get ready for the upcoming season!</p>
               <p className="text-gray-400 mb-6">Teams are preparing and the season will begin soon.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
-              <div className="bg-[#2a2a3d] rounded-lg p-6">
+              <div className="glass-dark p-6 rounded-lg border border-white/20">
                 <h4 className="text-lg font-semibold text-yellow-400 mb-3">📅 Coming Soon:</h4>
                 <ul className="text-sm text-gray-300 space-y-2">
                   <li>• Team draft and rosters</li>
@@ -203,7 +203,7 @@ export default function Standings() {
                 </ul>
               </div>
               
-              <div className="bg-[#2a2a3d] rounded-lg p-6">
+              <div className="glass-dark p-6 rounded-lg border border-white/20">
                 <h4 className="text-lg font-semibold text-green-400 mb-3">🏆 Last Champions:</h4>
                 <p className="text-white font-semibold">Season 2: MJ</p>
                 <p className="text-gray-400 text-sm">4-0 series victory over Jakeing It</p>
@@ -216,11 +216,11 @@ export default function Standings() {
         {/* Overall Rankings */}
         {!currentData.notStarted && (
           <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 text-center">🏆 Overall Rankings</h2>
-          <div className="bg-[#1f1f2e] rounded-xl shadow-lg overflow-hidden border border-blue-800">
+          <h2 className="text-2xl md:text-3xl font-bold holographic mb-6 text-center">🏆 Overall Rankings</h2>
+          <div className="glass shadow-executive overflow-hidden border border-white/10 rounded-xl">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm md:text-base">
-                <thead className="bg-blue-900 border-b border-blue-700">
+                <thead className="glass-dark border-b border-white/20">
                   <tr>
                     <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">#</th>
                     <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Team</th>
@@ -241,15 +241,15 @@ export default function Standings() {
                       symbolClass = "text-yellow-400";
                     }
 
-                    const baseStyle = "transition duration-200 border-b border-gray-700";
+                    const baseStyle = "transition duration-200 border-b border-white/10";
                     const styles = {
-                      1: "bg-gradient-to-r from-yellow-900 to-yellow-800 hover:from-yellow-800 hover:to-yellow-700",
-                      2: "bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-700 hover:to-gray-600",
-                      3: "bg-gradient-to-r from-amber-900 to-amber-800 hover:from-amber-800 hover:to-amber-700",
+                      1: "bg-gradient-to-r from-yellow-900/50 to-yellow-800/50 hover:from-yellow-800/60 hover:to-yellow-700/60",
+                      2: "bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/60 hover:to-gray-600/60",
+                      3: "bg-gradient-to-r from-amber-900/50 to-amber-800/50 hover:from-amber-800/60 hover:to-amber-700/60",
                     };
 
                     const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
-                    const rowClass = styles[rank] || "hover:bg-[#2a2a3d]";
+                    const rowClass = styles[rank] || "hover:bg-white/5";
 
                     return (
                       <tr key={i} className={`${rowClass} ${baseStyle}`}>
@@ -288,8 +288,8 @@ export default function Standings() {
         {/* Playoffs Information */}
         {currentData.playoffs && (
           <section className="mt-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 text-center">🏆 Playoffs Results</h2>
-            <div className="bg-[#1f1f2e] rounded-xl p-6 border border-blue-800">
+            <h2 className="text-2xl md:text-3xl font-bold holographic mb-6 text-center">🏆 Playoffs Results</h2>
+            <div className="glass section-card shadow-executive border border-white/10">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold text-yellow-400">🏆 Champion: {currentData.playoffs.champion}</h3>
                 <p className="text-lg text-gray-300">Runner-up: {currentData.playoffs.runnerUp}</p>

@@ -6,11 +6,11 @@ const slugify = (str) =>
 
 export default function Teams() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 border-b border-blue-700">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">⚽ RLBL Teams</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">⚽ RLBL Teams</h1>
           <p className="text-blue-200 text-sm md:text-base">Explore team rosters and player lineups across all seasons</p>
         </div>
       </div>
@@ -21,17 +21,16 @@ export default function Teams() {
         .sort(([a], [b]) => b.localeCompare(a)) // reverse order
         .map(([season, teams]) => (
           <div key={season} className="mb-20">
-            <h2 className="text-3xl font-bold text-blue-300 mb-8 text-center">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
               {season} Season
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {teams.map((team, i) => (
                 <Link to={`/teams/${slugify(team.name)}`} key={i}>
                   <div
-                    className="rounded-2xl shadow-lg p-6 border border-blue-900 transition duration-300 hover:scale-[1.02] cursor-pointer"
+                    className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-blue-500/30 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-blue-500/60"
                     style={{
-                      background: `linear-gradient(135deg, ${team.colors[0]}33 20%, ${team.colors[1]}33 80%)`,
-                      backgroundColor: "#1f1f2e",
+                      background: `linear-gradient(135deg, ${team.colors[0]}15 20%, ${team.colors[1]}15 80%), rgba(31, 41, 55, 0.9)`,
                     }}
                   >
                     <div className="flex justify-between items-center mb-4">
