@@ -176,7 +176,7 @@ export default function Standings() {
                           <td className="py-3 md:py-4 px-3 md:px-4 hidden md:table-cell">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-yellow-400">
-                                {team.win_percentage ? team.win_percentage.toFixed(1) : '0.0'}%
+                                {team.win_percentage ? Number(team.win_percentage).toFixed(1) : '0.0'}%
                               </span>
                               <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
                                 <div

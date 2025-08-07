@@ -27,7 +27,10 @@
       "Bash(psql:*)",
       "Bash(mkdir:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(grep:*)",
+      "Bash(del debug-seasons.js test-api-seasons.js test-live-api.js verify-season-field.js)"
     ],
     "deny": []
   }

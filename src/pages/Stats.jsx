@@ -18,8 +18,8 @@ const Stats = () => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        console.log('Fetching stats data from API...');
-        const statsData = await apiService.getStats();
+        console.log('Fetching stats data from API for season:', selectedSeason);
+        const statsData = await apiService.getStats(selectedSeason);
         console.log('Stats data received:', statsData);
         setStats(statsData);
         setError(null);
@@ -35,7 +35,7 @@ const Stats = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [selectedSeason]);
 
   // Process stats data to add calculated fields
   const processedStats = useMemo(() => {
@@ -136,8 +136,8 @@ const Stats = () => {
       .slice(0, showCount);
   }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount]);
 
-  // Generate premium analytics data
-  const premiumAnalytics = useMemo(() => {
+  // Generate premium statistics data
+  const premiumStatistics = useMemo(() => {
     if (processedStats.length === 0) return null;
     
     const topPlayers = [...processedStats].sort((a, b) => b.total_points - a.total_points).slice(0, 5);
@@ -226,21 +226,21 @@ const Stats = () => {
       {/* Controls */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         
-        {/* Premium Analytics Dashboard */}
-        {premiumAnalytics && (
+        {/* Premium Statistics Dashboard */}
+        {premiumStatistics && (
           <div className="mb-12">
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <MetricCard
                 title="Active Players"
-                value={premiumAnalytics.totalPlayers}
+                value={premiumStatistics.totalPlayers}
                 subtitle="Registered Players"
                 trend={12}
                 icon="👥"
               />
               <MetricCard
                 title="Avg Performance"
-                value={Math.round(premiumAnalytics.avgStats.points)}
+                value={Math.round(premiumStatistics.avgStats.points)}
                 subtitle="Points per player"
                 trend={8}
                 icon="📊"
@@ -266,7 +266,7 @@ const Stats = () => {
               <div className="lg:col-span-2">
                 <PremiumChart
                   title="Top Performers"
-                  data={premiumAnalytics.topPlayers}
+                  data={premiumStatistics.topPlayers}
                   type="bar"
                   gradient="blue"
                 />
@@ -361,7 +361,7 @@ const Stats = () => {
             </div>
             
             <p className="text-xl text-gray-300 mb-8 font-light">
-              Advanced analytics platform is preparing for launch
+              Advanced statistics platform is preparing for launch
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
@@ -405,7 +405,7 @@ const Stats = () => {
           <div className="bg-gray-800/90 border border-gray-600 rounded-3xl overflow-hidden shadow-executive">
             <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-gray-600">
               <h3 className="text-xl font-bold text-white">Performance Data Matrix</h3>
-              <p className="text-sm text-gray-300 mt-1">Real-time player analytics and metrics</p>
+              <p className="text-sm text-gray-300 mt-1">Real-time player statistics and metrics</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">

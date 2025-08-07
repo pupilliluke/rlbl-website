@@ -43,7 +43,7 @@ function Navbar() {
               { label: "Standings", path: "/standings", icon: "🏆" },
               { label: "Teams", path: "/teams", icon: "⚽" },
               { label: "Weekly", path: "/power-rankings", icon: "📈" },
-              { label: "Analytics", path: "/stats", icon: "📉" },
+              { label: "Statistics", path: "/stats", icon: "📉" },
               { label: "Schedule", path: "/schedule", icon: "📅" },
               { label: "Legacy", path: "/legacy", icon: "🏛️" }
             ].map(({ label, path, icon }) => (
@@ -125,7 +125,7 @@ function Navbar() {
               { label: "Standings", path: "/standings", icon: "🏆" },
               { label: "Teams", path: "/teams", icon: "⚽" },
               { label: "Weekly", path: "/power-rankings", icon: "📈" },
-              { label: "Analytics", path: "/stats", icon: "📉" },
+              { label: "Statistics", path: "/stats", icon: "📉" },
               { label: "Schedule", path: "/schedule", icon: "📅" },
               { label: "Legacy", path: "/legacy", icon: "🏛️" }
             ].map(({ label, path, icon }) => (

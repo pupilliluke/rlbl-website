@@ -34,11 +34,12 @@
     "eject": "react-scripts eject",
     "server": "node server/index.js",
     "server-simple": "node server/simple-server.js",
+    "server-dev": "node server/local-dev-server.js",
     "migrate": "node server/migrate.js",
     "migrate-simple": "node server/migrate-simple.js",
     "test-db": "node server/test-database.js",
     "test-api": "node server/api-test.js",
-    "dev": "concurrently \"npm run server-simple\" \"npm start\""
+    "dev": "concurrently \"npm run server-dev\" \"npm start\""
   },
   "eslintConfig": {
     "extends": [

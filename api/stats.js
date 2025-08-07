@@ -4,7 +4,8 @@ const { Pool } = require('pg');
 // Create connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : 
+       (process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false),
 });
 
 // Query helper function
@@ -27,6 +28,23 @@ export default async function handler(req, res) {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
+  const { season } = req.query;
+  let seasonCondition = '';
+  
+  if (season && season !== 'career') {
+    if (season === 'current') {
+      seasonCondition = 'AND seasons.is_active = true';
+    } else if (season && season.startsWith('season')) {
+      const seasonNumber = season.replace('season', '');
+      seasonCondition = `AND seasons.season_name ILIKE '%Season ${seasonNumber}%'`;
+    } else if (season === 'season2_playoffs') {
+      seasonCondition = `AND seasons.season_name ILIKE '%Season 2%playoff%'`;
+    }
+  } else if (!season || season === 'current') {
+    seasonCondition = 'AND seasons.is_active = true';
+  }
+  // For 'career' or no season, show all data (no additional filter)
 
   try {
     const result = await query(`
@@ -51,10 +69,11 @@ export default async function handler(req, res) {
         seasons.season_name
       FROM player_game_stats pgs
       JOIN players p ON pgs.player_id = p.id
-      JOIN teams t ON pgs.team_id = t.id
       JOIN games g ON pgs.game_id = g.id
       JOIN seasons ON g.season_id = seasons.id
-      WHERE seasons.is_active = true
+      JOIN player_seasons ps ON ps.player_id = p.id AND ps.season_id = seasons.id
+      JOIN teams t ON ps.team_id = t.id
+      WHERE 1=1 ${seasonCondition}
       GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color, seasons.season_name
       HAVING SUM(pgs.points) > 0
       ORDER BY total_points DESC, total_goals DESC
