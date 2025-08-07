@@ -1,157 +1,302 @@
-import { useState } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-  CartesianGrid
-} from "recharts";
-
-import { players } from "../data/players.js"; // Adjust the path as necessary
-
-
+import { useState, useMemo } from "react";
+import { players } from "../data/players.js";
+import { formatPlayerName } from "../utils/formatters.js";
 
 const Stats = () => {
-  const [sortBy, setSortBy] = useState("season");
+  const [sortBy, setSortBy] = useState("points");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [filter, setFilter] = useState("");
+  const [selectedSeason, setSelectedSeason] = useState("2025");
+  const [viewType, setViewType] = useState("players"); // players or teams
+  const [showCount, setShowCount] = useState(20);
 
-  const sortedPlayers = [...players]
-    .filter((p) => p.player.toLowerCase().includes(filter.toLowerCase()))
-    .sort((a, b) => b[sortBy] - a[sortBy]);
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+  };
+
+  const getSortIcon = (column) => {
+    if (sortBy !== column) return "↕";
+    return sortOrder === "desc" ? "↓" : "↑";
+  };
+
+  // Calculate team stats from players
+  const teamStats = useMemo(() => {
+    const teamMap = {};
+    players.forEach(player => {
+      if (!teamMap[player.team]) {
+        teamMap[player.team] = {
+          team: player.team,
+          players: 0,
+          totalPoints: 0,
+          totalGoals: 0,
+          totalAssists: 0,
+          totalSaves: 0,
+          totalShots: 0,
+          totalMVPs: 0,
+          totalDemos: 0,
+          totalEpicSaves: 0,
+          totalGames: 0,
+          avgPPG: 0,
+          avgGPG: 0,
+          avgAPG: 0,
+          avgSVPG: 0,
+          avgSH: 0
+        };
+      }
+      const team = teamMap[player.team];
+      team.players++;
+      team.totalPoints += player.points;
+      team.totalGoals += player.goals;
+      team.totalAssists += player.assists;
+      team.totalSaves += player.saves;
+      team.totalShots += player.shots;
+      team.totalMVPs += player.mvps;
+      team.totalDemos += player.demos;
+      team.totalEpicSaves += player.epicSaves;
+      team.totalGames += player.gamesPlayed;
+    });
+
+    return Object.values(teamMap).map(team => ({
+      ...team,
+      avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
+      avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames) : 0,
+      avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames) : 0,
+      avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
+      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
+    }));
+  }, []);
+
+  // Sort and filter data
+  const sortedData = useMemo(() => {
+    const data = viewType === "players" ? players : teamStats;
+    return data
+      .filter(item => {
+        const name = viewType === "players" ? item.player : item.team;
+        return name.toLowerCase().includes(filter.toLowerCase());
+      })
+      .sort((a, b) => {
+        let aValue = a[sortBy];
+        let bValue = b[sortBy];
+        
+        if (typeof aValue === "string") {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+        
+        if (sortOrder === "desc") {
+          return bValue > aValue ? 1 : -1;
+        } else {
+          return aValue > bValue ? 1 : -1;
+        }
+      })
+      .slice(0, showCount);
+  }, [viewType, teamStats, sortBy, sortOrder, filter, showCount]);
+
+  const StatHeader = ({ column, label, className = "" }) => (
+    <th 
+      className={`px-3 py-4 text-left font-bold text-white cursor-pointer hover:bg-blue-800 transition-colors ${className}`}
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <span className="text-xs opacity-70">{getSortIcon(column)}</span>
+      </div>
+    </th>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white px-6 py-12">
-      <h1 className="text-4xl font-extrabold text-orange-400 mb-8 text-center drop-shadow-md">
-        📊 RLBL Player Stats
-      </h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <h1 className="text-4xl font-bold text-white mb-2">RLBL Statistics</h1>
+          <p className="text-blue-200">Complete player and team statistics for the Rocket League Business League</p>
+        </div>
+      </div>
 
       {/* Controls */}
-      <div className="flex flex-wrap justify-center gap-4 mb-10">
-        <input
-          type="text"
-          placeholder="Search player..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 rounded bg-[#2a2a3d] border border-blue-800 text-sm"
-        />
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-4 py-2 rounded bg-[#2a2a3d] border border-blue-800 text-sm"
-        >
-          <option value="points">2025</option>
-          <option value="ppg">2024</option>
-         
-        </select>
-           <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-4 py-2 rounded bg-[#2a2a3d] border border-blue-800 text-sm"
-        >
-          <option value="points">Points</option>
-          <option value="ppg">PPG</option>
-          <option value="goals">Goals</option>
-          <option value="gpg">GPG</option>
-          <option value="assists">Assists</option>
-          <option value="saves">Saves</option>
-          <option value="svpg">Saves/Game</option>
-          <option value="shPercent">Shooting %</option>
-        </select>
-      </div>
-      
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-        {sortedPlayers.map((p, i) => (
-          <div
-            key={i}
-            className="p-5 rounded-2xl shadow-lg border border-blue-900 transition bg-[#1f1f2e] hover:scale-[1.02]"
-            style={{
-              background: `linear-gradient(135deg, ${p.teamColor[0]}33 20%, ${p.teamColor[1]}33 80%)`,
-              backgroundColor: "#1f1f2e",
-            }}
-          >
-            <h2 className="text-xl font-bold text-white mb-2">{p.player}</h2>
-            <p className="text-sm text-blue-300 mb-4 italic">{p.team}</p>
-            <div className="grid grid-cols-2 text-sm gap-1 text-gray-200">
-              <span>Points: {p.points}</span>
-              <span>PPG: {p.ppg.toFixed(2)}</span>
-              <span>Goals: {p.goals}</span>
-              <span>GPG: {p.gpg.toFixed(2)}</span>
-              <span>Assists: {p.assists}</span>
-              <span>APG: {p.apg.toFixed(2)}</span>
-              <span>Saves: {p.saves}</span>
-              <span>SVPG: {p.svpg.toFixed(2)}</span>
-              <span>Shots: {p.shots}</span>
-              <span>SH%: {p.shPercent.toFixed(1)}%</span>
-              <span>MVPs: {p.mvps}</span>
-              <span>Demos: {p.demos}</span>
-              <span>Epic Saves: {p.epicSaves}</span>
-              <span>Games: {p.gamesPlayed}</span>
-              <div className="col-span-2 mt-2">
-                <div className="text-xs mb-1">MVP Progress</div>
-                <div className="w-full h-2 bg-gray-700 rounded">
-                  <div className="h-full bg-yellow-400 rounded transition-all duration-500" style={{ width: `${(p.mvps / 15) * 100}%` }} />
-                </div>
-                <div className="text-xs mt-2 mb-1">Demos Progress</div>
-                <div className="w-full h-2 bg-gray-700 rounded">
-                  <div className="h-full bg-red-500 rounded transition-all duration-500" style={{ width: `${(p.demos / 40) * 100}%` }} />
-                </div>
-                <div className="text-xs mt-2 mb-1">Saves Progress</div>
-                <div className="w-full h-2 bg-gray-700 rounded">
-                  <div className="h-full bg-green-500 rounded transition-all duration-500" style={{ width: `${(p.saves / 60) * 100}%` }} />
-                </div>
-              </div>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
+          <div className="flex flex-wrap gap-4">
+            {/* View Type Toggle */}
+            <div className="flex bg-[#2a2a3d] rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewType("players")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewType === "players" 
+                    ? "bg-blue-600 text-white" 
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                Players
+              </button>
+              <button
+                onClick={() => setViewType("teams")}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewType === "teams" 
+                    ? "bg-blue-600 text-white" 
+                    : "text-gray-300 hover:text-white hover:bg-gray-700"
+                }`}
+              >
+                Teams
+              </button>
             </div>
+
+            {/* Season Selector */}
+            <select
+              value={selectedSeason}
+              onChange={(e) => setSelectedSeason(e.target.value)}
+              className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm"
+            >
+              <option value="2025">2025 Season</option>
+              <option value="2024">2024 Season</option>
+              <option value="all">All Time</option>
+            </select>
+
+            {/* Show Count */}
+            <select
+              value={showCount}
+              onChange={(e) => setShowCount(parseInt(e.target.value))}
+              className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm"
+            >
+              <option value={10}>Top 10</option>
+              <option value={20}>Top 20</option>
+              <option value={50}>Top 50</option>
+              <option value={999}>All</option>
+            </select>
           </div>
-        ))}
-      </div>
 
-      {/* Visualization: Goals */}
-      <div className="max-w-5xl mx-auto mt-20">
-        <h2 className="text-2xl font-bold text-orange-400 mb-4 text-center">Top Goal Scorers</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sortedPlayers.slice(0, 10)}>
-            <CartesianGrid strokeDasharray="4 4" stroke="#2c3e50" />
-            <XAxis dataKey="player" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip wrapperClassName="text-sm" />
-            <Legend />
-            <Bar dataKey="goals" fill="#60a5fa" radius={[6, 6, 0, 0]} style={{ filter: "drop-shadow(0 0 6px #60a5fa)" }} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+          {/* Search */}
+          <input
+            type="text"
+            placeholder={`Search ${viewType}...`}
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm min-w-[200px]"
+          />
+        </div>
 
-      {/* Visualization: Saves */}
-      <div className="max-w-5xl mx-auto mt-20">
-        <h2 className="text-2xl font-bold text-orange-400 mb-4 text-center">Top Save Leaders</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sortedPlayers.slice(0, 10)}>
-            <CartesianGrid strokeDasharray="4 4" stroke="#2c3e50" />
-            <XAxis dataKey="player" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip wrapperClassName="text-sm" />
-            <Legend />
-            <Bar dataKey="saves" fill="#34d399" radius={[6, 6, 0, 0]} style={{ filter: "drop-shadow(0 0 6px #34d399)" }} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+        {/* Stats Table */}
+        <div className="bg-[#1f1f2e] rounded-lg overflow-hidden border border-blue-800">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-blue-900 border-b border-blue-700">
+                <tr>
+                  <th className="px-3 py-4 text-left font-bold text-white w-8">#</th>
+                  <StatHeader 
+                    column={viewType === "players" ? "player" : "team"} 
+                    label={viewType === "players" ? "Player" : "Team"} 
+                    className="min-w-[150px]"
+                  />
+                  {viewType === "players" && (
+                    <StatHeader column="team" label="Team" className="min-w-[120px]" />
+                  )}
+                  {viewType === "teams" && (
+                    <StatHeader column="players" label="Players" />
+                  )}
+                  <StatHeader column="gamesPlayed" label="GP" />
+                  <StatHeader column={viewType === "players" ? "points" : "totalPoints"} label="PTS" />
+                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" />
+                  <StatHeader column={viewType === "players" ? "goals" : "totalGoals"} label="G" />
+                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" />
+                  <StatHeader column={viewType === "players" ? "assists" : "totalAssists"} label="A" />
+                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" />
+                  <StatHeader column={viewType === "players" ? "saves" : "totalSaves"} label="SV" />
+                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" />
+                  <StatHeader column={viewType === "players" ? "shots" : "totalShots"} label="SH" />
+                  <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" />
+                  <StatHeader column={viewType === "players" ? "mvps" : "totalMVPs"} label="MVP" />
+                  <StatHeader column={viewType === "players" ? "demos" : "totalDemos"} label="DEM" />
+                  <StatHeader column={viewType === "players" ? "epicSaves" : "totalEpicSaves"} label="ES" />
+                </tr>
+              </thead>
+              <tbody>
+                {sortedData.map((item, index) => (
+                  <tr 
+                    key={index} 
+                    className="border-b border-gray-700 hover:bg-[#2a2a3d] transition-colors"
+                  >
+                    <td className="px-3 py-3 text-gray-400 font-mono text-sm">
+                      {index + 1}
+                    </td>
+                    <td className="px-3 py-3 font-semibold text-white">
+                      {viewType === "players" ? formatPlayerName(item.player, item.gamertag) : item.team}
+                    </td>
+                    {viewType === "players" && (
+                      <td className="px-3 py-3 text-blue-300 text-sm">{item.team}</td>
+                    )}
+                    {viewType === "teams" && (
+                      <td className="px-3 py-3 text-center">{item.players}</td>
+                    )}
+                    <td className="px-3 py-3 text-center">
+                      {viewType === "players" ? item.gamesPlayed : Math.round(item.totalGames / item.players)}
+                    </td>
+                    <td className="px-3 py-3 text-center font-bold text-yellow-400">
+                      {viewType === "players" ? item.points.toLocaleString() : item.totalPoints.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {(viewType === "players" ? item.ppg : item.avgPPG).toFixed(1)}
+                    </td>
+                    <td className="px-3 py-3 text-center font-semibold text-green-400">
+                      {viewType === "players" ? item.goals : item.totalGoals}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {(viewType === "players" ? item.gpg : item.avgGPG).toFixed(2)}
+                    </td>
+                    <td className="px-3 py-3 text-center font-semibold text-blue-400">
+                      {viewType === "players" ? item.assists : item.totalAssists}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {(viewType === "players" ? item.apg : item.avgAPG).toFixed(2)}
+                    </td>
+                    <td className="px-3 py-3 text-center font-semibold text-purple-400">
+                      {viewType === "players" ? item.saves : item.totalSaves}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {(viewType === "players" ? item.svpg : item.avgSVPG).toFixed(2)}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {viewType === "players" ? item.shots : item.totalShots}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {(viewType === "players" ? item.shPercent : item.avgSH).toFixed(1)}%
+                    </td>
+                    <td className="px-3 py-3 text-center font-bold text-orange-400">
+                      {viewType === "players" ? item.mvps : item.totalMVPs}
+                    </td>
+                    <td className="px-3 py-3 text-center text-red-400">
+                      {viewType === "players" ? item.demos : item.totalDemos}
+                    </td>
+                    <td className="px-3 py-3 text-center text-cyan-400">
+                      {viewType === "players" ? item.epicSaves : item.totalEpicSaves}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-      {/* Visualization: Demos */}
-      <div className="max-w-5xl mx-auto mt-20 mb-12">
-        <h2 className="text-2xl font-bold text-orange-400 mb-4 text-center">Top Demo Counts</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sortedPlayers.slice(0, 10)}>
-            <CartesianGrid strokeDasharray="4 4" stroke="#2c3e50" />
-            <XAxis dataKey="player" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip wrapperClassName="text-sm" />
-            <Legend />
-            <Bar dataKey="demos" fill="#f87171" radius={[6, 6, 0, 0]} style={{ filter: "drop-shadow(0 0 6px #f87171)" }} />
-          </BarChart>
-        </ResponsiveContainer>
+        {/* Footer Info */}
+        <div className="mt-6 text-center text-gray-400 text-sm">
+          <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
+          <div className="flex justify-center gap-6 mt-2 text-xs">
+            <span>GP = Games Played</span>
+            <span>PPG = Points Per Game</span>
+            <span>GPG = Goals Per Game</span>
+            <span>APG = Assists Per Game</span>
+            <span>SVPG = Saves Per Game</span>
+            <span>SH% = Shooting %</span>
+            <span>DEM = Demolitions</span>
+            <span>ES = Epic Saves</span>
+          </div>
+        </div>
       </div>
     </div>
   );
