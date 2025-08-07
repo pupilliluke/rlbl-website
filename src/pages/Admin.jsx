@@ -91,6 +91,8 @@ const Admin = () => {
   }, [error]);
 
   const handleAuth = () => {
+    console.log('Entered password:', password);
+    console.log('Expected password:', process.env.REACT_APP_ADMIN_PASSWORD);
     const isCorrect = password === process.env.REACT_APP_ADMIN_PASSWORD;
     if (isCorrect) {
       setAuthenticated(true);
