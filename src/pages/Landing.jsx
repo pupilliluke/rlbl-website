@@ -86,8 +86,7 @@ export default function Landing() {
           {/* Premium Description */}
           <div className="glass-dark rounded-3xl p-8 md:p-12 mb-12 shadow-luxury animate-premium-slide-up">
             <p className="text-xl md:text-2xl text-gray-200 font-light leading-relaxed mb-6">
-              Experience next-generation esports analytics with AI-powered insights, 
-              real-time performance tracking, and executive-level reporting.
+              Dylan Wilding Dylan WildingDylan Wilding Dylan Wilding    Dylan Wilding Dylan Wilding Dylan Wilding Dylan WildingDylan Wilding ylaWildingDyWildinDylanlding
             </p>
             <div className="flex flex-wrap justify-center gap-6 text-sm text-blue-300">
               <span className="flex items-center gap-2">
@@ -96,11 +95,11 @@ export default function Landing() {
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                AI Predictions
+                idk what to put here
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-                Enterprise Grade
+                uh doi
               </span>
             </div>
           </div>
@@ -122,7 +121,7 @@ export default function Landing() {
 
             <Link
               to="/legacy"
-              className="group spacing-container glass text-white font-semibold text-lg rounded-full border-2 border-white/20 hover:border-blue-400/50 transition-smooth hover:shadow-executive"
+              className="group spacing-container bg-gray-800/90 border border-gray-500 text-white font-semibold text-lg rounded-full hover:border-blue-400 transition-smooth hover:shadow-executive"
             >
               <span className="flex items-center gap-standard">
                 <svg className="w-6 h-6 group-hover:animate-ai-processing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,17 +134,17 @@ export default function Landing() {
 
           {/* Status Indicators */}
           <div className="mt-16 flex justify-center gap-8">
-            <div className="glass-dark rounded-2xl px-6 py-4">
+            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
               <div className="text-3xl font-bold text-green-400">99.9%</div>
-              <div className="text-sm text-gray-400">Uptime</div>
+              <div className="text-sm text-gray-300">Uptime</div>
             </div>
-            <div className="glass-dark rounded-2xl px-6 py-4">
+            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
               <div className="text-3xl font-bold text-blue-400">24/7</div>
-              <div className="text-sm text-gray-400">Monitoring</div>
+              <div className="text-sm text-gray-300">Monitoring</div>
             </div>
-            <div className="glass-dark rounded-2xl px-6 py-4">
+            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
               <div className="text-3xl font-bold text-purple-400">Live</div>
-              <div className="text-sm text-gray-400">Data Feed</div>
+              <div className="text-sm text-gray-300">Data Feed</div>
             </div>
           </div>
         </div>

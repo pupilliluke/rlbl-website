@@ -161,19 +161,19 @@ const Stats = () => {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-5xl font-black holographic mb-4">Analytics Dashboard</h1>
-              <p className="text-xl text-gray-300 font-light">
+              <h1 className="text-5xl font-black text-white mb-4">Statistics Dashboard</h1>
+              <p className="text-xl text-white font-light">
                 Executive-level insights and performance metrics
               </p>
             </div>
             <div className="hidden md:flex items-center gap-4">
-              <div className="glass rounded-2xl px-6 py-4 text-center">
-                <div className="text-2xl font-bold text-green-400">Live</div>
-                <div className="text-xs text-gray-400">Status</div>
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
+                <div className="text-2xl font-bold text-orange-400">S3</div>
+                <div className="text-xs text-white">Season</div>
               </div>
-              <div className="glass rounded-2xl px-6 py-4 text-center">
-                <div className="text-2xl font-bold text-blue-400">AI</div>
-                <div className="text-xs text-gray-400">Powered</div>
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
+                <div className="text-2xl font-bold text-blue-400">⚽</div>
+                <div className="text-xs text-white">League</div>
               </div>
             </div>
           </div>
@@ -191,7 +191,7 @@ const Stats = () => {
               <MetricCard
                 title="Active Players"
                 value={premiumAnalytics.totalPlayers}
-                subtitle="Registered athletes"
+                subtitle="Registered Players"
                 trend={12}
                 icon="👥"
               />
@@ -229,25 +229,25 @@ const Stats = () => {
                 />
               </div>
               <RadialChart
-                title="League Activity"
-                data={{ percentage: 87, label: "Active Rate" }}
+                title="Close Match Rate"
+                data={{ percentage: 87, label: "Rate" }}
               />
             </div>
           </div>
         )}
 
         {/* Executive Controls */}
-        <div className="glass-dark rounded-2xl p-6 mb-8 shadow-executive">
+        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-600">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-4">
               {/* Premium View Toggle */}
-              <div className="glass rounded-xl overflow-hidden border border-white/10">
+              <div className="bg-gray-700/80 rounded-xl overflow-hidden border border-gray-500">
                 <button
                   onClick={() => setViewType("players")}
                   className={`px-6 py-3 text-sm font-bold transition-all duration-300 ${
                     viewType === "players" 
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury" 
-                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                      : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
                   🏃‍♂️ Players
@@ -257,7 +257,7 @@ const Stats = () => {
                   className={`px-6 py-3 text-sm font-bold transition-all duration-300 ${
                     viewType === "teams" 
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury" 
-                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                      : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
                   🏆 Teams
@@ -268,25 +268,25 @@ const Stats = () => {
               <select
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(e.target.value)}
-                className="px-6 py-3 rounded-xl glass border border-black/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
+                className="px-6 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
               >
-                <option value="current" className="text-black">🚀 Season 3 - Summer 25 (Not Started)</option>
-                <option value="career" className="text-black">🌟 Career Stats (All-Time)</option>
-                <option value="season2" className="text-black">🏅 Season 2 - Spring 25</option>
-                <option value="season2_playoffs" className="text-black">🏆 Season 2 Playoffs</option>
-                <option value="season1" className="text-black">🎯 Season 1 - Fall 24</option>
+                <option value="current" className="text-black bg-white">🚀 Season 3 - Summer 25 (Not Started)</option>
+                <option value="career" className="text-black bg-white">🌟 Career Stats (All-Time)</option>
+                <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
+                <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
+                <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
               </select>
 
               {/* Premium Results Count */}
               <select
                 value={showCount}
                 onChange={(e) => setShowCount(parseInt(e.target.value))}
-                className="px-4 py-3 rounded-xl glass border border-white/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
+                className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
               >
-                <option value={10} className="text-black">Top 10</option>
-                <option value={20} className="text-black">Top 20</option>
-                <option value={50} className="text-black">Top 50</option>
-                <option value={999} className="text-black">All Players</option>
+                <option value={10} className="text-black bg-white">Top 10</option>
+                <option value={20} className="text-black bg-white">Top 20</option>
+                <option value={50} className="text-black bg-white">Top 50</option>
+                <option value={999} className="text-black bg-white">All Players</option>
               </select>
             </div>
 
@@ -297,45 +297,45 @@ const Stats = () => {
                 placeholder={`🔍 Search ${viewType}...`}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                className="px-6 py-3 pl-12 rounded-xl glass border border-white/10 text-sm min-w-[250px] focus:border-blue-400/50 focus:shadow-luxury transition-all duration-300"
+                className="px-6 py-3 pl-12 rounded-xl bg-gray-700/80 border border-gray-500 text-sm min-w-[250px] text-white placeholder-gray-300 focus:border-blue-400/50 focus:shadow-luxury transition-all duration-300"
               />
-              <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
         </div>
 
-        {/* Premium Empty State for Season 3 */}
+        {/* High-Contrast Empty State for Season 3 */}
         {selectedSeason === "current" && (
-          <div className="glass-dark rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
+          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
             <div className="relative mb-8">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
               <div className="relative">
-                <h3 className="text-4xl font-black holographic mb-4">🚀 Season 3 - Summer 25</h3>
+                <h3 className="text-4xl font-black text-white mb-4">🚀 Season 3 - Summer 25</h3>
                 <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
               </div>
             </div>
             
-            <p className="text-xl text-gray-200 mb-8 font-light">
+            <p className="text-xl text-gray-300 mb-8 font-light">
               Advanced analytics platform is preparing for launch
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              <div className="glass rounded-2xl p-6">
+              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
                 <div className="text-3xl mb-3">🤖</div>
                 <h4 className="text-lg font-bold text-blue-400 mb-3">AI-Powered Insights</h4>
-                <ul className="text-sm text-gray-300 space-y-2 text-left">
+                <ul className="text-sm text-white space-y-2 text-left">
                   <li>• Real-time performance analysis</li>
                   <li>• Predictive modeling</li>
                   <li>• Advanced metrics dashboard</li>
                 </ul>
               </div>
               
-              <div className="glass rounded-2xl p-6">
+              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
                 <div className="text-3xl mb-3">📊</div>
                 <h4 className="text-lg font-bold text-green-400 mb-3">Executive Reporting</h4>
-                <ul className="text-sm text-gray-300 space-y-2 text-left">
+                <ul className="text-sm text-white space-y-2 text-left">
                   <li>• Interactive visualizations</li>
                   <li>• Custom KPI tracking</li>
                   <li>• Automated insights</li>
@@ -345,11 +345,11 @@ const Stats = () => {
 
             {/* Status indicators */}
             <div className="mt-8 flex justify-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-dark">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-600">
                 <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                 <span className="text-xs text-yellow-400 font-medium">Initializing</span>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-dark">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-600">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-xs text-green-400 font-medium">Systems Ready</span>
               </div>
@@ -357,16 +357,16 @@ const Stats = () => {
           </div>
         )}
 
-        {/* Premium Data Table */}
+        {/* High-Contrast Data Table */}
         {currentPlayerData.length > 0 && (
-          <div className="glass-dark rounded-3xl overflow-hidden shadow-executive">
-            <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-white/10">
-              <h3 className="text-xl font-bold holographic">Performance Data Matrix</h3>
-              <p className="text-sm text-gray-400 mt-1">Real-time player analytics and metrics</p>
+          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl overflow-hidden shadow-executive">
+            <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-gray-600">
+              <h3 className="text-xl font-bold text-white">Performance Data Matrix</h3>
+              <p className="text-sm text-gray-300 mt-1">Real-time player analytics and metrics</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-white/10">
+                <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
                 <tr>
                   <th className="px-4 py-5 text-left font-bold text-white w-12 border-r border-white/5">#</th>
                   <StatHeader 
@@ -400,13 +400,13 @@ const Stats = () => {
                 {sortedData.map((item, index) => (
                   <tr 
                     key={index} 
-                    className="border-b border-white/5 hover:bg-white/5 transition-all duration-300 hover:shadow-luxury group"
+                    className="border-b border-gray-600 hover:bg-gray-700/50 transition-all duration-300 hover:shadow-luxury group"
                   >
-                    <td className="px-4 py-4 text-gray-400 font-mono text-sm border-r border-white/5 group-hover:text-blue-400 transition-colors">
+                    <td className="px-4 py-4 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
                       <div className="flex items-center justify-center">
                         {index + 1 <= 3 ? 
                           <span className="text-lg">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> : 
-                          <span className="group-hover:holographic transition-all duration-300">{index + 1}</span>
+                          <span className="group-hover:text-blue-400 transition-all duration-300">{index + 1}</span>
                         }
                       </div>
                     </td>
@@ -471,9 +471,9 @@ const Stats = () => {
 
         {/* Footer Info */}
         {currentPlayerData.length > 0 && (
-          <div className="mt-6 text-center text-gray-400 text-sm">
+          <div className="mt-6 text-center text-white text-sm">
             <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
-          <div className="flex justify-center gap-6 mt-2 text-xs">
+          <div className="flex justify-center gap-6 mt-2 text-xs text-gray-300">
             <span>GP = Games Played</span>
             <span>PPG = Points Per Game</span>
             <span>GPG = Goals Per Game</span>

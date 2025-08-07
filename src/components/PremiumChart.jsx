@@ -81,14 +81,14 @@ const MetricCard = ({ title, value, subtitle, trend, icon }) => {
       </div>
       
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-gray-400 group-hover:text-gray-200 transition-colors">
+        <h3 className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">
           {title}
         </h3>
         <div className="text-3xl font-black text-white group-hover:holographic transition-all duration-500">
           {value}
         </div>
         {subtitle && (
-          <p className="text-xs text-gray-500 group-hover:text-gray-300 transition-colors">
+          <p className="text-xs text-white/70 group-hover:text-white/90 transition-colors">
             {subtitle}
           </p>
         )}

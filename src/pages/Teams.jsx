@@ -27,33 +27,40 @@ export default function Teams() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {teams.map((team, i) => (
                 <Link to={`/teams/${slugify(team.name)}`} key={i}>
-                  <div
-                    className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-blue-500/30 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-blue-500/60"
-                    style={{
-                      background: `linear-gradient(135deg, ${team.colors[0]}15 20%, ${team.colors[1]}15 80%), rgba(31, 41, 55, 0.9)`,
-                    }}
-                  >
+                  <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
+                    {/* Team Color Strip */}
+                    <div className="flex mb-4 rounded-lg overflow-hidden h-3">
+                      {team.colors.map((color, j) => (
+                        <div
+                          key={j}
+                          className="flex-1"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-bold text-white drop-shadow">
+                      <h3 className="text-xl font-bold text-white">
                         {team.name}
                       </h3>
                       <div className="flex space-x-2">
                         {team.colors.map((color, j) => (
                           <div
                             key={j}
-                            className="w-5 h-5 rounded-full border border-white"
+                            className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                             style={{ backgroundColor: color }}
                           />
                         ))}
                       </div>
                     </div>
+                    
                     <div className="mt-4">
-                      <p className="text-sm text-gray-100 mb-1">Players:</p>
-                      <div className="grid grid-cols-1 gap-1">
+                      <p className="text-sm text-gray-300 mb-3 font-medium">Players:</p>
+                      <div className="grid grid-cols-1 gap-2">
                         {team.players.map((p, idx) => (
                           <div
                             key={idx}
-                            className="text-lg font-semibold text-white drop-shadow-sm"
+                            className="text-base text-white bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50"
                           >
                             {p}
                           </div>
