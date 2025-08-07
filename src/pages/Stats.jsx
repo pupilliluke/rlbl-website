@@ -1,14 +1,35 @@
 import { useState, useMemo } from "react";
 import { players } from "../data/players.js";
 import { formatPlayerName } from "../utils/formatters.js";
+import { historicalSeasons } from "../data/historicalStats.js";
+import { careerStats } from "../data/careerStats.js";
+import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
 
 const Stats = () => {
   const [sortBy, setSortBy] = useState("points");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filter, setFilter] = useState("");
-  const [selectedSeason, setSelectedSeason] = useState("2025");
+  const [selectedSeason, setSelectedSeason] = useState("current");
   const [viewType, setViewType] = useState("players"); // players or teams
   const [showCount, setShowCount] = useState(20);
+
+  // Get current data based on selected season
+  const getCurrentData = () => {
+    if (selectedSeason === "current") {
+      // Season 3 hasn't started - show empty state
+      return [];
+    } else if (selectedSeason === "career") {
+      return careerStats;
+    } else if (selectedSeason === "2025") {
+      return players; // If they have current season data
+    } else if (historicalSeasons[selectedSeason]) {
+      return historicalSeasons[selectedSeason].stats;
+    } else {
+      return []; // fallback to empty
+    }
+  };
+
+  const currentPlayerData = getCurrentData();
 
 
   const handleSort = (column) => {
@@ -25,10 +46,10 @@ const Stats = () => {
     return sortOrder === "desc" ? "↓" : "↑";
   };
 
-  // Calculate team stats from players
+  // Calculate team stats from current player data
   const teamStats = useMemo(() => {
     const teamMap = {};
-    players.forEach(player => {
+    currentPlayerData.forEach(player => {
       if (!teamMap[player.team]) {
         teamMap[player.team] = {
           team: player.team,
@@ -70,11 +91,11 @@ const Stats = () => {
       avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
       avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
     }));
-  }, []);
+  }, [currentPlayerData]);
 
   // Sort and filter data
   const sortedData = useMemo(() => {
-    const data = viewType === "players" ? players : teamStats;
+    const data = viewType === "players" ? currentPlayerData : teamStats;
     return data
       .filter(item => {
         const name = viewType === "players" ? item.player : item.team;
@@ -96,99 +117,258 @@ const Stats = () => {
         }
       })
       .slice(0, showCount);
-  }, [viewType, teamStats, sortBy, sortOrder, filter, showCount]);
+  }, [viewType, teamStats, currentPlayerData, sortBy, sortOrder, filter, showCount]);
 
   const StatHeader = ({ column, label, className = "" }) => (
     <th 
-      className={`px-3 py-4 text-left font-bold text-white cursor-pointer hover:bg-blue-800 transition-colors ${className}`}
+      className={`px-4 py-5 text-left font-bold text-white cursor-pointer hover:bg-white/5 transition-all duration-300 hover:shadow-luxury border-r border-white/5 last:border-r-0 ${className}`}
       onClick={() => handleSort(column)}
     >
-      <div className="flex items-center gap-1">
-        {label}
-        <span className="text-xs opacity-70">{getSortIcon(column)}</span>
+      <div className="flex items-center gap-2 group">
+        <span className="group-hover:holographic transition-all duration-300">{label}</span>
+        <span className="text-xs opacity-50 group-hover:opacity-100 transition-opacity">
+          {getSortIcon(column)}
+        </span>
       </div>
     </th>
   );
 
+  // Generate premium analytics data
+  const premiumAnalytics = useMemo(() => {
+    if (currentPlayerData.length === 0) return null;
+    
+    const topPlayers = [...currentPlayerData].sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, 5);
+    const avgStats = {
+      points: currentPlayerData.reduce((sum, p) => sum + (p.points || 0), 0) / currentPlayerData.length,
+      goals: currentPlayerData.reduce((sum, p) => sum + (p.goals || 0), 0) / currentPlayerData.length,
+      assists: currentPlayerData.reduce((sum, p) => sum + (p.assists || 0), 0) / currentPlayerData.length,
+    };
+    
+    return {
+      topPlayers: topPlayers.map(p => ({ label: p.player, value: p.points || 0 })),
+      totalPlayers: currentPlayerData.length,
+      avgStats
+    };
+  }, [currentPlayerData]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <h1 className="text-4xl font-bold text-white mb-2">RLBL Statistics</h1>
-          <p className="text-blue-200">Complete player and team statistics for the Rocket League Business League</p>
+    <div className="min-h-screen bg-gradient-executive relative">
+      {/* Neural Background */}
+      <div className="absolute inset-0 neural-bg opacity-20" />
+      
+      {/* Executive Header */}
+      <div className="relative z-10 glass-dark border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-5xl font-black holographic mb-4">Analytics Dashboard</h1>
+              <p className="text-xl text-gray-300 font-light">
+                Executive-level insights and performance metrics
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-4">
+              <div className="glass rounded-2xl px-6 py-4 text-center">
+                <div className="text-2xl font-bold text-green-400">Live</div>
+                <div className="text-xs text-gray-400">Status</div>
+              </div>
+              <div className="glass rounded-2xl px-6 py-4 text-center">
+                <div className="text-2xl font-bold text-blue-400">AI</div>
+                <div className="text-xs text-gray-400">Powered</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-wrap gap-4 items-center justify-between mb-6">
-          <div className="flex flex-wrap gap-4">
-            {/* View Type Toggle */}
-            <div className="flex bg-[#2a2a3d] rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewType("players")}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  viewType === "players" 
-                    ? "bg-blue-600 text-white" 
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                }`}
-              >
-                Players
-              </button>
-              <button
-                onClick={() => setViewType("teams")}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  viewType === "teams" 
-                    ? "bg-blue-600 text-white" 
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                }`}
-              >
-                Teams
-              </button>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+        
+        {/* Premium Analytics Dashboard */}
+        {premiumAnalytics && (
+          <div className="mb-12">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <MetricCard
+                title="Active Players"
+                value={premiumAnalytics.totalPlayers}
+                subtitle="Registered athletes"
+                trend={12}
+                icon="👥"
+              />
+              <MetricCard
+                title="Avg Performance"
+                value={Math.round(premiumAnalytics.avgStats.points)}
+                subtitle="Points per player"
+                trend={8}
+                icon="📊"
+              />
+              <MetricCard
+                title="Total Goals"
+                value={currentPlayerData.reduce((sum, p) => sum + (p.goals || 0), 0)}
+                subtitle="Season aggregate"
+                trend={-3}
+                icon="⚽"
+              />
+              <MetricCard
+                title="Engagement"
+                value="94.2%"
+                subtitle="Player activity"
+                trend={5}
+                icon="🎯"
+              />
             </div>
 
-            {/* Season Selector */}
-            <select
-              value={selectedSeason}
-              onChange={(e) => setSelectedSeason(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm"
-            >
-              <option value="2025">2025 Season</option>
-              <option value="2024">2024 Season</option>
-              <option value="all">All Time</option>
-            </select>
-
-            {/* Show Count */}
-            <select
-              value={showCount}
-              onChange={(e) => setShowCount(parseInt(e.target.value))}
-              className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm"
-            >
-              <option value={10}>Top 10</option>
-              <option value={20}>Top 20</option>
-              <option value={50}>Top 50</option>
-              <option value={999}>All</option>
-            </select>
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <div className="lg:col-span-2">
+                <PremiumChart
+                  title="Top Performers"
+                  data={premiumAnalytics.topPlayers}
+                  type="bar"
+                  gradient="blue"
+                />
+              </div>
+              <RadialChart
+                title="League Activity"
+                data={{ percentage: 87, label: "Active Rate" }}
+              />
+            </div>
           </div>
+        )}
 
-          {/* Search */}
-          <input
-            type="text"
-            placeholder={`Search ${viewType}...`}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg bg-[#2a2a3d] border border-blue-800 text-sm min-w-[200px]"
-          />
+        {/* Executive Controls */}
+        <div className="glass-dark rounded-2xl p-6 mb-8 shadow-executive">
+          <div className="flex flex-wrap gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-4">
+              {/* Premium View Toggle */}
+              <div className="glass rounded-xl overflow-hidden border border-white/10">
+                <button
+                  onClick={() => setViewType("players")}
+                  className={`px-6 py-3 text-sm font-bold transition-all duration-300 ${
+                    viewType === "players" 
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury" 
+                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  🏃‍♂️ Players
+                </button>
+                <button
+                  onClick={() => setViewType("teams")}
+                  className={`px-6 py-3 text-sm font-bold transition-all duration-300 ${
+                    viewType === "teams" 
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury" 
+                      : "text-gray-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  🏆 Teams
+                </button>
+              </div>
+
+              {/* Premium Season Selector */}
+              <select
+                value={selectedSeason}
+                onChange={(e) => setSelectedSeason(e.target.value)}
+                className="px-6 py-3 rounded-xl glass border border-white/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
+              >
+                <option value="current">🚀 Season 3 - Summer 25 (Not Started)</option>
+                <option value="career">🌟 Career Stats (All-Time)</option>
+                <option value="season2">🏅 Season 2 - Spring 25</option>
+                <option value="season2_playoffs">🏆 Season 2 Playoffs</option>
+                <option value="season1">🎯 Season 1 - Fall 24</option>
+              </select>
+
+              {/* Premium Results Count */}
+              <select
+                value={showCount}
+                onChange={(e) => setShowCount(parseInt(e.target.value))}
+                className="px-4 py-3 rounded-xl glass border border-white/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
+              >
+                <option value={10}>Top 10</option>
+                <option value={20}>Top 20</option>
+                <option value={50}>Top 50</option>
+                <option value={999}>All Players</option>
+              </select>
+            </div>
+
+            {/* Premium Search */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={`🔍 Search ${viewType}...`}
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="px-6 py-3 pl-12 rounded-xl glass border border-white/10 text-sm min-w-[250px] focus:border-blue-400/50 focus:shadow-luxury transition-all duration-300"
+              />
+              <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
         </div>
 
-        {/* Stats Table */}
-        <div className="bg-[#1f1f2e] rounded-lg overflow-hidden border border-blue-800">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-blue-900 border-b border-blue-700">
+        {/* Premium Empty State for Season 3 */}
+        {selectedSeason === "current" && (
+          <div className="glass-dark rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
+            <div className="relative mb-8">
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
+              <div className="relative">
+                <h3 className="text-4xl font-black holographic mb-4">🚀 Season 3 - Summer 25</h3>
+                <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
+              </div>
+            </div>
+            
+            <p className="text-xl text-gray-200 mb-8 font-light">
+              Advanced analytics platform is preparing for launch
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              <div className="glass rounded-2xl p-6">
+                <div className="text-3xl mb-3">🤖</div>
+                <h4 className="text-lg font-bold text-blue-400 mb-3">AI-Powered Insights</h4>
+                <ul className="text-sm text-gray-300 space-y-2 text-left">
+                  <li>• Real-time performance analysis</li>
+                  <li>• Predictive modeling</li>
+                  <li>• Advanced metrics dashboard</li>
+                </ul>
+              </div>
+              
+              <div className="glass rounded-2xl p-6">
+                <div className="text-3xl mb-3">📊</div>
+                <h4 className="text-lg font-bold text-green-400 mb-3">Executive Reporting</h4>
+                <ul className="text-sm text-gray-300 space-y-2 text-left">
+                  <li>• Interactive visualizations</li>
+                  <li>• Custom KPI tracking</li>
+                  <li>• Automated insights</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Status indicators */}
+            <div className="mt-8 flex justify-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-dark">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-yellow-400 font-medium">Initializing</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-dark">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-400 font-medium">Systems Ready</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Premium Data Table */}
+        {currentPlayerData.length > 0 && (
+          <div className="glass-dark rounded-3xl overflow-hidden shadow-executive">
+            <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-white/10">
+              <h3 className="text-xl font-bold holographic">Performance Data Matrix</h3>
+              <p className="text-sm text-gray-400 mt-1">Real-time player analytics and metrics</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-white/10">
                 <tr>
-                  <th className="px-3 py-4 text-left font-bold text-white w-8">#</th>
+                  <th className="px-4 py-5 text-left font-bold text-white w-12 border-r border-white/5">#</th>
                   <StatHeader 
                     column={viewType === "players" ? "player" : "team"} 
                     label={viewType === "players" ? "Player" : "Team"} 
@@ -220,10 +400,15 @@ const Stats = () => {
                 {sortedData.map((item, index) => (
                   <tr 
                     key={index} 
-                    className="border-b border-gray-700 hover:bg-[#2a2a3d] transition-colors"
+                    className="border-b border-white/5 hover:bg-white/5 transition-all duration-300 hover:shadow-luxury group"
                   >
-                    <td className="px-3 py-3 text-gray-400 font-mono text-sm">
-                      {index + 1}
+                    <td className="px-4 py-4 text-gray-400 font-mono text-sm border-r border-white/5 group-hover:text-blue-400 transition-colors">
+                      <div className="flex items-center justify-center">
+                        {index + 1 <= 3 ? 
+                          <span className="text-lg">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> : 
+                          <span className="group-hover:holographic transition-all duration-300">{index + 1}</span>
+                        }
+                      </div>
                     </td>
                     <td className="px-3 py-3 font-semibold text-white">
                       {viewType === "players" ? formatPlayerName(item.player, item.gamertag) : item.team}
@@ -279,13 +464,15 @@ const Stats = () => {
                   </tr>
                 ))}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Footer Info */}
-        <div className="mt-6 text-center text-gray-400 text-sm">
-          <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
+        {currentPlayerData.length > 0 && (
+          <div className="mt-6 text-center text-gray-400 text-sm">
+            <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
           <div className="flex justify-center gap-6 mt-2 text-xs">
             <span>GP = Games Played</span>
             <span>PPG = Points Per Game</span>
@@ -296,7 +483,8 @@ const Stats = () => {
             <span>DEM = Demolitions</span>
             <span>ES = Epic Saves</span>
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

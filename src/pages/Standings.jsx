@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { homerConference, garfieldConference, overall } from "../data/standings.js";
+import { historicalStandingsData } from "../data/historicalStandings.js";
 
 const Table = ({ title, data, showSymbols = false }) => (
   <section className="mb-10">
@@ -70,14 +71,53 @@ const Table = ({ title, data, showSymbols = false }) => (
 );
 
 export default function Standings() {
-  const [selectedSeason, setSelectedSeason] = useState("2025");
+  const [selectedSeason, setSelectedSeason] = useState("current");
   const [showSymbols, setShowSymbols] = useState(true);
 
   const seasons = {
-    "2025": { name: "2025 Season", active: true },
-    "2024": { name: "2024 Season", active: false },
+    "current": { name: "Season 3 - Summer 25 (Not Started)", active: true },
+    "season2": { name: "Season 2 - Spring 25", active: false },
+    "season1": { name: "Season 1 - Fall 24", active: false },
     "all": { name: "All Time", active: false }
   };
+
+  // Get current season data
+  const getCurrentSeasonData = () => {
+    if (selectedSeason === "current") {
+      // Season 3 hasn't started
+      return {
+        homerConference: [],
+        garfieldConference: [],
+        overall: [],
+        hasConferences: false,
+        notStarted: true
+      };
+    } else if (selectedSeason === "2025") {
+      return {
+        homerConference,
+        garfieldConference,
+        overall,
+        hasConferences: true
+      };
+    } else if (historicalStandingsData[selectedSeason]) {
+      const data = historicalStandingsData[selectedSeason].data;
+      return {
+        homerConference: data.homerConference || [],
+        garfieldConference: data.garfieldConference || [],
+        overall: data.overall || [],
+        hasConferences: !!(data.homerConference && data.garfieldConference),
+        playoffs: data.playoffs
+      };
+    }
+    return {
+      homerConference: [],
+      garfieldConference: [],
+      overall: [],
+      hasConferences: false
+    };
+  };
+
+  const currentData = getCurrentSeasonData();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
@@ -85,7 +125,11 @@ export default function Standings() {
       <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 border-b border-blue-700">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">📊 RLBL Standings</h1>
-          <p className="text-blue-200 text-sm md:text-base">Current league standings and team rankings</p>
+          <p className="text-blue-200 text-sm md:text-base">
+            {currentData.notStarted 
+              ? "Preparing for Season 3 - Summer 25" 
+              : "Current league standings and team rankings"}
+          </p>
         </div>
       </div>
 
@@ -139,8 +183,39 @@ export default function Standings() {
           </div>
         )}
 
+        {/* Empty State for Season 3 */}
+        {currentData.notStarted && (
+          <div className="bg-[#1f1f2e] rounded-xl p-12 border border-blue-800 text-center">
+            <div className="mb-8">
+              <h3 className="text-3xl font-bold text-blue-400 mb-4">🚀 Season 3 - Summer 25</h3>
+              <p className="text-xl text-gray-300 mb-4">Get ready for the upcoming season!</p>
+              <p className="text-gray-400 mb-6">Teams are preparing and the season will begin soon.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+              <div className="bg-[#2a2a3d] rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-yellow-400 mb-3">📅 Coming Soon:</h4>
+                <ul className="text-sm text-gray-300 space-y-2">
+                  <li>• Team draft and rosters</li>
+                  <li>• Conference divisions</li>
+                  <li>• Regular season schedule</li>
+                  <li>• Live standings tracking</li>
+                </ul>
+              </div>
+              
+              <div className="bg-[#2a2a3d] rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-green-400 mb-3">🏆 Last Champions:</h4>
+                <p className="text-white font-semibold">Season 2: MJ</p>
+                <p className="text-gray-400 text-sm">4-0 series victory over Jakeing It</p>
+                <p className="text-gray-400 text-sm mt-2">Who will claim the crown next?</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Overall Rankings */}
-        <section className="mb-12">
+        {!currentData.notStarted && (
+          <section className="mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 text-center">🏆 Overall Rankings</h2>
           <div className="bg-[#1f1f2e] rounded-xl shadow-lg overflow-hidden border border-blue-800">
             <div className="overflow-x-auto">
@@ -154,7 +229,9 @@ export default function Standings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {overall.map(([team, points], i) => {
+                  {currentData.overall.map((team, i) => {
+                    const teamName = Array.isArray(team) ? team[0] : team;
+                    const points = Array.isArray(team) ? (team.length > 2 ? team[3] : team[1]) : 0;
                     const rank = i + 1;
                     let symbol = "";
                     let symbolClass = "";
@@ -180,7 +257,7 @@ export default function Standings() {
                           <span className="mr-2">{medal || rank}</span>
                           <span className={symbolClass}>{symbol}</span>
                         </td>
-                        <td className="py-3 md:py-4 px-3 md:px-4 font-semibold text-white">{team}</td>
+                        <td className="py-3 md:py-4 px-3 md:px-4 font-semibold text-white">{teamName}</td>
                         <td className="py-3 md:py-4 px-3 md:px-4 font-bold text-yellow-400">{points}</td>
                         <td className="py-3 md:py-4 px-3 md:px-4 w-1/3 hidden md:table-cell">
                           <div className="relative w-full h-3 bg-gray-700 rounded-full">
@@ -197,13 +274,37 @@ export default function Standings() {
               </table>
             </div>
           </div>
-        </section>
+          </section>
+        )}
 
         {/* Conference Tables */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <Table title="🏟 Homer Conference" data={homerConference} showSymbols={showSymbols} />
-          <Table title="🏟 Garfield Conference" data={garfieldConference} showSymbols={showSymbols} />
-        </div>
+        {currentData.hasConferences && (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <Table title="🏟 Homer Conference" data={currentData.homerConference} showSymbols={showSymbols} />
+            <Table title="🏟 Garfield Conference" data={currentData.garfieldConference} showSymbols={showSymbols} />
+          </div>
+        )}
+
+        {/* Playoffs Information */}
+        {currentData.playoffs && (
+          <section className="mt-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-blue-400 mb-6 text-center">🏆 Playoffs Results</h2>
+            <div className="bg-[#1f1f2e] rounded-xl p-6 border border-blue-800">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-yellow-400">🏆 Champion: {currentData.playoffs.champion}</h3>
+                <p className="text-lg text-gray-300">Runner-up: {currentData.playoffs.runnerUp}</p>
+              </div>
+              {currentData.playoffs.bracket && currentData.playoffs.bracket.final && (
+                <div className="text-center">
+                  <p className="text-blue-200">
+                    Final: {currentData.playoffs.bracket.final.home} vs {currentData.playoffs.bracket.final.away} - 
+                    <span className="font-bold ml-1">{currentData.playoffs.bracket.final.result}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-400 text-sm">

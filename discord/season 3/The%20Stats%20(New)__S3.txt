@@ -1,0 +1,33 @@
+Unnamed: 0,Player,Points,Goals,Assists,Saves,Shots,MVP,Demos,Epic Saves,OTG,Games Played,Points per game,GPG ,SH%,APG,SVPG,Epic Save %,Demo/Game,Unnamed: 19,Unnamed: 20,ID,Team,Goals.1,Saves.1,Demos.1,Shots Allowed,Goals Allowed,Shots.1,Goals per GM,Shots per GM,SH%.1,Saves per GM,Epic SV per GM,Saves per SA,Demo per GM,Goals Allowed per GM,Shots Allowed per GM,Goals Allowed per Shot,Games Played.1,East Record,West Record,Last 6,Teams,ID.1
+10.0,Austin,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Backdoor Bandits,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Backdoor Bandits,1.0
+19.0,Keough,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,LeJohn James,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,LeJohn James,2.0
+20.0,Gup,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,vince owen,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,,3.0
+21.0,Sam,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Cancun Baboons,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Cancun Baboons,4.0
+22.0,Jake C.,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,jack pup,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,,5.0
+23.0,Jake W.,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Jakeing It,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Jakeing It,6.0
+24.0,A Rob,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Mid Boost,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Mid Boost,7.0
+18.0,Alex,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,MJ,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,MJ,8.0
+4.0,JohnnyG,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Nick Al Nite,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Nick Al Nite,9.0
+6.0,Mason,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,a rob alex,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,,10.0
+1.0,Dylan,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Otters,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,Otters,11.0
+11.0,Ben,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,erica collin,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,0.0,0-0-0,0-0-0,0-0-0,,12.0
+28.0,Pup*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Bogey and Ethan,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,
+29.0,Jack P*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,Jack W and Mario,0.0,0.0,0.0,,,0.0,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,
+30.0,Owen*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+8.0,Vince,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+9.0,Stan,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+25.0,John C.,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+5.0,Robert,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+17.0,Quinn,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+13.0,Big Nick,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+12.0,Dundee,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+27.0,Erica,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+31.0,Collin*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+26.0,Bogey,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+32.0,Ethan*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+7.0,Jack W,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+33.0,Mario*,,,,,,,,,,,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+,League Average,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,#DIV/0!,,,,,,,,,,,,,,,,,,,,,,,,,,
