@@ -268,13 +268,13 @@ const Stats = () => {
               <select
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(e.target.value)}
-                className="px-6 py-3 rounded-xl glass border border-white/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
+                className="px-6 py-3 rounded-xl glass border border-black/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
               >
-                <option value="current">🚀 Season 3 - Summer 25 (Not Started)</option>
-                <option value="career">🌟 Career Stats (All-Time)</option>
-                <option value="season2">🏅 Season 2 - Spring 25</option>
-                <option value="season2_playoffs">🏆 Season 2 Playoffs</option>
-                <option value="season1">🎯 Season 1 - Fall 24</option>
+                <option value="current" className="text-black">🚀 Season 3 - Summer 25 (Not Started)</option>
+                <option value="career" className="text-black">🌟 Career Stats (All-Time)</option>
+                <option value="season2" className="text-black">🏅 Season 2 - Spring 25</option>
+                <option value="season2_playoffs" className="text-black">🏆 Season 2 Playoffs</option>
+                <option value="season1" className="text-black">🎯 Season 1 - Fall 24</option>
               </select>
 
               {/* Premium Results Count */}
@@ -283,10 +283,10 @@ const Stats = () => {
                 onChange={(e) => setShowCount(parseInt(e.target.value))}
                 className="px-4 py-3 rounded-xl glass border border-white/10 text-sm font-medium hover:shadow-luxury transition-all duration-300"
               >
-                <option value={10}>Top 10</option>
-                <option value={20}>Top 20</option>
-                <option value={50}>Top 50</option>
-                <option value={999}>All Players</option>
+                <option value={10} className="text-black">Top 10</option>
+                <option value={20} className="text-black">Top 20</option>
+                <option value={50} className="text-black">Top 50</option>
+                <option value={999} className="text-black">All Players</option>
               </select>
             </div>
 
