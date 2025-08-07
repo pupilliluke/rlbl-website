@@ -6,10 +6,16 @@ const slugify = (str) =>
 
 export default function Teams() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white px-6 py-12">
-      <h1 className="text-4xl font-extrabold text-orange-400 mb-12 text-center drop-shadow-md">
-        RLBL Teams
-      </h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 border-b border-blue-700">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">⚽ RLBL Teams</h1>
+          <p className="text-blue-200 text-sm md:text-base">Explore team rosters and player lineups across all seasons</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
 
       {Object.entries(teams)
         .sort(([a], [b]) => b.localeCompare(a)) // reverse order
@@ -61,6 +67,7 @@ export default function Teams() {
             </div>
           </div>
         ))}
+      </div>
     </div>
   );
 }

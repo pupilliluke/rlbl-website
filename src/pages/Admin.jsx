@@ -175,7 +175,7 @@ const Admin = () => {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+      <div className="min-h-screen pt-20 flex items-center justify-center bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
         <div className={`bg-[#1f1f2e] p-8 rounded-xl shadow-xl max-w-md w-full transition-transform duration-300 ${error ? 'animate-shake' : ''}`}>
           <h2 className="text-2xl font-bold text-center text-orange-400 mb-4">🔐 Admin Access</h2>
           <input
@@ -205,10 +205,16 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen px-6 py-10 text-white bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black">
-      <h1 className="text-4xl font-bold text-orange-400 text-center mb-8 drop-shadow">
-        🛠 Admin Panel
-      </h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-red-900 via-orange-800 to-red-900 border-b border-red-700">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">🛠 Admin Panel</h1>
+          <p className="text-red-200 text-sm md:text-base">League data management and administration tools</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
 <div className="flex justify-center gap-4 mb-10 flex-wrap">
   {Object.keys(dataSources).map((key) => (
     <button
@@ -460,9 +466,10 @@ const Admin = () => {
           Save Game
         </button>
       </div>
+      </div>
     </div>
-  </div>
 )}
+      </div>
     </div>
   );
 };

@@ -6,6 +6,68 @@
   --animation-normal: 400ms;
   --animation-slow: 800ms;
   --animation-very-slow: 1500ms;
+  --navbar-height: 5rem; /* 80px - matches h-20 in Tailwind */
+}
+
+/* Layout utility for pages with fixed navbar */
+.page-with-navbar {
+  padding-top: var(--navbar-height);
+}
+
+/* Navbar spacer utility */
+.navbar-spacer {
+  height: var(--navbar-height);
+}
+
+/* Standardized Page Header Gradients */
+.header-league-info {
+  background: linear-gradient(135deg, #1e3a8a, #7c3aed, #1e3a8a);
+  border-bottom: 1px solid #3b82f6;
+}
+
+.header-standings {
+  background: linear-gradient(135deg, #1e3a8a, #1e40af, #1e3a8a);
+  border-bottom: 1px solid #3b82f6;
+}
+
+.header-teams {
+  background: linear-gradient(135deg, #1e3a8a, #7c3aed, #1e3a8a);
+  border-bottom: 1px solid #3b82f6;
+}
+
+.header-weekly {
+  background: linear-gradient(135deg, #ea580c, #ec4899, #ea580c);
+  border-bottom: 1px solid #f97316;
+}
+
+.header-stats {
+  background: linear-gradient(135deg, #1e3a8a, #7c3aed, #1e3a8a);
+  border-bottom: 1px solid #3b82f6;
+}
+
+.header-schedule {
+  background: linear-gradient(135deg, #166534, #1e40af, #166534);
+  border-bottom: 1px solid #22c55e;
+}
+
+.header-legacy {
+  background: linear-gradient(135deg, #7c2d12, #1e40af, #7c2d12);
+  border-bottom: 1px solid #a855f7;
+}
+
+.header-power-rankings {
+  background: linear-gradient(135deg, #92400e, #ea580c, #92400e);
+  border-bottom: 1px solid #fbbf24;
+}
+
+.header-team-stats {
+  background: linear-gradient(135deg, #ea580c, #ec4899, #ea580c);
+  border-bottom: 1px solid #f97316;
+}
+
+.header-admin {
+  background: linear-gradient(135deg, #7f1d1d, #ea580c, #7f1d1d);
+  border-bottom: 1px solid #ef4444;
 }
 
 /* Float Animation - Reduced intensity for better performance */

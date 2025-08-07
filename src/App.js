@@ -19,7 +19,7 @@ function NavBar() {
   const isHome = location.pathname === '/';
   
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 glass-dark shadow-executive border-b border-white/10 transition-smooth ${isHome ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+    <nav className={`sticky top-0 left-0 right-0 z-50 glass-dark shadow-executive border-b border-white/10 transition-smooth ${isHome ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="max-w-7xl mx-auto spacing-container">
             <div className="flex items-center justify-between h-20">
               
