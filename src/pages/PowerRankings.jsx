@@ -17,10 +17,16 @@ export default function PowerRankings() {
 
 
   return (
-  <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white font-sans px-6 py-10 max-w-5xl mx-auto">
-      <h1 className="text-4xl font-extrabold text-orange-400 mb-10 text-center drop-shadow-md">
-        🥇 RLBL Power Rankings
-      </h1>
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-yellow-900 via-orange-800 to-yellow-900 border-b border-yellow-700">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">🥇 RLBL Power Rankings</h1>
+          <p className="text-yellow-200 text-sm md:text-base">Weekly team rankings and analysis</p>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
 
       {powerRankings.map(({ title, content }, sectionIdx) => (
         <section key={sectionIdx} className="mb-12">
@@ -46,9 +52,7 @@ export default function PowerRankings() {
           )}
         </section>
       ))}
-
-   
+      </div>
     </div>
-
   );
 }

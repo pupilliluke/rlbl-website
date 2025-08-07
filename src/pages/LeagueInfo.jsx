@@ -132,7 +132,7 @@ const LeagueInfo = () => {
           </h1>
           <div className="w-32 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-400 mx-auto rounded-full mb-6"></div>
           <p className="text-lg md:text-xl text-blue-200 text-center max-w-3xl mx-auto">
-            The official rulebook and standings for the most competitive casual league in Rocket League
+            The official rulebook and standings for the Rocket League Beer League
           </p>
         </div>
       </div>
