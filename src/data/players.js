@@ -1,6 +1,7 @@
 export const players = [
   {
     player: "Austin",
+    gamertag: "AustinRL",
     team: "Backdoor Bandits",
     points: 12952,
     goals: 41,
@@ -20,6 +21,7 @@ export const players = [
   },
   {
     player: "Keough",
+    gamertag: "KeoughGaming",
     team: "Bronny James",
     points: 12079,
     goals: 41,
@@ -39,6 +41,7 @@ export const players = [
   },
   {
     player: "Gup",
+    gamertag: "GupTheChamp",
     team: "Chicken Jockey",
     points: 18393,
     goals: 63,
@@ -96,6 +99,7 @@ export const players = [
   },
   {
     player: "Jake W.",
+    gamertag: "JakeWins",
     team: "Jakeing It",
     points: 16372,
     goals: 61,
@@ -134,6 +138,7 @@ export const players = [
   },
   {
     player: "Jack",
+    gamertag: "JackAttack",
     team: "Non Chalant",
     points: 18736,
     goals: 79,
@@ -172,6 +177,7 @@ export const players = [
   },
   {
     player: "Mason",
+    gamertag: "MasonRL",
     team: "Non Chalant",
     points: 17106,
     goals: 65,
