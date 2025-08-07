@@ -64,12 +64,12 @@ export default function Weekly() {
   const currentContent = weeklyContent[selectedWeek] || weeklyContent.current;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-600 via-pink-600 to-orange-600 border-b border-orange-500">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">📅 RLBL Weekly</h1>
-          <p className="text-orange-100 text-sm md:text-base">Your weekly dose of RLBL updates, highlights, and storylines</p>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">📅 RLBL Weekly</h1>
+          <p className="text-gray-200 text-sm md:text-base">Your weekly dose of RLBL updates, highlights, and storylines</p>
         </div>
       </div>
 
@@ -78,20 +78,20 @@ export default function Weekly() {
         <div className="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
           <button
             onClick={() => setSelectedWeek("current")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm md:text-base border ${
               selectedWeek === "current"
-                ? "bg-orange-600 text-white"
-                : "bg-[#2a2a3d] text-gray-300 hover:bg-gray-700"
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-blue-500"
+                : "bg-gray-800/80 border-gray-600 text-gray-200 hover:text-white hover:bg-gray-700 hover:border-blue-500"
             }`}
           >
             Current Week
           </button>
           <button
             onClick={() => setSelectedWeek("previous")}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm md:text-base ${
+            className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm md:text-base border ${
               selectedWeek === "previous"
-                ? "bg-orange-600 text-white"
-                : "bg-[#2a2a3d] text-gray-300 hover:bg-gray-700"
+                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white border-blue-500"
+                : "bg-gray-800/80 border-gray-600 text-gray-200 hover:text-white hover:bg-gray-700 hover:border-blue-500"
             }`}
           >
             Previous Week
@@ -100,30 +100,30 @@ export default function Weekly() {
 
         {/* Week Header */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-orange-400 mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             {currentContent.week} - {currentContent.date}
           </h2>
-          <div className="h-1 w-24 md:w-32 bg-gradient-to-r from-orange-400 to-pink-500 mx-auto rounded"></div>
+          <div className="h-1 w-24 md:w-32 bg-gradient-to-r from-blue-500 to-purple-500 mx-auto rounded"></div>
         </div>
 
         {/* Three Stars of the Week */}
         {selectedWeek === "current" && (
           <section className="mb-10">
-            <h3 className="text-xl md:text-2xl font-bold text-blue-400 mb-6 flex items-center gap-2">
+            <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
               ⭐ Three Stars of the Week
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {threeStars.map((star, index) => (
-                <div key={index} className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-blue-800 hover:scale-105 transition-transform">
+                <div key={index} className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform border border-blue-500/30 shadow-xl">
                   <div className="text-center">
                     <div className="text-2xl md:text-3xl mb-2">
                       {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
                     </div>
                     <h4 className="text-lg md:text-xl font-bold text-white mb-2">{formatPlayerName(star.player.player, star.player.gamertag)}</h4>
                     <p className="text-sm md:text-base text-blue-300 mb-2">{star.player.team}</p>
-                    <p className="text-xs md:text-sm text-gray-400 mb-2">{star.reason}</p>
-                    <div className="bg-[#2a2a3d] rounded-lg p-2 md:p-3">
-                      <span className="text-lg md:text-xl font-bold text-orange-400">{star.stat}</span>
+                    <p className="text-xs md:text-sm text-gray-300 mb-2">{star.reason}</p>
+                    <div className="bg-gray-900/80 rounded-lg p-2 md:p-3 border border-blue-400/50">
+                      <span className="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">{star.stat}</span>
                     </div>
                   </div>
                 </div>
@@ -134,14 +134,14 @@ export default function Weekly() {
 
         {/* Week Highlights */}
         <section className="mb-10">
-          <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-6 flex items-center gap-2">
+          <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
             🔥 Week Highlights
           </h3>
-          <div className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-green-800">
+          <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-red-500/30 shadow-xl">
             <ul className="space-y-3 md:space-y-4">
               {currentContent.highlights.map((highlight, index) => (
-                <li key={index} className="text-sm md:text-base text-gray-200 flex items-start gap-3">
-                  <span className="text-green-400 mt-1">•</span>
+                <li key={index} className="text-sm md:text-base text-gray-100 flex items-start gap-3">
+                  <span className="text-green-400 mt-1 font-bold">•</span>
                   <span>{highlight}</span>
                 </li>
               ))}
@@ -153,25 +153,25 @@ export default function Weekly() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-10">
           {/* Game of the Week */}
           <section>
-            <h3 className="text-xl md:text-2xl font-bold text-purple-400 mb-6 flex items-center gap-2">
+            <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
               🏆 {currentContent.gameOfWeek.title.includes("Game of the Week") ? "Game of the Week" : "Game Recap"}
             </h3>
-            <div className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-purple-800">
+            <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-yellow-500/30 shadow-xl">
               <h4 className="text-base md:text-lg font-semibold text-white mb-3">
                 {currentContent.gameOfWeek.title.replace("Game of the Week: ", "")}
               </h4>
-              <p className="text-sm md:text-base text-gray-300 leading-relaxed mb-4">
+              <p className="text-sm md:text-base text-gray-100 leading-relaxed mb-4">
                 {currentContent.gameOfWeek.description}
               </p>
               {currentContent.gameOfWeek.prediction && (
-                <div className="bg-purple-900 bg-opacity-50 rounded-lg p-3">
-                  <p className="text-sm md:text-base text-purple-200 font-medium">
+                <div className="bg-gray-900/80 rounded-lg p-3 border border-blue-400/50">
+                  <p className="text-sm md:text-base text-blue-200 font-medium">
                     {currentContent.gameOfWeek.prediction}
                   </p>
                 </div>
               )}
               {currentContent.gameOfWeek.result && (
-                <div className="bg-green-900 bg-opacity-50 rounded-lg p-3">
+                <div className="bg-gray-900/80 rounded-lg p-3 border border-green-400/50">
                   <p className="text-sm md:text-base text-green-200 font-medium">
                     {currentContent.gameOfWeek.result}
                   </p>
@@ -183,16 +183,16 @@ export default function Weekly() {
           {/* Stat Highlight */}
           {currentContent.statHighlight && (
             <section>
-              <h3 className="text-xl md:text-2xl font-bold text-yellow-400 mb-6 flex items-center gap-2">
+              <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
                 📊 {currentContent.statHighlight.title}
               </h3>
-              <div className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-yellow-800">
+              <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30 shadow-xl">
                 <div className="text-center mb-4">
-                  <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">
+                  <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
                     {currentContent.statHighlight.stat}
                   </div>
                 </div>
-                <p className="text-sm md:text-base text-gray-300 leading-relaxed">
+                <p className="text-sm md:text-base text-gray-100 leading-relaxed">
                   {currentContent.statHighlight.description}
                 </p>
               </div>
@@ -202,41 +202,41 @@ export default function Weekly() {
 
         {/* Power Rankings & Resources Links */}
         <section className="mb-10">
-          <h3 className="text-xl md:text-2xl font-bold text-orange-400 mb-6 flex items-center gap-2">
+          <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
             📚 Resources & Links
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <Link 
               to="/stats" 
-              className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-blue-800 hover:scale-105 transition-transform text-center group"
+              className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
             >
               <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">📊</div>
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Latest Stats</h4>
-              <p className="text-xs md:text-sm text-gray-400">View complete player and team statistics</p>
+              <p className="text-xs md:text-sm text-gray-300">View complete player and team statistics</p>
             </Link>
             
             <button 
-              className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-green-800 hover:scale-105 transition-transform text-center group"
+              className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
               onClick={() => window.open('#', '_blank')}
             >
               <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">📄</div>
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Power Rankings Doc</h4>
-              <p className="text-xs md:text-sm text-gray-400">Full analysis and team breakdowns</p>
+              <p className="text-xs md:text-sm text-gray-300">Full analysis and team breakdowns</p>
             </button>
             
             <button 
-              className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-red-800 hover:scale-105 transition-transform text-center group"
+              className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
               onClick={() => window.open('#', '_blank')}
             >
               <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">🎥</div>
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Game Footage</h4>
-              <p className="text-xs md:text-sm text-gray-400">Watch the best plays and highlights</p>
+              <p className="text-xs md:text-sm text-gray-300">Watch the best plays and highlights</p>
             </button>
           </div>
         </section>
 
         {/* Footer */}
-        <div className="text-center text-gray-400 text-xs md:text-sm">
+        <div className="text-center text-gray-300 text-xs md:text-sm">
           <p>RLBL Weekly • Updated every Monday</p>
           <p className="mt-1">Follow the action and stay up to date with all league news</p>
         </div>

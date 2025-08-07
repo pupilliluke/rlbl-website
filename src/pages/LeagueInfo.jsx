@@ -123,11 +123,11 @@ const LeagueInfo = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 border-b border-blue-700">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-          <h1 className="text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300 text-center mb-4">
+          <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent text-center mb-4">
             🚀 ROCKET LEAGUE BEER LEAGUE
           </h1>
           <div className="w-32 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-400 mx-auto rounded-full mb-6"></div>
