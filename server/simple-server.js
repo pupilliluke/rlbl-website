@@ -71,7 +71,7 @@ app.get('/api/standings', async (req, res) => {
         s.points_for,
         s.points_against,
         (s.points_for - s.points_against) as point_diff,
-        ROUND((CAST(s.wins as FLOAT) / NULLIF(s.wins + s.losses + s.ties, 0)) * 100, 1) as win_percentage
+        ROUND(((CAST(s.wins as FLOAT) / NULLIF(s.wins + s.losses + s.ties, 0)) * 100)::numeric, 1) as win_percentage
       FROM standings s
       JOIN teams t ON s.team_id = t.id
       ORDER BY s.wins DESC, point_diff DESC
@@ -132,7 +132,7 @@ app.get('/api/stats', async (req, res) => {
         SUM(pgs.demos) as total_demos,
         SUM(pgs.epic_saves) as total_epic_saves,
         COUNT(pgs.game_id) as games_played,
-        ROUND(CAST(SUM(pgs.points) as FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 1) as avg_points_per_game
+        ROUND((CAST(SUM(pgs.points) as FLOAT) / NULLIF(COUNT(pgs.game_id), 0))::numeric, 1) as avg_points_per_game
       FROM player_game_stats pgs
       JOIN players p ON pgs.player_id = p.id
       JOIN teams t ON pgs.team_id = t.id

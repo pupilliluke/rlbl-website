@@ -36,7 +36,10 @@ export const apiService = {
   getSchedule: () => apiCall('/schedule'),
 
   // Stats
-  getStats: () => apiCall('/stats'),
+  getStats: (season) => {
+    const endpoint = season ? `/stats?season=${encodeURIComponent(season)}` : '/stats';
+    return apiCall(endpoint);
+  },
 
   // Power Rankings
   getPowerRankings: () => apiCall('/power-rankings'),

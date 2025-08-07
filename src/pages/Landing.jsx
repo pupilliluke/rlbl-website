@@ -91,7 +91,7 @@ export default function Landing() {
             <div className="flex flex-wrap justify-center gap-6 text-sm text-blue-300">
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Live Analytics
+                Live Statistics
               </span>
               <span className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />

@@ -196,6 +196,43 @@ async function populateStandings(seasonIds, teamIds) {
   }
 }
 
+// Helper function to get player's team for a given season
+function getPlayerTeamForSeason(playerName, season, teamData) {
+  if (season === 'Season 1 - Fall 24') {
+    // Season 1 team assignments (from our predefined data)
+    const season1Teams = {
+      'JohnnyG': 'John & Tyler', 'Tyler': 'John & Tyler',
+      'Jack W': 'Style Boyz', 'Vince': 'Style Boyz',
+      'Stan': 'Lebron James', 'Big Nick': 'Lebron James',
+      'Matt S': 'Drunken Goats', 'Dundee': 'Drunken Goats',
+      'Dylan': 'Wolverines', 'Ben': 'Wolverines',
+      'Nathan': 'Corner Boost', 'Austin': 'Corner Boost',
+      'Jared': 'Chopped Trees', 'Mason': 'Chopped Trees',
+      'Jax': 'Shock', 'Robert': 'Shock',
+      'Quinn': 'Super Sonics', 'Alex': 'Super Sonics'
+    };
+    return season1Teams[playerName] || null;
+  } else if (season === 'Season 2 - Spring 25') {
+    // Season 2 team assignments (from our predefined data)
+    const season2Teams = {
+      'Matt S': 'Drunken Goats', 'Dundee': 'Drunken Goats',
+      'Mason': 'MJ', 'JohnnyG': 'MJ',
+      'Jack W': 'Non Chalant', 'A Rob': 'Non Chalant',
+      'Dylan': 'Overdosed Otters', 'Ben': 'Overdosed Otters',
+      'Vince': 'Chicken Jockeys', 'Jax': 'Chicken Jockeys',
+      'Erica': 'Pen15 Club', 'John C': 'Pen15 Club',
+      'Jake W': 'Jakeing It', 'Jake C': 'Jakeing It',
+      'Austin': 'Mid Boost', 'Keough': 'Mid Boost',
+      'Sam': 'Backdoor Bandits', 'Gup': 'Backdoor Bandits',
+      'Nick B': 'Double Bogey', 'Quinn': 'Double Bogey',
+      'Robert': 'Bronny James', 'Stan': 'Bronny James',
+      'Big Nick': 'Nick Al Nite', 'Alex': 'Nick Al Nite'
+    };
+    return season2Teams[playerName] || null;
+  }
+  return null;
+}
+
 async function populatePlayerStats(seasonIds, playerIds, teamIds) {
   console.log('⚽ Populating player stats...');
   
@@ -224,6 +261,15 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
   for (let i = 0; i < Math.min(18, season1Stats.length); i++) {
     const stat = season1Stats[i];
     if (stat.Player && playerIds[stat.Player]) {
+      // Get correct team for this player in Season 1
+      const playerTeamName = getPlayerTeamForSeason(stat.Player, 'Season 1 - Fall 24');
+      const playerTeamId = playerTeamName ? teamIds[playerTeamName] : homeTeamId;
+      
+      if (!playerTeamId) {
+        console.log(`  ⚠️  Could not find team ID for ${stat.Player} in Season 1`);
+        continue;
+      }
+      
       // Create a dummy game for these stats
       const gameResult = await query(`
         INSERT INTO games (season_id, home_team_id, away_team_id, home_score, away_score, week) 
@@ -238,7 +284,7 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
       `, [
         gameResult.rows[0].id,
         playerIds[stat.Player],
-        homeTeamId, // Use actual team ID
+        playerTeamId, // Use correct team ID for this player
         Math.round(parseFloat(stat.Points) || 0),
         parseInt(stat.Goals) || 0,
         parseInt(stat.Assists) || 0,
@@ -248,7 +294,7 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
         parseInt(stat.Demos) || 0,
         parseInt(stat['Epic Saves']) || 0
       ]);
-      console.log(`  ✓ Added Season 1 stats for ${stat.Player}`);
+      console.log(`  ✓ Added Season 1 stats for ${stat.Player} (${playerTeamName})`);
     }
   }
   
@@ -257,6 +303,15 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
   for (let i = 0; i < Math.min(24, season2Stats.length); i++) {
     const stat = season2Stats[i];
     if (stat.Player && playerIds[stat.Player]) {
+      // Get correct team for this player in Season 2
+      const playerTeamName = getPlayerTeamForSeason(stat.Player, 'Season 2 - Spring 25');
+      const playerTeamId = playerTeamName ? teamIds[playerTeamName] : homeTeamId;
+      
+      if (!playerTeamId) {
+        console.log(`  ⚠️  Could not find team ID for ${stat.Player} in Season 2`);
+        continue;
+      }
+      
       // Create a dummy game for these stats
       const gameResult = await query(`
         INSERT INTO games (season_id, home_team_id, away_team_id, home_score, away_score, week) 
@@ -271,7 +326,7 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
       `, [
         gameResult.rows[0].id,
         playerIds[stat.Player],
-        homeTeamId, // Use actual team ID
+        playerTeamId, // Use correct team ID for this player
         Math.round(parseFloat(stat.Points) || 0),
         parseInt(stat.Goals) || 0,
         parseInt(stat.Assists) || 0,
@@ -281,7 +336,7 @@ async function populatePlayerStats(seasonIds, playerIds, teamIds) {
         parseInt(stat.Demos) || 0,
         parseInt(stat['Epic Saves']) || 0
       ]);
-      console.log(`  ✓ Added Season 2 stats for ${stat.Player}`);
+      console.log(`  ✓ Added Season 2 stats for ${stat.Player} (${playerTeamName})`);
     }
   }
 }
