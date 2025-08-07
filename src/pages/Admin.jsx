@@ -146,6 +146,8 @@ const Admin = () => {
       case "careerStats":
         setCareerStatsData(newData);
         break;
+      default:
+        break;
     }
   };
 
@@ -522,7 +524,7 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-executive relative">
+    <div className="min-h-screen bg-gradient-executive relative page-with-navbar">
       {/* Neural Background */}
       <div className="absolute inset-0 neural-bg opacity-20" />
       

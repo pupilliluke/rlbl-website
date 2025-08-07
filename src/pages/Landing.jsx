@@ -20,7 +20,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gradient-executive">
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gradient-executive z-[1]">
       {/* Neural Network Background */}
       <div className="absolute inset-0 neural-bg opacity-30">
         <div className="absolute inset-0">
