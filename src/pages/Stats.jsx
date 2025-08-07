@@ -1,58 +1,75 @@
-import { useState, useMemo } from "react";
-import { players } from "../data/players.js";
+import { useState, useMemo, useEffect } from "react";
+import { apiService, fallbackData } from "../services/apiService";
 import { formatPlayerName } from "../utils/formatters.js";
-import { historicalSeasons } from "../data/historicalStats.js";
-import { careerStats } from "../data/careerStats.js";
 import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
 
 const Stats = () => {
-  const [sortBy, setSortBy] = useState("points");
+  const [sortBy, setSortBy] = useState("total_points");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filter, setFilter] = useState("");
-  const [selectedSeason, setSelectedSeason] = useState("current");
-  const [viewType, setViewType] = useState("players"); // players or teams
+  const [viewType, setViewType] = useState("players");
   const [showCount, setShowCount] = useState(20);
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [, setError] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState("career");
 
-  // Get current data based on selected season
-  const getCurrentData = () => {
-    if (selectedSeason === "current") {
-      // Season 3 hasn't started - show empty state
-      return [];
-    } else if (selectedSeason === "career") {
-      return careerStats;
-    } else if (selectedSeason === "2025") {
-      return players; // If they have current season data
-    } else if (historicalSeasons[selectedSeason]) {
-      return historicalSeasons[selectedSeason].stats;
-    } else {
-      return []; // fallback to empty
-    }
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching stats data from API...');
+        const statsData = await apiService.getStats();
+        console.log('Stats data received:', statsData);
+        setStats(statsData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+        console.error('Error details:', err.message);
+        setError(err.message);
+        console.log('Using fallback data due to API error');
+        setStats(fallbackData.stats);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const currentPlayerData = getCurrentData();
+    fetchStats();
+  }, []);
 
-
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
-    } else {
-      setSortBy(column);
-      setSortOrder("desc");
-    }
-  };
-
-  const getSortIcon = (column) => {
-    if (sortBy !== column) return "↕";
-    return sortOrder === "desc" ? "↓" : "↑";
-  };
+  // Process stats data to add calculated fields
+  const processedStats = useMemo(() => {
+    return stats.map(player => {
+      const gamesPlayed = parseInt(player.games_played) || 1;
+      return {
+        ...player,
+        // Convert to numbers
+        total_points: parseInt(player.total_points) || 0,
+        total_goals: parseInt(player.total_goals) || 0,
+        total_assists: parseInt(player.total_assists) || 0,
+        total_saves: parseInt(player.total_saves) || 0,
+        total_shots: parseInt(player.total_shots) || 0,
+        total_mvps: parseInt(player.total_mvps) || 0,
+        total_demos: parseInt(player.total_demos) || 0,
+        total_epic_saves: parseInt(player.total_epic_saves) || 0,
+        games_played: gamesPlayed,
+        // Calculated fields
+        ppg: (parseInt(player.total_points) || 0) / gamesPlayed,
+        gpg: (parseInt(player.total_goals) || 0) / gamesPlayed,
+        apg: (parseInt(player.total_assists) || 0) / gamesPlayed,
+        svpg: (parseInt(player.total_saves) || 0) / gamesPlayed,
+        shPercent: parseInt(player.total_shots) > 0 ? ((parseInt(player.total_goals) || 0) / parseInt(player.total_shots)) * 100 : 0
+      };
+    });
+  }, [stats]);
 
   // Calculate team stats from current player data
   const teamStats = useMemo(() => {
     const teamMap = {};
-    currentPlayerData.forEach(player => {
-      if (!teamMap[player.team]) {
-        teamMap[player.team] = {
-          team: player.team,
+    processedStats.forEach(player => {
+      if (!teamMap[player.team_name]) {
+        teamMap[player.team_name] = {
+          team: player.team_name,
           players: 0,
           totalPoints: 0,
           totalGoals: 0,
@@ -70,35 +87,35 @@ const Stats = () => {
           avgSH: 0
         };
       }
-      const team = teamMap[player.team];
+      const team = teamMap[player.team_name];
       team.players++;
-      team.totalPoints += player.points;
-      team.totalGoals += player.goals;
-      team.totalAssists += player.assists;
-      team.totalSaves += player.saves;
-      team.totalShots += player.shots;
-      team.totalMVPs += player.mvps;
-      team.totalDemos += player.demos;
-      team.totalEpicSaves += player.epicSaves;
-      team.totalGames += player.gamesPlayed;
+      team.totalPoints += player.total_points;
+      team.totalGoals += player.total_goals;
+      team.totalAssists += player.total_assists;
+      team.totalSaves += player.total_saves;
+      team.totalShots += player.total_shots;
+      team.totalMVPs += player.total_mvps;
+      team.totalDemos += player.total_demos;
+      team.totalEpicSaves += player.total_epic_saves;
+      team.totalGames += player.games_played;
     });
 
     return Object.values(teamMap).map(team => ({
       ...team,
-      avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
-      avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames) : 0,
-      avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames) : 0,
-      avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
-      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
+      avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames).toFixed(1) : 0,
+      avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames).toFixed(1) : 0,
+      avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames).toFixed(1) : 0,
+      avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames).toFixed(1) : 0,
+      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100).toFixed(1) : 0
     }));
-  }, [currentPlayerData]);
+  }, [processedStats]);
 
   // Sort and filter data
   const sortedData = useMemo(() => {
-    const data = viewType === "players" ? currentPlayerData : teamStats;
+    const data = viewType === "players" ? processedStats : teamStats;
     return data
       .filter(item => {
-        const name = viewType === "players" ? item.player : item.team;
+        const name = viewType === "players" ? item.player_name : item.team;
         return name.toLowerCase().includes(filter.toLowerCase());
       })
       .sort((a, b) => {
@@ -117,7 +134,51 @@ const Stats = () => {
         }
       })
       .slice(0, showCount);
-  }, [viewType, teamStats, currentPlayerData, sortBy, sortOrder, filter, showCount]);
+  }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount]);
+
+  // Generate premium analytics data
+  const premiumAnalytics = useMemo(() => {
+    if (processedStats.length === 0) return null;
+    
+    const topPlayers = [...processedStats].sort((a, b) => b.total_points - a.total_points).slice(0, 5);
+    const avgStats = {
+      points: processedStats.reduce((sum, p) => sum + p.total_points, 0) / processedStats.length,
+      goals: processedStats.reduce((sum, p) => sum + p.total_goals, 0) / processedStats.length,
+      assists: processedStats.reduce((sum, p) => sum + p.total_assists, 0) / processedStats.length,
+    };
+    
+    return {
+      topPlayers: topPlayers.map(p => ({ label: p.player_name, value: p.total_points })),
+      totalPlayers: processedStats.length,
+      avgStats
+    };
+  }, [processedStats]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-blue-200">Loading player statistics...</p>
+        </div>
+      </div>
+    );
+  }
+
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "desc" ? "asc" : "desc");
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+  };
+
+  const getSortIcon = (column) => {
+    if (sortBy !== column) return "↕";
+    return sortOrder === "desc" ? "↓" : "↑";
+  };
 
   const StatHeader = ({ column, label, className = "" }) => (
     <th 
@@ -133,26 +194,8 @@ const Stats = () => {
     </th>
   );
 
-  // Generate premium analytics data
-  const premiumAnalytics = useMemo(() => {
-    if (currentPlayerData.length === 0) return null;
-    
-    const topPlayers = [...currentPlayerData].sort((a, b) => (b.points || 0) - (a.points || 0)).slice(0, 5);
-    const avgStats = {
-      points: currentPlayerData.reduce((sum, p) => sum + (p.points || 0), 0) / currentPlayerData.length,
-      goals: currentPlayerData.reduce((sum, p) => sum + (p.goals || 0), 0) / currentPlayerData.length,
-      assists: currentPlayerData.reduce((sum, p) => sum + (p.assists || 0), 0) / currentPlayerData.length,
-    };
-    
-    return {
-      topPlayers: topPlayers.map(p => ({ label: p.player, value: p.points || 0 })),
-      totalPlayers: currentPlayerData.length,
-      avgStats
-    };
-  }, [currentPlayerData]);
-
   return (
-    <div className="min-h-screen bg-gradient-executive relative">
+    <div className="min-h-screen bg-gradient-executive relative page-with-navbar">
       {/* Neural Background */}
       <div className="absolute inset-0 neural-bg opacity-20" />
       
@@ -204,7 +247,7 @@ const Stats = () => {
               />
               <MetricCard
                 title="Total Goals"
-                value={currentPlayerData.reduce((sum, p) => sum + (p.goals || 0), 0)}
+                value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
                 subtitle="Season aggregate"
                 trend={-3}
                 icon="⚽"
@@ -358,7 +401,7 @@ const Stats = () => {
         )}
 
         {/* High-Contrast Data Table */}
-        {currentPlayerData.length > 0 && (
+        {processedStats.length > 0 && selectedSeason !== "current" && (
           <div className="bg-gray-800/90 border border-gray-600 rounded-3xl overflow-hidden shadow-executive">
             <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-gray-600">
               <h3 className="text-xl font-bold text-white">Performance Data Matrix</h3>
@@ -370,30 +413,30 @@ const Stats = () => {
                 <tr>
                   <th className="px-4 py-5 text-left font-bold text-white w-12 border-r border-white/5">#</th>
                   <StatHeader 
-                    column={viewType === "players" ? "player" : "team"} 
+                    column={viewType === "players" ? "player_name" : "team"} 
                     label={viewType === "players" ? "Player" : "Team"} 
                     className="min-w-[150px]"
                   />
                   {viewType === "players" && (
-                    <StatHeader column="team" label="Team" className="min-w-[120px]" />
+                    <StatHeader column="team_name" label="Team" className="min-w-[120px]" />
                   )}
                   {viewType === "teams" && (
                     <StatHeader column="players" label="Players" />
                   )}
-                  <StatHeader column="gamesPlayed" label="GP" />
-                  <StatHeader column={viewType === "players" ? "points" : "totalPoints"} label="PTS" />
+                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="GP" />
+                  <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="PTS" />
                   <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" />
-                  <StatHeader column={viewType === "players" ? "goals" : "totalGoals"} label="G" />
+                  <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="G" />
                   <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" />
-                  <StatHeader column={viewType === "players" ? "assists" : "totalAssists"} label="A" />
+                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="A" />
                   <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" />
-                  <StatHeader column={viewType === "players" ? "saves" : "totalSaves"} label="SV" />
+                  <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="SV" />
                   <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" />
-                  <StatHeader column={viewType === "players" ? "shots" : "totalShots"} label="SH" />
+                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="SH" />
                   <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" />
-                  <StatHeader column={viewType === "players" ? "mvps" : "totalMVPs"} label="MVP" />
-                  <StatHeader column={viewType === "players" ? "demos" : "totalDemos"} label="DEM" />
-                  <StatHeader column={viewType === "players" ? "epicSaves" : "totalEpicSaves"} label="ES" />
+                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" />
+                  <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="DEM" />
+                  <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="ES" />
                 </tr>
               </thead>
               <tbody>
@@ -411,55 +454,55 @@ const Stats = () => {
                       </div>
                     </td>
                     <td className="px-3 py-3 font-semibold text-white">
-                      {viewType === "players" ? formatPlayerName(item.player, item.gamertag) : item.team}
+                      {viewType === "players" ? formatPlayerName(item.player_name, item.gamertag) : item.team}
                     </td>
                     {viewType === "players" && (
-                      <td className="px-3 py-3 text-blue-300 text-sm">{item.team}</td>
+                      <td className="px-3 py-3 text-blue-300 text-sm">{item.team_name}</td>
                     )}
                     {viewType === "teams" && (
                       <td className="px-3 py-3 text-center">{item.players}</td>
                     )}
                     <td className="px-3 py-3 text-center">
-                      {viewType === "players" ? item.gamesPlayed : Math.round(item.totalGames / item.players)}
+                      {viewType === "players" ? item.games_played : Math.round(item.totalGames / item.players)}
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-yellow-400">
-                      {viewType === "players" ? item.points.toLocaleString() : item.totalPoints.toLocaleString()}
+                      {viewType === "players" ? item.total_points.toLocaleString() : item.totalPoints.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {(viewType === "players" ? item.ppg : item.avgPPG).toFixed(1)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-green-400">
-                      {viewType === "players" ? item.goals : item.totalGoals}
+                      {viewType === "players" ? item.total_goals : item.totalGoals}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {(viewType === "players" ? item.gpg : item.avgGPG).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-blue-400">
-                      {viewType === "players" ? item.assists : item.totalAssists}
+                      {viewType === "players" ? item.total_assists : item.totalAssists}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {(viewType === "players" ? item.apg : item.avgAPG).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-purple-400">
-                      {viewType === "players" ? item.saves : item.totalSaves}
+                      {viewType === "players" ? item.total_saves : item.totalSaves}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {(viewType === "players" ? item.svpg : item.avgSVPG).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {viewType === "players" ? item.shots : item.totalShots}
+                      {viewType === "players" ? item.total_shots : item.totalShots}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {(viewType === "players" ? item.shPercent : item.avgSH).toFixed(1)}%
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-orange-400">
-                      {viewType === "players" ? item.mvps : item.totalMVPs}
+                      {viewType === "players" ? item.total_mvps : item.totalMVPs}
                     </td>
                     <td className="px-3 py-3 text-center text-red-400">
-                      {viewType === "players" ? item.demos : item.totalDemos}
+                      {viewType === "players" ? item.total_demos : item.totalDemos}
                     </td>
                     <td className="px-3 py-3 text-center text-cyan-400">
-                      {viewType === "players" ? item.epicSaves : item.totalEpicSaves}
+                      {viewType === "players" ? item.total_epic_saves : item.totalEpicSaves}
                     </td>
                   </tr>
                 ))}
@@ -470,7 +513,7 @@ const Stats = () => {
         )}
 
         {/* Footer Info */}
-        {currentPlayerData.length > 0 && (
+        {processedStats.length > 0 && selectedSeason !== "current" && (
           <div className="mt-6 text-center text-white text-sm">
             <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
           <div className="flex justify-center gap-6 mt-2 text-xs text-gray-300">

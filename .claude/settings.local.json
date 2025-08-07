@@ -7,7 +7,27 @@
       "Bash(taskkill:*)",
       "mcp__ide__getDiagnostics",
       "Bash(find:*)",
-      "Bash(dir /s)"
+      "Bash(dir /s)",
+      "Bash(winget search:*)",
+      "Bash(winget install:*)",
+      "WebFetch(domain:www.postgresql.org)",
+      "Bash(choco install:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(node:*)",
+      "Bash(npm run server:*)",
+      "Bash(curl:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run dev:*)",
+      "Bash(net start:*)",
+      "Bash(pg_ctl:*)",
+      "Bash(npm run test-db:*)",
+      "Bash(vercel:*)",
+      "Bash(npm run migrate:*)",
+      "Bash(psql:*)",
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
