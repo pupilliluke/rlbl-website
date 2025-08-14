@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { players } from '../data/players.js';
 import { formatPlayerName } from '../utils/formatters.js';
+import { RocketIcon, RulesIcon, AwardIcon, FlagIcon, TrophyIcon, UsersIcon } from '../components/Icons';
 
 const LeagueInfo = () => {
   const navigate = useNavigate();
@@ -125,10 +126,11 @@ const LeagueInfo = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
           <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent text-center mb-4">
-            🚀 ROCKET LEAGUE BEER LEAGUE
+            <RocketIcon className="w-12 h-12 inline mr-4" />
+            ROCKET LEAGUE BEER LEAGUE
           </h1>
           <div className="w-32 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-400 mx-auto rounded-full mb-6"></div>
           <p className="text-lg md:text-xl text-blue-200 text-center max-w-3xl mx-auto">
@@ -146,7 +148,7 @@ const LeagueInfo = () => {
             <section className="bg-gray-800/60 backdrop-blur-sm p-6 md:p-8 rounded-xl border border-gray-700/50 shadow-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-blue-500/20 p-3 rounded-lg">
-                  <span className="text-2xl">📝</span>
+                  <RulesIcon className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white">LEAGUE RULES</h2>
               </div>
@@ -164,7 +166,7 @@ const LeagueInfo = () => {
             <section className="bg-gray-800/60 backdrop-blur-sm p-6 md:p-8 rounded-xl border border-gray-700/50 shadow-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-green-500/20 p-3 rounded-lg">
-                  <span className="text-2xl">🏅</span>
+                  <AwardIcon className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white">POINTS SYSTEM</h2>
               </div>
@@ -195,7 +197,7 @@ const LeagueInfo = () => {
             <section className="bg-gray-800/60 backdrop-blur-sm p-6 md:p-8 rounded-xl border border-gray-700/50 shadow-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-red-500/20 p-3 rounded-lg">
-                  <span className="text-2xl">🏳️</span>
+                  <FlagIcon className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white">FORFEIT POLICY</h2>
               </div>
@@ -213,7 +215,7 @@ const LeagueInfo = () => {
             <section className="bg-gray-800/60 backdrop-blur-sm p-6 md:p-8 rounded-xl border border-gray-700/50 shadow-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="bg-yellow-500/20 p-3 rounded-lg">
-                  <span className="text-2xl">🏆</span>
+                  <TrophyIcon className="w-8 h-8" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white">PLAYOFF STRUCTURE</h2>
               </div>
@@ -263,7 +265,7 @@ const LeagueInfo = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="bg-purple-500/20 p-3 rounded-lg">
-                <span className="text-2xl">👥</span>
+                <UsersIcon className="w-8 h-8" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white">TEAM ROSTERS</h2>
             </div>

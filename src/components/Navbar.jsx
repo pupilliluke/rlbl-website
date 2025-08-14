@@ -1,5 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { 
+  DashboardIcon, 
+  TrophyIcon, 
+  SoccerIcon, 
+  ChartUpIcon, 
+  ChartBarIcon, 
+  CalendarIcon, 
+  BuildingIcon 
+} from "./Icons";
 
 function Navbar() {
   const location = useLocation();
@@ -21,7 +30,7 @@ function Navbar() {
   if (isHome) return null;
   
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-dark shadow-executive border-b border-white/10 transition-smooth">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-dark shadow-executive transition-smooth">
       <div className="max-w-7xl mx-auto spacing-container">
         <div className="flex items-center justify-between h-20">
           
@@ -39,14 +48,14 @@ function Navbar() {
           {/* Main Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             {[
-              { label: "Dashboard", path: "/leagueinfo", icon: "📊" },
-              { label: "Standings", path: "/standings", icon: "🏆" },
-              { label: "Teams", path: "/teams", icon: "⚽" },
-              { label: "Weekly", path: "/power-rankings", icon: "📈" },
-              { label: "Statistics", path: "/stats", icon: "📉" },
-              { label: "Schedule", path: "/schedule", icon: "📅" },
-              { label: "Legacy", path: "/legacy", icon: "🏛️" }
-            ].map(({ label, path, icon }) => (
+              { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
+              { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
+              { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
+              { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
+              { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
+            ].map(({ label, path, IconComponent }) => (
               <Link
                 key={path}
                 to={path}
@@ -56,7 +65,7 @@ function Navbar() {
                     : 'text-gray-300 hover:text-white'
                 }`}
               >
-                <span className="group-hover:animate-float">{icon}</span>
+                <IconComponent className="w-4 h-4 group-hover:animate-float" />
                 <span>{label}</span>
               </Link>
             ))}
@@ -121,14 +130,14 @@ function Navbar() {
         <div className="max-w-7xl mx-auto spacing-container">
           <div className="flex flex-col space-y-1 py-4">
             {[
-              { label: "Dashboard", path: "/leagueinfo", icon: "📊" },
-              { label: "Standings", path: "/standings", icon: "🏆" },
-              { label: "Teams", path: "/teams", icon: "⚽" },
-              { label: "Weekly", path: "/power-rankings", icon: "📈" },
-              { label: "Statistics", path: "/stats", icon: "📉" },
-              { label: "Schedule", path: "/schedule", icon: "📅" },
-              { label: "Legacy", path: "/legacy", icon: "🏛️" }
-            ].map(({ label, path, icon }) => (
+              { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
+              { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
+              { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
+              { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
+              { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
+            ].map(({ label, path, IconComponent }) => (
               <Link
                 key={path}
                 to={path}
@@ -139,7 +148,7 @@ function Navbar() {
                     : 'text-gray-300 hover:text-white'
                 }`}
               >
-                <span className="text-lg group-hover:animate-float">{icon}</span>
+                <IconComponent className="w-5 h-5 group-hover:animate-float" />
                 <span className="text-base font-medium">{label}</span>
               </Link>
             ))}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiService, fallbackData } from "../services/apiService";
+import { SoccerIcon } from "../components/Icons";
 
 const slugify = (str) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -63,9 +64,12 @@ export default function Teams() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">⚽ RLBL Teams</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <SoccerIcon className="w-8 h-8" />
+            RLBL Teams
+          </h1>
           <p className="text-blue-200 text-sm md:text-base">
             Current season team rosters and player lineups
             {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
