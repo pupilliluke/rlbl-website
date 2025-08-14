@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { players } from "../data/players.js";
 import { formatPlayerName } from "../utils/formatters.js";
+import { CalendarIcon, StarIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon, FireIcon, TrophyIcon, ChartBarIcon, BooksIcon, DocumentIcon, VideoIcon } from "../components/Icons";
 
 export default function Weekly() {
   const [selectedWeek, setSelectedWeek] = useState("current");
@@ -64,11 +65,14 @@ export default function Weekly() {
   const currentContent = weeklyContent[selectedWeek] || weeklyContent.current;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white relative page-with-navbar">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
+      <div className="relative z-10 bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">📅 RLBL Weekly</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <CalendarIcon className="w-8 h-8" />
+            RLBL Weekly
+          </h1>
           <p className="text-gray-200 text-sm md:text-base">Your weekly dose of RLBL updates, highlights, and storylines</p>
         </div>
       </div>
@@ -110,14 +114,14 @@ export default function Weekly() {
         {selectedWeek === "current" && (
           <section className="mb-10">
             <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-              ⭐ Three Stars of the Week
+              <StarIcon className="w-6 h-6" color="#F59E0B" /> Three Stars of the Week
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {threeStars.map((star, index) => (
                 <div key={index} className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform border border-blue-500/30 shadow-xl">
                   <div className="text-center">
                     <div className="text-2xl md:text-3xl mb-2">
-                      {index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}
+                      {index === 0 ? <GoldMedalIcon className="w-8 h-8" /> : index === 1 ? <SilverMedalIcon className="w-8 h-8" /> : <BronzeMedalIcon className="w-8 h-8" />}
                     </div>
                     <h4 className="text-lg md:text-xl font-bold text-white mb-2">{formatPlayerName(star.player.player, star.player.gamertag)}</h4>
                     <p className="text-sm md:text-base text-blue-300 mb-2">{star.player.team}</p>
@@ -135,7 +139,7 @@ export default function Weekly() {
         {/* Week Highlights */}
         <section className="mb-10">
           <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-            🔥 Week Highlights
+            <FireIcon className="w-6 h-6" /> Week Highlights
           </h3>
           <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-red-500/30 shadow-xl">
             <ul className="space-y-3 md:space-y-4">
@@ -154,7 +158,7 @@ export default function Weekly() {
           {/* Game of the Week */}
           <section>
             <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-              🏆 {currentContent.gameOfWeek.title.includes("Game of the Week") ? "Game of the Week" : "Game Recap"}
+              <TrophyIcon className="w-6 h-6" /> {currentContent.gameOfWeek.title.includes("Game of the Week") ? "Game of the Week" : "Game Recap"}
             </h3>
             <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-yellow-500/30 shadow-xl">
               <h4 className="text-base md:text-lg font-semibold text-white mb-3">
@@ -184,7 +188,7 @@ export default function Weekly() {
           {currentContent.statHighlight && (
             <section>
               <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-                📊 {currentContent.statHighlight.title}
+                <ChartBarIcon className="w-6 h-6" /> {currentContent.statHighlight.title}
               </h3>
               <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl border border-purple-500/30 shadow-xl">
                 <div className="text-center mb-4">
@@ -203,14 +207,14 @@ export default function Weekly() {
         {/* Power Rankings & Resources Links */}
         <section className="mb-10">
           <h3 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent mb-6 flex items-center gap-2">
-            📚 Resources & Links
+            <BooksIcon className="w-6 h-6" /> Resources & Links
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <Link 
               to="/stats" 
               className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
             >
-              <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">📊</div>
+              <ChartBarIcon className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Latest Stats</h4>
               <p className="text-xs md:text-sm text-gray-300">View complete player and team statistics</p>
             </Link>
@@ -219,7 +223,7 @@ export default function Weekly() {
               className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
               onClick={() => window.open('#', '_blank')}
             >
-              <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">📄</div>
+              <DocumentIcon className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Power Rankings Doc</h4>
               <p className="text-xs md:text-sm text-gray-300">Full analysis and team breakdowns</p>
             </button>
@@ -228,7 +232,7 @@ export default function Weekly() {
               className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl hover:scale-105 transition-transform text-center group border border-cyan-500/30 shadow-xl"
               onClick={() => window.open('#', '_blank')}
             >
-              <div className="text-2xl md:text-3xl mb-2 group-hover:scale-110 transition-transform">🎥</div>
+              <VideoIcon className="w-8 h-8 mb-2 group-hover:scale-110 transition-transform" />
               <h4 className="text-base md:text-lg font-semibold text-white mb-2">Game Footage</h4>
               <p className="text-xs md:text-sm text-gray-300">Watch the best plays and highlights</p>
             </button>

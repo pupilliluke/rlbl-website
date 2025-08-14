@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config({ path: '.env.local' });
 const { query, testConnection } = require('./database');
 
 const app = express();

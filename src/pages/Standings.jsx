@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiService, fallbackData } from "../services/apiService";
+import { ChartBarIcon, TrophyIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from "../components/Icons";
 
 export default function Standings() {
   const [standings, setStandings] = useState([]);
@@ -44,9 +45,12 @@ export default function Standings() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">📊 RLBL Standings</h1>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <ChartBarIcon className="w-8 h-8" />
+            RLBL Standings
+          </h1>
           <p className="text-blue-200 text-sm md:text-base">
             Current season standings and team rankings
             {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
@@ -95,7 +99,10 @@ export default function Standings() {
 
         {/* Current Standings */}
         <section className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-6 text-center">🏆 Current Standings</h2>
+          <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-6 text-center flex items-center justify-center gap-3">
+            <TrophyIcon className="w-7 h-7" />
+            Current Standings
+          </h2>
           
           {standings.length === 0 ? (
             <div className="text-center text-gray-400">
@@ -144,7 +151,7 @@ export default function Standings() {
                         3: "bg-gradient-to-r from-amber-900/30 to-amber-800/30",
                       };
 
-                      const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "";
+                      const medal = rank === 1 ? <GoldMedalIcon className="w-5 h-5" /> : rank === 2 ? <SilverMedalIcon className="w-5 h-5" /> : rank === 3 ? <BronzeMedalIcon className="w-5 h-5" /> : "";
                       const rowClass = styles[rank] || "";
 
                       return (

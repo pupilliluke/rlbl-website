@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { apiService, fallbackData } from "../services/apiService";
 import { formatPlayerName } from "../utils/formatters.js";
 import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
+import { SoccerIcon, UsersIcon, ChartBarIcon, TargetIcon, RocketIcon, TrophyIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from "../components/Icons";
 
 const Stats = () => {
   const [sortBy, setSortBy] = useState("total_points");
@@ -200,7 +201,7 @@ const Stats = () => {
       <div className="absolute inset-0 neural-bg opacity-20" />
       
       {/* Executive Header */}
-      <div className="relative z-10 glass-dark border-b border-white/10">
+      <div className="relative z-10 glass-dark pt-20">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
@@ -215,7 +216,7 @@ const Stats = () => {
                 <div className="text-xs text-white">Season</div>
               </div>
               <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-blue-400">⚽</div>
+                <SoccerIcon className="w-8 h-8" />
                 <div className="text-xs text-white">League</div>
               </div>
             </div>
@@ -236,28 +237,28 @@ const Stats = () => {
                 value={premiumStatistics.totalPlayers}
                 subtitle="Registered Players"
                 trend={12}
-                icon="👥"
+IconComponent={UsersIcon}
               />
               <MetricCard
                 title="Avg Performance"
                 value={Math.round(premiumStatistics.avgStats.points)}
                 subtitle="Points per player"
                 trend={8}
-                icon="📊"
+IconComponent={ChartBarIcon}
               />
               <MetricCard
                 title="Total Goals"
                 value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
                 subtitle="Season aggregate"
                 trend={-3}
-                icon="⚽"
+IconComponent={SoccerIcon}
               />
               <MetricCard
                 title="Engagement"
                 value="94.2%"
                 subtitle="Player activity"
                 trend={5}
-                icon="🎯"
+IconComponent={TargetIcon}
               />
             </div>
 
@@ -293,7 +294,7 @@ const Stats = () => {
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  🏃‍♂️ Players
+                  <UsersIcon className="w-5 h-5 inline mr-2" />Players
                 </button>
                 <button
                   onClick={() => setViewType("teams")}
@@ -303,7 +304,7 @@ const Stats = () => {
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  🏆 Teams
+                  <TrophyIcon className="w-5 h-5 inline mr-2" />Teams
                 </button>
               </div>
 
@@ -355,7 +356,10 @@ const Stats = () => {
             <div className="relative mb-8">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
               <div className="relative">
-                <h3 className="text-4xl font-black text-white mb-4">🚀 Season 3 - Summer 25</h3>
+                <h3 className="text-4xl font-black text-white mb-4 flex items-center gap-3">
+                  <RocketIcon className="w-10 h-10" />
+                  Season 3 - Summer 25
+                </h3>
                 <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
               </div>
             </div>
@@ -448,7 +452,7 @@ const Stats = () => {
                     <td className="px-4 py-4 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
                       <div className="flex items-center justify-center">
                         {index + 1 <= 3 ? 
-                          <span className="text-lg">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> : 
+                          (index + 1 === 1 ? <GoldMedalIcon className="w-5 h-5" /> : index + 1 === 2 ? <SilverMedalIcon className="w-5 h-5" /> : <BronzeMedalIcon className="w-5 h-5" />) : 
                           <span className="group-hover:text-blue-400 transition-all duration-300">{index + 1}</span>
                         }
                       </div>

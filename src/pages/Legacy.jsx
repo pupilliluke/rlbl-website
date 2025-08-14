@@ -2,6 +2,7 @@ import { useState } from "react";
 import { historicalSeasons } from "../data/historicalStats.js";
 import { historicalStandingsData } from "../data/historicalStandings.js";
 import { careerStats } from "../data/careerStats.js";
+import { BuildingIcon, TrophyIcon, TargetIcon, ShieldIcon, StarIcon, ChartBarIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon, FireIcon } from "../components/Icons";
 
 export default function Legacy() {
   const [selectedSeason, setSelectedSeason] = useState("career");
@@ -16,11 +17,14 @@ export default function Legacy() {
   const currentStandings = historicalStandingsData[selectedSeason];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white relative page-with-navbar">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-900 via-blue-800 to-purple-900 border-b border-purple-700">
+      <div className="relative z-10 bg-gradient-to-r from-purple-900 via-blue-800 to-purple-900 pt-20">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <h1 className="text-4xl font-bold text-white mb-2">🏛️ RLBL Legacy</h1>
+          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+            <BuildingIcon className="w-10 h-10" />
+            RLBL Legacy
+          </h1>
           <p className="text-purple-200">Historical seasons, champions, and legendary performances</p>
         </div>
       </div>
@@ -58,7 +62,10 @@ export default function Legacy() {
             {/* Champion Banner */}
             {currentStandings?.data?.playoffs && (
               <div className="bg-gradient-to-r from-yellow-900 to-orange-900 rounded-lg p-6 mb-6">
-                <h3 className="text-2xl font-bold text-yellow-400 mb-2">🏆 Season Champion</h3>
+                <h3 className="text-2xl font-bold text-yellow-400 mb-2 flex items-center gap-2">
+                  <TrophyIcon className="w-6 h-6" />
+                  Season Champion
+                </h3>
                 <p className="text-xl text-white font-semibold">{currentStandings.data.playoffs.champion}</p>
                 <p className="text-yellow-200">Runner-up: {currentStandings.data.playoffs.runnerUp}</p>
               </div>
@@ -119,7 +126,10 @@ export default function Legacy() {
 
             {/* Assists Leaders */}
             <div className="bg-[#1f1f2e] rounded-xl p-6 border border-blue-800">
-              <h3 className="text-xl font-bold text-blue-400 mb-4">🎯 Assists Leaders</h3>
+              <h3 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
+                <TargetIcon className="w-5 h-5" />
+                Assists Leaders
+              </h3>
               <div className="space-y-3">
                 {[...currentSeason.stats]
                   .sort((a, b) => (b.assists || 0) - (a.assists || 0))
@@ -139,7 +149,10 @@ export default function Legacy() {
 
             {/* Saves Leaders */}
             <div className="bg-[#1f1f2e] rounded-xl p-6 border border-purple-800">
-              <h3 className="text-xl font-bold text-purple-400 mb-4">🛡️ Saves Leaders</h3>
+              <h3 className="text-xl font-bold text-purple-400 mb-4 flex items-center gap-2">
+                <ShieldIcon className="w-5 h-5" />
+                Saves Leaders
+              </h3>
               <div className="space-y-3">
                 {[...currentSeason.stats]
                   .sort((a, b) => (b.saves || 0) - (a.saves || 0))
@@ -159,7 +172,10 @@ export default function Legacy() {
 
             {/* Points Leaders */}
             <div className="bg-[#1f1f2e] rounded-xl p-6 border border-yellow-800">
-              <h3 className="text-xl font-bold text-yellow-400 mb-4">⭐ Points Leaders</h3>
+              <h3 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
+                <StarIcon className="w-5 h-5" />
+                Points Leaders
+              </h3>
               <div className="space-y-3">
                 {[...currentSeason.stats]
                   .sort((a, b) => (b.points || 0) - (a.points || 0))
@@ -182,7 +198,10 @@ export default function Legacy() {
         {/* Final Standings */}
         {currentStandings?.data?.overall && (
           <div className="bg-[#1f1f2e] rounded-xl p-6 border border-gray-800 mb-8">
-            <h3 className="text-xl font-bold text-gray-200 mb-4">📊 Final Standings</h3>
+            <h3 className="text-xl font-bold text-gray-200 mb-4 flex items-center gap-2">
+              <ChartBarIcon className="w-5 h-5" />
+              Final Standings
+            </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-800">
@@ -203,7 +222,7 @@ export default function Legacy() {
                     return (
                       <tr key={i} className={`border-b border-gray-700 ${rank <= 3 ? 'bg-gradient-to-r from-yellow-900/20 to-transparent' : ''}`}>
                         <td className="py-2 px-3 font-bold">
-                          {rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank}
+                          {rank === 1 ? <GoldMedalIcon className="w-5 h-5" /> : rank === 2 ? <SilverMedalIcon className="w-5 h-5" /> : rank === 3 ? <BronzeMedalIcon className="w-5 h-5" /> : rank}
                         </td>
                         <td className="py-2 px-3 font-medium text-white">{teamName}</td>
                         <td className="py-2 px-3 text-gray-300">{record}</td>
@@ -220,7 +239,10 @@ export default function Legacy() {
         {/* Notable Records */}
         {currentSeason?.stats && (
           <div className="bg-[#1f1f2e] rounded-xl p-6 border border-red-800">
-            <h3 className="text-xl font-bold text-red-400 mb-4">🔥 Notable Records</h3>
+            <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
+              <FireIcon className="w-5 h-5" />
+              Notable Records
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-semibold text-white mb-2">Highest Single Season Performance</h4>
