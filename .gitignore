@@ -13,15 +13,105 @@
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env
 
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 .vercel
-.env*.local
+
+# =======================
+# SECURITY: Environment Variables & Secrets
+# =======================
+
+# Environment files (all variations)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+.env.development
+.env.production
+.env.test
+
+# API Keys and Secrets
+*.key
+*.secret
+*.pem
+*.p12
+*.jks
+*.keystore
+config/secrets.json
+config/keys.json
+secrets/
+keys/
+
+# Database credentials
+database.env
+db.env
+*.sql.env
+
+# Cloud provider credentials
+.aws/
+.gcp/
+gcp-credentials.json
+aws-credentials.json
+azure-credentials.json
+
+# Authentication tokens
+.token
+auth.json
+oauth.json
+jwt.secret
+
+# SSL certificates
+*.crt
+*.cert
+*.cer
+*.der
+ssl/
+
+# Service account files
+service-account*.json
+*-service-account.json
+
+# =======================
+# SECURITY: Configuration Files
+# =======================
+
+# Sensitive config files
+config/production.json
+config/secrets.yml
+docker-compose.override.yml
+.env.docker
+
+# =======================
+# SECURITY: Temporary & Log Files
+# =======================
+
+# Logs that might contain sensitive data
+*.log
+logs/
+log/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# =======================
+# IDE & OS FILES
+# =======================
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+
+# JetBrains
+.idea/
+
+# OS Files
+Thumbs.db
+.DS_Store
