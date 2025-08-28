@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { players } from '../data/players.js';
 import { formatPlayerName } from '../utils/formatters.js';
 import { RocketIcon, RulesIcon, AwardIcon, FlagIcon, TrophyIcon, UsersIcon } from '../components/Icons';
+import { createPlayerSlug, createTeamSlug } from '../utils/slugify.js';
 
 const LeagueInfo = () => {
   const navigate = useNavigate();
@@ -94,9 +95,12 @@ const LeagueInfo = () => {
                 <div className="space-y-2">
                   {team.players.map((player, pIndex) => (
                     <div key={pIndex} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-300">
+                      <button
+                        onClick={() => navigate(`/players/${createPlayerSlug(player.player, player.gamertag)}`)}
+                        className="text-gray-300 hover:text-blue-400 transition-colors cursor-pointer text-left"
+                      >
                         {formatPlayerName(player.player, player.gamertag)}
-                      </span>
+                      </button>
                       <div className="flex gap-3 text-xs">
                         <span className="text-yellow-400">{player.goals}G</span>
                         <span className="text-blue-400">{player.assists}A</span>
@@ -106,7 +110,7 @@ const LeagueInfo = () => {
                   ))}
                 </div>
                 <button
-                  onClick={() => navigate(`/teams/${team.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`)}
+                  onClick={() => navigate(`/teams/${createTeamSlug(team.name)}`)}
                   className={`mt-3 w-full py-2 px-3 text-xs font-medium rounded-md transition-colors ${
                     color === 'bg-blue-500' 
                       ? 'bg-blue-600/20 text-blue-300 hover:bg-blue-600/30' 
@@ -124,7 +128,7 @@ const LeagueInfo = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
       {/* Header */}
       <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">

@@ -1,9 +1,15 @@
 const { Pool } = require('pg');
 
-// Create connection pool
+// Create connection pool using the same approach as working PowerShell script
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  host: 'ep-empty-brook-adzsqif2-pooler.c-2.us-east-1.aws.neon.tech',
+  port: 5432,
+  user: 'neondb_owner',
+  password: 'npg_oQLihs3zZJV6',
+  database: 'neondb',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 // Test database connection

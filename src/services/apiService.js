@@ -1,5 +1,10 @@
-// API Service for Rocket League app
+// API Service for Rocket League app - Using unified mock server
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api' 
+  : 'http://localhost:5000/api';
+
+// Use same base URL for admin functions
+const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api' 
   : 'http://localhost:5000/api';
 
@@ -18,13 +23,17 @@ const apiCall = async (endpoint) => {
   }
 };
 
+
 // API service functions
 export const apiService = {
   // Health check
   checkHealth: () => apiCall('/health'),
 
   // Teams
-  getTeams: () => apiCall('/teams'),
+  getTeams: (season) => {
+    const endpoint = season ? `/teams?season=${encodeURIComponent(season)}` : '/teams';
+    return apiCall(endpoint);
+  },
 
   // Players  
   getPlayers: () => apiCall('/players'),
@@ -36,13 +45,79 @@ export const apiService = {
   getSchedule: () => apiCall('/schedule'),
 
   // Stats
-  getStats: (season) => {
-    const endpoint = season ? `/stats?season=${encodeURIComponent(season)}` : '/stats';
-    return apiCall(endpoint);
+  getStats: async (season) => {
+    try {
+      const endpoint = season ? `/stats?season=${encodeURIComponent(season)}` : '/stats';
+      const result = await apiCall(endpoint);
+      console.log(`Stats API returned ${result.length} records for season:`, season);
+      return result;
+    } catch (error) {
+      console.error('Stats API failed:', error);
+      throw error;
+    }
   },
 
   // Power Rankings
   getPowerRankings: () => apiCall('/power-rankings'),
+
+  // Season endpoints
+  getTeamSeasons: (teamId) => apiCall(`/teams/${teamId}/seasons`),
+  getPlayerSeasons: (playerId) => apiCall(`/players/${playerId}/seasons`),
+  getTeamStatsBySeason: (teamSlug, season = '2024') => apiCall(`/teams/${teamSlug}/stats?season=${season}`),
+
+  // Admin endpoints for data management (using separate admin server)
+  updatePlayer: async (id, playerData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/players/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(playerData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update player ${id}:`, error);
+      throw error;
+    }
+  },
+
+  createPlayer: async (playerData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/players`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(playerData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create player:', error);
+      throw error;
+    }
+  },
+
+  deletePlayer: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/players/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete player ${id}:`, error);
+      throw error;
+    }
+  },
 
   // Test endpoint
   runTest: () => apiCall('/test')

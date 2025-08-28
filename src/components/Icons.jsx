@@ -226,3 +226,10 @@ export const CrownIcon = ({ className, color = "#F59E0B" }) => (
     <path d="M3 20h18"/>
   </BaseIcon>
 );
+
+// Chevron Down Icon
+export const ChevronDownIcon = ({ className, color = "currentColor" }) => (
+  <BaseIcon className={className} color="none">
+    <path stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+  </BaseIcon>
+);

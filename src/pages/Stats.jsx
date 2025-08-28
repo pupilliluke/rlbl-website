@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { apiService, fallbackData } from "../services/apiService";
 import { formatPlayerName } from "../utils/formatters.js";
 import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
-import { SoccerIcon, UsersIcon, ChartBarIcon, TargetIcon, RocketIcon, TrophyIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from "../components/Icons";
 
 const Stats = () => {
   const [sortBy, setSortBy] = useState("total_points");
@@ -11,31 +10,40 @@ const Stats = () => {
   const [viewType, setViewType] = useState("players");
   const [showCount, setShowCount] = useState(20);
   const [stats, setStats] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("career");
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching stats data from API for season:', selectedSeason);
-        const statsData = await apiService.getStats(selectedSeason);
+        console.log('Fetching stats and teams data from API for season:', selectedSeason);
+        
+        const [statsData, teamsData] = await Promise.all([
+          apiService.getStats(selectedSeason),
+          apiService.getTeams(selectedSeason)
+        ]);
+        
         console.log('Stats data received:', statsData);
+        console.log('Teams data received:', teamsData);
         setStats(statsData);
+        setTeams(teamsData);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch stats:', err);
+        console.error('Failed to fetch data:', err);
         console.error('Error details:', err.message);
         setError(err.message);
         console.log('Using fallback data due to API error');
         setStats(fallbackData.stats);
+        setTeams(fallbackData.teams);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStats();
+    fetchData();
   }, [selectedSeason]);
 
   // Process stats data to add calculated fields
@@ -64,13 +72,48 @@ const Stats = () => {
     });
   }, [stats]);
 
-  // Calculate team stats from current player data
+  // Calculate team stats from all teams and merge with player data
   const teamStats = useMemo(() => {
+    // Start with all teams from the teams endpoint
     const teamMap = {};
+    
+    // Initialize all teams with zero stats
+    teams.forEach(team => {
+      teamMap[team.team_name] = {
+        team: team.team_name,
+        teamId: team.id,
+        color: team.color,
+        logo_url: team.logo_url,
+        players: 0,
+        totalPoints: 0,
+        totalGoals: 0,
+        totalAssists: 0,
+        totalSaves: 0,
+        totalShots: 0,
+        totalMVPs: 0,
+        totalDemos: 0,
+        totalEpicSaves: 0,
+        totalGames: 0,
+        avgPPG: 0,
+        avgGPG: 0,
+        avgAPG: 0,
+        avgSVPG: 0,
+        avgSH: 0
+      };
+    });
+    
+    // Add player statistics to teams
     processedStats.forEach(player => {
-      if (!teamMap[player.team_name]) {
-        teamMap[player.team_name] = {
-          team: player.team_name,
+      // Handle cases where team_name might not match exactly or player has no team
+      const teamName = player.team_name || 'Free Agent';
+      
+      // If team doesn't exist in teamMap, create it (for cases like 'Free Agent' or 'Career Total')
+      if (!teamMap[teamName]) {
+        teamMap[teamName] = {
+          team: teamName,
+          teamId: null,
+          color: player.team_color || '#808080',
+          logo_url: null,
           players: 0,
           totalPoints: 0,
           totalGoals: 0,
@@ -88,7 +131,8 @@ const Stats = () => {
           avgSH: 0
         };
       }
-      const team = teamMap[player.team_name];
+      
+      const team = teamMap[teamName];
       team.players++;
       team.totalPoints += player.total_points;
       team.totalGoals += player.total_goals;
@@ -103,13 +147,13 @@ const Stats = () => {
 
     return Object.values(teamMap).map(team => ({
       ...team,
-      avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames).toFixed(1) : 0,
-      avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames).toFixed(1) : 0,
-      avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames).toFixed(1) : 0,
-      avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames).toFixed(1) : 0,
-      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100).toFixed(1) : 0
+      avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
+      avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames) : 0,
+      avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames) : 0,
+      avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
+      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
     }));
-  }, [processedStats]);
+  }, [teams, processedStats]);
 
   // Sort and filter data
   const sortedData = useMemo(() => {
@@ -201,7 +245,7 @@ const Stats = () => {
       <div className="absolute inset-0 neural-bg opacity-20" />
       
       {/* Executive Header */}
-      <div className="relative z-10 glass-dark pt-20">
+      <div className="relative z-10 glass-dark border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
@@ -216,7 +260,7 @@ const Stats = () => {
                 <div className="text-xs text-white">Season</div>
               </div>
               <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <SoccerIcon className="w-8 h-8" />
+                <div className="text-2xl font-bold text-blue-400">⚽</div>
                 <div className="text-xs text-white">League</div>
               </div>
             </div>
@@ -237,28 +281,28 @@ const Stats = () => {
                 value={premiumStatistics.totalPlayers}
                 subtitle="Registered Players"
                 trend={12}
-IconComponent={UsersIcon}
+                icon="👥"
               />
               <MetricCard
                 title="Avg Performance"
                 value={Math.round(premiumStatistics.avgStats.points)}
                 subtitle="Points per player"
                 trend={8}
-IconComponent={ChartBarIcon}
+                icon="📊"
               />
               <MetricCard
                 title="Total Goals"
                 value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
                 subtitle="Season aggregate"
                 trend={-3}
-IconComponent={SoccerIcon}
+                icon="⚽"
               />
               <MetricCard
                 title="Engagement"
                 value="94.2%"
                 subtitle="Player activity"
                 trend={5}
-IconComponent={TargetIcon}
+                icon="🎯"
               />
             </div>
 
@@ -294,7 +338,7 @@ IconComponent={TargetIcon}
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  <UsersIcon className="w-5 h-5 inline mr-2" />Players
+                  🏃‍♂️ Players
                 </button>
                 <button
                   onClick={() => setViewType("teams")}
@@ -304,7 +348,7 @@ IconComponent={TargetIcon}
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  <TrophyIcon className="w-5 h-5 inline mr-2" />Teams
+                  🏆 Teams
                 </button>
               </div>
 
@@ -356,10 +400,7 @@ IconComponent={TargetIcon}
             <div className="relative mb-8">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
               <div className="relative">
-                <h3 className="text-4xl font-black text-white mb-4 flex items-center gap-3">
-                  <RocketIcon className="w-10 h-10" />
-                  Season 3 - Summer 25
-                </h3>
+                <h3 className="text-4xl font-black text-white mb-4">🚀 Season 3 - Summer 25</h3>
                 <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
               </div>
             </div>
@@ -452,7 +493,7 @@ IconComponent={TargetIcon}
                     <td className="px-4 py-4 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
                       <div className="flex items-center justify-center">
                         {index + 1 <= 3 ? 
-                          (index + 1 === 1 ? <GoldMedalIcon className="w-5 h-5" /> : index + 1 === 2 ? <SilverMedalIcon className="w-5 h-5" /> : <BronzeMedalIcon className="w-5 h-5" />) : 
+                          <span className="text-lg">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> : 
                           <span className="group-hover:text-blue-400 transition-all duration-300">{index + 1}</span>
                         }
                       </div>
@@ -473,31 +514,31 @@ IconComponent={TargetIcon}
                       {viewType === "players" ? item.total_points.toLocaleString() : item.totalPoints.toLocaleString()}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.ppg : item.avgPPG).toFixed(1)}
+                      {(viewType === "players" ? item.ppg : item.avgPPG || 0).toFixed(1)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-green-400">
                       {viewType === "players" ? item.total_goals : item.totalGoals}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.gpg : item.avgGPG).toFixed(2)}
+                      {(viewType === "players" ? item.gpg : item.avgGPG || 0).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-blue-400">
                       {viewType === "players" ? item.total_assists : item.totalAssists}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.apg : item.avgAPG).toFixed(2)}
+                      {(viewType === "players" ? item.apg : item.avgAPG || 0).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center font-semibold text-purple-400">
                       {viewType === "players" ? item.total_saves : item.totalSaves}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.svpg : item.avgSVPG).toFixed(2)}
+                      {(viewType === "players" ? item.svpg : item.avgSVPG || 0).toFixed(2)}
                     </td>
                     <td className="px-3 py-3 text-center">
                       {viewType === "players" ? item.total_shots : item.totalShots}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.shPercent : item.avgSH).toFixed(1)}%
+                      {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
                     </td>
                     <td className="px-3 py-3 text-center font-bold text-orange-400">
                       {viewType === "players" ? item.total_mvps : item.totalMVPs}

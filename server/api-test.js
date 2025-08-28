@@ -1,4 +1,4 @@
-const { query, testConnection } = require('./database-sqlite');
+const { query, testConnection } = require('./database');
 
 // Simulate API endpoints by calling database functions directly
 async function testAllEndpoints() {
