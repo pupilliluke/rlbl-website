@@ -1,4 +1,7 @@
-const { query, testConnection } = require('./database-sqlite');
+// Load environment variables first
+require('dotenv').config({ path: '.env.local' });
+
+const { query, testConnection } = require('./database');
 
 // Test functions to display database data
 async function testDatabaseData() {

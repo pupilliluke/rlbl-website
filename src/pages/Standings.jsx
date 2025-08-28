@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiService, fallbackData } from "../services/apiService";
 import { ChartBarIcon, TrophyIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon } from "../components/Icons";
+import { createTeamSlug } from "../utils/slugify.js";
 
 export default function Standings() {
+  const navigate = useNavigate();
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -160,14 +163,17 @@ export default function Standings() {
                             <span className="mr-2">{medal || rank}</span>
                             <span className={symbolClass}>{symbol}</span>
                           </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 font-semibold text-white">
-                            <div className="flex items-center gap-3">
+                          <td className="py-3 md:py-4 px-3 md:px-4 font-semibold">
+                            <button
+                              onClick={() => navigate(`/teams/${createTeamSlug(team.team_name)}`)}
+                              className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors cursor-pointer w-full text-left"
+                            >
                               <div 
                                 className="w-4 h-4 rounded-full border border-gray-400"
                                 style={{ backgroundColor: team.color }}
                               />
                               {team.team_name}
-                            </div>
+                            </button>
                           </td>
                           <td className="py-3 md:py-4 px-3 md:px-4 text-green-400 font-semibold">{team.wins}</td>
                           <td className="py-3 md:py-4 px-3 md:px-4 text-red-400 font-semibold">{team.losses}</td>

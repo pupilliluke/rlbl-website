@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiService, fallbackData } from "../services/apiService";
-import { SoccerIcon } from "../components/Icons";
 
 const slugify = (str) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -11,6 +10,7 @@ export default function Teams() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState("career");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,7 +19,7 @@ export default function Teams() {
         console.log('Fetching teams and players data from API...');
         
         const [teamsData, playersData] = await Promise.all([
-          apiService.getTeams(),
+          apiService.getTeams(selectedSeason),
           apiService.getPlayers()
         ]);
         
@@ -43,7 +43,7 @@ export default function Teams() {
     };
 
     fetchData();
-  }, []);
+  }, [selectedSeason]);
 
   // Group players by team
   const getPlayersForTeam = (teamName) => {
@@ -64,28 +64,58 @@ export default function Teams() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-            <SoccerIcon className="w-8 h-8" />
-            RLBL Teams
-          </h1>
-          <p className="text-blue-200 text-sm md:text-base">
-            Current season team rosters and player lineups
-            {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
-          </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">⚽ RLBL Teams</h1>
+              <p className="text-blue-200 text-sm md:text-base">
+                Team rosters and player lineups by season
+                {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
+              </p>
+            </div>
+            
+            {/* Season Dropdown */}
+            <div className="flex flex-col items-start md:items-end">
+              <label className="text-xs text-gray-300 mb-1">Season</label>
+              <select
+                value={selectedSeason}
+                onChange={(e) => setSelectedSeason(e.target.value)}
+                className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
+              >
+                <option value="current" className="text-black bg-white">🚀 Season 3 - Summer 25 (Not Started)</option>
+                <option value="career" className="text-black bg-white">🌟 Active Season Teams</option>
+                <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
+                <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
+                <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="mb-12">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
-            Current Season Teams
+            {selectedSeason === 'current' ? 'Season 3 Teams (Not Started)' :
+             selectedSeason === 'career' ? 'Active Season Teams' :
+             selectedSeason === 'season1' ? 'Season 1 Teams' :
+             selectedSeason === 'season2' ? 'Season 2 Teams' :
+             selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
+             'Teams'}
           </h2>
           
           {teams.length === 0 ? (
             <div className="text-center text-gray-400">
-              <p>No teams found. Make sure the API server is running.</p>
+              {selectedSeason === 'current' ? (
+                <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-600">
+                  <div className="text-4xl mb-4">🚀</div>
+                  <p className="text-xl text-white mb-2">Season 3 - Summer 25</p>
+                  <p>No teams registered yet. Season hasn't started!</p>
+                </div>
+              ) : (
+                <p>No teams found for this season. Make sure the API server is running.</p>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -93,7 +123,7 @@ export default function Teams() {
                 const teamPlayers = getPlayersForTeam(team.team_name);
                 
                 return (
-                  <Link to={`/teams/${slugify(team.team_name)}`} key={team.id}>
+                  <Link to={`/teams/${slugify(team.team_name)}`} key={team.team_id || team.id}>
                     <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
                       {/* Team Color Strip */}
                       <div className="flex mb-4 rounded-lg overflow-hidden h-3">

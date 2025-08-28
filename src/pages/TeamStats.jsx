@@ -1,14 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { teamStats } from "../data/teamStats.js";
 import { players } from "../data/players.js";
 import { formatPlayerName } from "../utils/formatters.js";
-
-const slugify = (str) =>
-  str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+import SeasonDropdown from "../components/SeasonDropdown.jsx";
+import { apiService } from "../services/apiService.js";
+import { slugify, findTeamBySlug, createPlayerSlug } from "../utils/slugify.js";
 
 export default function TeamStats() {
   const { teamSlug } = useParams();
   const navigate = useNavigate();
+  const [selectedSeason, setSelectedSeason] = useState('2024');
+  const [seasonStats, setSeasonStats] = useState(null);
 
   const team = teamStats.find((t) => slugify(t.name) === teamSlug);
   
@@ -17,9 +20,31 @@ export default function TeamStats() {
     slugify(player.team) === teamSlug
   );
 
+  // Fetch season-specific stats
+  useEffect(() => {
+    const fetchSeasonStats = async () => {
+      try {
+        const data = await apiService.getTeamStatsBySeason(teamSlug, selectedSeason);
+        setSeasonStats(data.stats);
+      } catch (error) {
+        console.error('Failed to fetch season stats:', error);
+        // Fallback to current team stats
+        setSeasonStats(team?.stats || {});
+      }
+    };
+
+    if (team && selectedSeason) {
+      fetchSeasonStats();
+    }
+  }, [team, teamSlug, selectedSeason]);
+
+  const handleSeasonChange = (season) => {
+    setSelectedSeason(season);
+  };
+
   if (!team) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white flex items-center justify-center page-with-navbar">
         <div className="text-center">
           <h1 className="text-2xl md:text-3xl font-bold text-red-400 mb-4">
             Team not found: {teamSlug}
@@ -35,23 +60,33 @@ export default function TeamStats() {
     );
   }
 
-  const { name, stats } = team;
+  const { name } = team;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white page-with-navbar">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-600 via-pink-600 to-orange-600 border-b border-orange-500">
+      <div className="relative z-10 bg-gradient-to-r from-orange-600 via-pink-600 to-orange-600 border-b border-orange-500 pt-20">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate(-1)}
               className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold px-4 py-2 rounded-lg transition"
             >
               ← Back
             </button>
+            
+            <SeasonDropdown
+              entityType="team"
+              entitySlug={teamSlug}
+              selectedSeason={selectedSeason}
+              onSeasonChange={handleSeasonChange}
+              className="ml-4"
+            />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{name}</h1>
-          <p className="text-orange-100 text-sm md:text-base">Team statistics and roster information</p>
+          <p className="text-orange-100 text-sm md:text-base">
+            Team statistics and roster information {selectedSeason && `• Season ${selectedSeason}`}
+          </p>
         </div>
       </div>
 
@@ -64,9 +99,12 @@ export default function TeamStats() {
               {teamPlayers.map((player, index) => (
                 <div key={index} className="bg-[#1f1f2e] rounded-xl p-4 md:p-6 border border-blue-800 hover:scale-105 transition-transform">
                   <div className="text-center">
-                    <h3 className="text-lg md:text-xl font-bold text-white mb-2">
+                    <button
+                      onClick={() => navigate(`/players/${createPlayerSlug(player.player, player.gamertag)}`)}
+                      className="text-lg md:text-xl font-bold text-white hover:text-blue-400 transition-colors cursor-pointer mb-2 block w-full"
+                    >
                       {formatPlayerName(player.player, player.gamertag)}
-                    </h3>
+                    </button>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div className="bg-[#2a2a3d] rounded-lg p-2">
                         <div className="text-yellow-400 font-bold">{player.points.toLocaleString()}</div>
@@ -103,16 +141,23 @@ export default function TeamStats() {
         <section className="mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-orange-400 mb-6">📊 Team Statistics</h2>
           <div className="bg-[#1f1f2e] rounded-xl p-6 md:p-8 border border-orange-800">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {Object.entries(stats).map(([key, value]) => (
-                <div key={key} className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-white mb-2">{value}</div>
-                  <div className="text-xs md:text-sm text-gray-400 uppercase tracking-wide">
-                    {formatStatLabel(key)}
+            {seasonStats ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {Object.entries(seasonStats).map(([key, value]) => (
+                  <div key={key} className="text-center">
+                    <div className="text-2xl md:text-3xl font-bold text-white mb-2">{value}</div>
+                    <div className="text-xs md:text-sm text-gray-400 uppercase tracking-wide">
+                      {formatStatLabel(key)}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-400"></div>
+                <span className="ml-3 text-gray-400">Loading season statistics...</span>
+              </div>
+            )}
           </div>
         </section>
 
