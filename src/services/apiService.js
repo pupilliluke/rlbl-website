@@ -29,7 +29,7 @@ export const apiService = {
   // Health check
   checkHealth: () => apiCall('/health'),
 
-  // Teams
+  // Teams - Always use team_seasons structure for consistency
   getTeams: (season) => {
     const endpoint = season ? `/teams?season=${encodeURIComponent(season)}` : '/teams';
     return apiCall(endpoint);
@@ -41,7 +41,15 @@ export const apiService = {
   // Standings
   getStandings: () => apiCall('/standings'),
 
-  // Schedule
+  // Schedule - using our new games API
+  getGames: (seasonId = null) => {
+    const endpoint = seasonId ? `/games/season/${seasonId}` : '/games';
+    return apiCall(endpoint);
+  },
+  
+  getGamesByWeek: (seasonId, week) => apiCall(`/games/season/${seasonId}/week/${week}`),
+  
+  // Legacy schedule endpoint (kept for backward compatibility)
   getSchedule: () => apiCall('/schedule'),
 
   // Stats
@@ -64,6 +72,12 @@ export const apiService = {
   getTeamSeasons: (teamId) => apiCall(`/teams/${teamId}/seasons`),
   getPlayerSeasons: (playerId) => apiCall(`/players/${playerId}/seasons`),
   getTeamStatsBySeason: (teamSlug, season = '2024') => apiCall(`/teams/${teamSlug}/stats?season=${season}`),
+  
+  // New team_seasons endpoint for getting teams by season
+  getTeamSeasonData: (seasonId) => {
+    const endpoint = seasonId ? `/team_seasons?season=${seasonId}` : '/team_seasons';
+    return apiCall(endpoint);
+  },
 
   // Admin endpoints for data management (using separate admin server)
   updatePlayer: async (id, playerData) => {
