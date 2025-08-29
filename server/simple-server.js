@@ -41,6 +41,7 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/teams', async (req, res) => {
   try {
     const season = req.query.season || null;
+    console.log('Teams API called with season:', season);
     
     // Handle current season (Season 3 - not started)
     if (season === 'current') {
@@ -56,11 +57,11 @@ app.get('/api/teams', async (req, res) => {
       let seasonCondition;
       
       if (season === 'season1') {
-        seasonCondition = "(s.name = 'Season 1' OR s.name = 'Fall 2024')";
+        seasonCondition = "(s.season_name = 'Season 1' OR s.season_name = 'Fall 2024')";
       } else if (season === 'season2') {
-        seasonCondition = "(s.name = 'Season 2' OR s.name = 'Spring 2025')";
+        seasonCondition = "(s.season_name = 'Season 2' OR s.season_name = 'Spring 2025')";
       } else if (season === 'season2_playoffs') {
-        seasonCondition = "(s.name = 'Season 2' OR s.name = 'Spring 2025')";
+        seasonCondition = "(s.season_name = 'Season 2' OR s.season_name = 'Spring 2025')";
         // Note: For playoffs, we might want additional filtering if playoff teams are tracked differently
       } else if (season === 'career') {
         // For career, show active season teams
@@ -69,40 +70,61 @@ app.get('/api/teams', async (req, res) => {
         seasonCondition = "s.is_active = true";
       }
       
-      // Pull directly from team_seasons table, not teams table
+      // Always pull from team_seasons table for consistency - include all fields
       teamsQuery = `
         SELECT 
           ts.id as team_season_id,
-          t.id as team_id, 
-          COALESCE(ts.display_name, t.team_name) as team_name,
-          COALESCE(ts.alt_logo_url, t.logo_url) as logo_url,
-          COALESCE(ts.primary_color, t.color) as color,
-          t.created_at,
+          ts.team_id,
           ts.season_id,
-          s.name as season_name
+          COALESCE(ts.display_name, t.team_name) as team_name,
+          ts.display_name,
+          COALESCE(ts.alt_logo_url, t.logo_url) as logo_url,
+          ts.alt_logo_url,
+          COALESCE(ts.primary_color, t.color) as primary_color,
+          COALESCE(ts.primary_color, t.color) as color,
+          ts.secondary_color,
+          ts.ranking,
+          ts.created_at,
+          ts.updated_at,
+          t.team_name as original_team_name,
+          t.logo_url as original_logo_url,
+          t.color as original_color,
+          s.season_name,
+          s.is_active as season_is_active
         FROM team_seasons ts
         INNER JOIN teams t ON ts.team_id = t.id
         INNER JOIN seasons s ON ts.season_id = s.id
         WHERE ${seasonCondition}
-        ORDER BY COALESCE(ts.display_name, t.team_name)
+        ORDER BY COALESCE(ts.ranking, 999), COALESCE(ts.display_name, t.team_name)
       `;
+      console.log('Using seasonal query:', teamsQuery);
     } else {
-      // Get teams for active season (default) - pull from team_seasons
+      // Get teams for active season (default) - always use team_seasons structure with all fields
       teamsQuery = `
         SELECT 
           ts.id as team_season_id,
-          t.id as team_id, 
-          COALESCE(ts.display_name, t.team_name) as team_name,
-          COALESCE(ts.alt_logo_url, t.logo_url) as logo_url,
-          COALESCE(ts.primary_color, t.color) as color,
-          t.created_at,
+          ts.team_id,
           ts.season_id,
-          s.name as season_name
+          COALESCE(ts.display_name, t.team_name) as team_name,
+          ts.display_name,
+          COALESCE(ts.alt_logo_url, t.logo_url) as logo_url,
+          ts.alt_logo_url,
+          COALESCE(ts.primary_color, t.color) as primary_color,
+          COALESCE(ts.primary_color, t.color) as color,
+          ts.secondary_color,
+          ts.ranking,
+          ts.created_at,
+          ts.updated_at,
+          t.team_name as original_team_name,
+          t.logo_url as original_logo_url,
+          t.color as original_color,
+          s.season_name,
+          s.is_active as season_is_active
         FROM team_seasons ts
         INNER JOIN teams t ON ts.team_id = t.id
         INNER JOIN seasons s ON ts.season_id = s.id
         WHERE s.is_active = true
-        ORDER BY COALESCE(ts.display_name, t.team_name)
+        ORDER BY COALESCE(ts.ranking, 999), COALESCE(ts.display_name, t.team_name)
       `;
     }
     
@@ -292,11 +314,11 @@ app.get('/api/stats', async (req, res) => {
       // Map season names to season IDs
       let seasonCondition;
       if (season === 'season1') {
-        seasonCondition = "s.name = 'Season 1' OR s.name = 'Fall 2024'";
+        seasonCondition = "s.season_name = 'Season 1' OR s.season_name = 'Fall 2024'";
       } else if (season === 'season2') {
-        seasonCondition = "s.name = 'Season 2' OR s.name = 'Spring 2025'";
+        seasonCondition = "s.season_name = 'Season 2' OR s.season_name = 'Spring 2025'";
       } else if (season === 'season2_playoffs') {
-        seasonCondition = "(s.name = 'Season 2' OR s.name = 'Spring 2025') AND g.is_playoffs = true";
+        seasonCondition = "(s.season_name = 'Season 2' OR s.season_name = 'Spring 2025') AND g.is_playoffs = true";
       } else {
         seasonCondition = "s.is_active = true";
       }
@@ -394,9 +416,145 @@ app.get('/api/power-rankings', async (req, res) => {
   }
 });
 
+// Games API endpoints
+app.get('/api/games', async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        g.id,
+        g.week,
+        g.game_date,
+        g.home_score,
+        g.away_score,
+        g.is_playoffs,
+        g.season_id,
+        hts.display_name as home_display,
+        hts.primary_color as home_team_color,
+        hts.alt_logo_url as home_team_logo,
+        ats.display_name as away_display,
+        ats.primary_color as away_team_color,
+        ats.alt_logo_url as away_team_logo
+      FROM games g
+      JOIN team_seasons hts ON g.home_team_season_id = hts.id
+      JOIN team_seasons ats ON g.away_team_season_id = ats.id
+      ORDER BY g.season_id DESC, g.week, g.id
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch games', details: error.message });
+  }
+});
+
+app.get('/api/games/season/:seasonId', async (req, res) => {
+  try {
+    const { seasonId } = req.params;
+    const result = await query(`
+      SELECT 
+        g.id,
+        g.week,
+        g.game_date,
+        g.home_score,
+        g.away_score,
+        g.is_playoffs,
+        g.season_id,
+        hts.display_name as home_display,
+        hts.primary_color as home_team_color,
+        hts.alt_logo_url as home_team_logo,
+        ats.display_name as away_display,
+        ats.primary_color as away_team_color,
+        ats.alt_logo_url as away_team_logo
+      FROM games g
+      JOIN team_seasons hts ON g.home_team_season_id = hts.id
+      JOIN team_seasons ats ON g.away_team_season_id = ats.id
+      WHERE g.season_id = $1
+      ORDER BY g.week, g.id
+    `, [seasonId]);
+    console.log(`Games API: Fetched ${result.rows.length} games for season ${seasonId}`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Games API Error:', error);
+    res.status(500).json({ error: 'Failed to fetch games', details: error.message });
+  }
+});
+
+app.get('/api/games/season/:seasonId/week/:week', async (req, res) => {
+  try {
+    const { seasonId, week } = req.params;
+    const result = await query(`
+      SELECT 
+        g.id,
+        g.week,
+        g.game_date,
+        g.home_score,
+        g.away_score,
+        g.is_playoffs,
+        g.season_id,
+        hts.display_name as home_display,
+        hts.primary_color as home_team_color,
+        hts.alt_logo_url as home_team_logo,
+        ats.display_name as away_display,
+        ats.primary_color as away_team_color,
+        ats.alt_logo_url as away_team_logo
+      FROM games g
+      JOIN team_seasons hts ON g.home_team_season_id = hts.id
+      JOIN team_seasons ats ON g.away_team_season_id = ats.id
+      WHERE g.season_id = $1 AND g.week = $2
+      ORDER BY g.id
+    `, [seasonId, week]);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch games', details: error.message });
+  }
+});
+
 // Simple test route
 app.get('/api/test-simple', (req, res) => {
   res.json({ message: 'Simple test works!' });
+});
+
+// Get team-seasons data (hyphenated version)
+app.get('/api/team-seasons', async (req, res) => {
+  console.log('Team-seasons endpoint called');
+  try {
+    const seasonId = req.query.season || null;
+    
+    let baseQuery = `
+      SELECT 
+        ts.id as team_season_id,
+        ts.team_id,
+        ts.season_id,
+        ts.display_name,
+        ts.primary_color,
+        ts.secondary_color,
+        ts.alt_logo_url,
+        ts.ranking,
+        ts.created_at,
+        ts.updated_at,
+        t.team_name as original_team_name,
+        t.logo_url as original_logo_url,
+        t.color as original_color,
+        s.season_name,
+        s.is_active as season_is_active
+      FROM team_seasons ts
+      JOIN teams t ON ts.team_id = t.id
+      JOIN seasons s ON ts.season_id = s.id`;
+    
+    let params = [];
+    
+    if (seasonId) {
+      baseQuery += ' WHERE ts.season_id = $1';
+      params.push(seasonId);
+    }
+    
+    baseQuery += ' ORDER BY s.id DESC, t.team_name';
+    
+    const result = await query(baseQuery, params);
+    console.log(`Team-seasons API: Fetched ${result.rows.length} team_seasons records for season ${seasonId || 'all'}`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Team-seasons API Error:', error);
+    res.status(500).json({ error: 'Failed to fetch team-seasons', details: error.message });
+  }
 });
 
 // Get team_seasons data
@@ -414,12 +572,14 @@ app.get('/api/team_seasons', async (req, res) => {
         ts.display_name,
         ts.alt_logo_url,
         ts.primary_color,
+        ts.secondary_color,
+        ts.ranking,
         ts.created_at,
         ts.updated_at,
         t.team_name as original_team_name,
         t.logo_url as original_logo_url,
         t.color as original_color,
-        s.name as season_name,
+        s.season_name,
         s.is_active as season_is_active
       FROM team_seasons ts
       JOIN teams t ON ts.team_id = t.id
@@ -444,8 +604,21 @@ app.get('/api/team_seasons', async (req, res) => {
     
     baseQuery += ' ORDER BY s.id DESC, t.team_name';
     
+    // Log the exact SQL being executed
+    console.log('🔍 EXECUTING SQL QUERY:');
+    console.log('Query:', baseQuery);
+    console.log('Params:', params);
+    
     const result = await query(baseQuery, params);
     console.log(`Team_seasons API: Fetched ${result.rows.length} team_seasons records`);
+    
+    // Log first record to see what fields are returned
+    if (result.rows.length > 0) {
+      console.log('🔍 FIRST RECORD FIELDS:');
+      console.log('Available fields:', Object.keys(result.rows[0]));
+      console.log('Sample record:', JSON.stringify(result.rows[0], null, 2));
+    }
+    
     res.json(result.rows);
   } catch (error) {
     console.error('Team_seasons API Error:', error);
@@ -665,6 +838,42 @@ app.get('/api/test', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Database test failed', details: error.message });
+  }
+});
+
+// Raw database inspection endpoint
+app.get('/api/inspect-team-seasons', async (req, res) => {
+  try {
+    console.log('🔍 Inspecting team_seasons table...');
+    
+    // Check table schema
+    const schemaQuery = await query(`
+      SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns 
+      WHERE table_name = 'team_seasons'
+      ORDER BY ordinal_position
+    `);
+    
+    // Get raw data
+    const rawData = await query('SELECT * FROM team_seasons WHERE season_id = 3 LIMIT 3');
+    
+    // Test specific columns
+    let secondaryColorTest = null;
+    try {
+      secondaryColorTest = await query('SELECT id, display_name, secondary_color, ranking FROM team_seasons WHERE season_id = 3 LIMIT 1');
+    } catch (error) {
+      secondaryColorTest = { error: error.message };
+    }
+    
+    res.json({
+      schema: schemaQuery.rows,
+      rawData: rawData.rows,
+      secondaryColorTest: secondaryColorTest.error || secondaryColorTest.rows,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Inspection failed:', error);
+    res.status(500).json({ error: 'Inspection failed', details: error.message });
   }
 });
 
