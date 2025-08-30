@@ -20,23 +20,21 @@ export default async function handler(req, res) {
   try {
     const result = await query(`
       SELECT 
-        t.id,
-        t.team_name,
-        t.logo_url,
-        t.color,
-        t.created_at,
-        COUNT(DISTINCT ps.player_id) as player_count
-      FROM teams t
-      LEFT JOIN player_seasons ps ON t.id = ps.team_id
-      GROUP BY t.id, t.team_name, t.logo_url, t.color, t.created_at
-      ORDER BY t.team_name
+        id,
+        season_name,
+        start_date,
+        end_date,
+        is_active,
+        created_at
+      FROM seasons
+      ORDER BY id DESC
     `);
 
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Failed to fetch teams:', error);
+    console.error('Failed to fetch seasons:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch teams', 
+      error: 'Failed to fetch seasons', 
       details: error.message 
     });
   }

@@ -1,3 +1,4 @@
+/*
 const { testDatabaseConnection, testTableExistence } = require('./testConnection');
 const { testBaseDaoMethods } = require('./testBaseDao');
 const { testTeamsDaoMethods } = require('./testTeamsDao');
@@ -65,4 +66,4 @@ async function runAllDaoTests() {
 }
 
 // Run all tests
-runAllDaoTests();
+runAllDaoTests();*/

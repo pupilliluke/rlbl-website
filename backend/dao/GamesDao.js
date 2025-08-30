@@ -45,6 +45,43 @@ class GamesDao extends BaseDao {
     const { query } = require('../../lib/database');
     await query('DELETE FROM games WHERE season_id = $1', [seasonId]);
   }
+
+  async getScheduleWithTeams() {
+    const { query } = require('../../lib/database');
+    try {
+      // Try the team_seasons approach first
+      const r = await query(`
+        SELECT 
+          g.id,
+          g.week,
+          g.game_date,
+          g.home_score,
+          g.away_score,
+          g.is_playoffs,
+          hts.display_name as home_team_name,
+          ht.color as home_team_color,
+          ht.logo_url as home_team_logo,
+          ats.display_name as away_team_name,
+          at.color as away_team_color,
+          at.logo_url as away_team_logo,
+          CASE 
+            WHEN g.home_score > g.away_score THEN hts.display_name
+            WHEN g.away_score > g.home_score THEN ats.display_name
+            ELSE 'TIE'
+          END as winner
+        FROM games g
+        JOIN team_seasons hts ON g.home_team_season_id = hts.id
+        JOIN team_seasons ats ON g.away_team_season_id = ats.id
+        JOIN teams ht ON hts.team_id = ht.id
+        JOIN teams at ON ats.team_id = at.id
+        ORDER BY g.week, g.game_date
+      `);
+      return r.rows;
+    } catch (error) {
+      // If team_seasons doesn't exist, return empty schedule
+      return [];
+    }
+  }
 }
 
 module.exports = GamesDao;

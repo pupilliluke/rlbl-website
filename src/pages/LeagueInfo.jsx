@@ -1,54 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { players } from '../data/players.js';
 import { formatPlayerName } from '../utils/formatters.js';
 import { RocketIcon, RulesIcon, AwardIcon, FlagIcon, TrophyIcon, UsersIcon } from '../components/Icons';
 import { createPlayerSlug, createTeamSlug } from '../utils/slugify.js';
+import { apiService } from '../services/apiService.js';
 
 const LeagueInfo = () => {
   const navigate = useNavigate();
   const [expandedConference, setExpandedConference] = useState(null);
+  const [teams, setTeams] = useState([]);
+  const [activeSeason, setActiveSeason] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Get teams by conference with their players
+  // Get teams from active season
+  useEffect(() => {
+    const fetchTeamsData = async () => {
+      try {
+        setLoading(true);
+        
+        // First get the active season
+        const seasonsData = await apiService.getSeasons();
+        const activeSeasonData = seasonsData.find(s => s.is_active) || seasonsData[seasonsData.length - 1];
+        setActiveSeason(activeSeasonData);
+
+        if (activeSeasonData) {
+          // Get teams from the active season - limit to first 14 teams
+          const teamsData = await apiService.getTeams(activeSeasonData.id);
+          const limitedTeams = teamsData.slice(0, 14);
+          setTeams(limitedTeams);
+        }
+      } catch (error) {
+        console.error('Failed to fetch teams data:', error);
+        // Fallback to empty data
+        setTeams([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamsData();
+  }, []);
+
+  // Get teams by conference - split 14 teams into two conferences
   const getTeamsByConference = () => {
     const teamsByConference = {
       homer: [],
       garfield: []
     };
 
-    // Group players by team
-    const teamMap = {};
-    players.forEach(player => {
-      if (!teamMap[player.team]) {
-        teamMap[player.team] = [];
-      }
-      teamMap[player.team].push(player);
-    });
+    if (teams.length === 0) {
+      return teamsByConference;
+    }
 
-    // Define conference assignments (you may want to move this to a data file)
-    const conferenceAssignments = {
-      homer: ['Non Chalant', 'Pen15 Club', 'MJ', 'Drunken Goats', 'Chicken Jockey'],
-      garfield: ['Backdoor Bandits', 'Jakeing It', 'Mid Boost', 'Nick Al Nite', 'Double Bogey', 'Bronny James', 'The Chopped Trees', 'The Shock']
-    };
-
-    Object.entries(teamMap).forEach(([teamName, teamPlayers]) => {
+    // Split teams evenly: first 7 teams go to Homer, next 7 to Garfield
+    teams.forEach((team, index) => {
       const teamData = {
-        name: teamName,
-        players: teamPlayers,
-        totalPoints: teamPlayers.reduce((sum, p) => sum + p.points, 0),
-        totalGoals: teamPlayers.reduce((sum, p) => sum + p.goals, 0)
+        id: team.id,
+        name: team.team_name,
+        color: team.color,
+        secondary_color: team.secondary_color,
+        players: [], // Players will be populated separately if needed
+        totalPoints: 0, // Can be enhanced later with actual stats
+        totalGoals: 0
       };
 
-      if (conferenceAssignments.homer.includes(teamName)) {
+      if (index < 7) {
         teamsByConference.homer.push(teamData);
-      } else if (conferenceAssignments.garfield.includes(teamName)) {
+      } else {
         teamsByConference.garfield.push(teamData);
       }
     });
-
-    // Sort teams by total points
-    teamsByConference.homer.sort((a, b) => b.totalPoints - a.totalPoints);
-    teamsByConference.garfield.sort((a, b) => b.totalPoints - a.totalPoints);
 
     return teamsByConference;
   };
@@ -83,45 +104,53 @@ const LeagueInfo = () => {
       
       {expandedConference === conference && (
         <div className="px-6 pb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {teams.map((team, index) => (
-              <div key={index} className="bg-gray-700/40 rounded-lg p-4 hover:bg-gray-700/60 transition-colors">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-bold text-white text-lg">{team.name}</h4>
-                  <div className="text-xs text-gray-400">
-                    {team.totalPoints.toLocaleString()} pts
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {team.players.map((player, pIndex) => (
-                    <div key={pIndex} className="flex items-center justify-between text-sm">
-                      <button
-                        onClick={() => navigate(`/players/${createPlayerSlug(player.player, player.gamertag)}`)}
-                        className="text-gray-300 hover:text-blue-400 transition-colors cursor-pointer text-left"
-                      >
-                        {formatPlayerName(player.player, player.gamertag)}
-                      </button>
-                      <div className="flex gap-3 text-xs">
-                        <span className="text-yellow-400">{player.goals}G</span>
-                        <span className="text-blue-400">{player.assists}A</span>
-                        <span className="text-purple-400">{player.saves}S</span>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
+              <p className="text-gray-400">Loading teams...</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {teams.map((team, index) => (
+                <div key={team.id || index} className="bg-gray-700/40 rounded-lg p-4 hover:bg-gray-700/60 transition-colors">
+                  <button
+                    onClick={() => navigate(`/teams/${createTeamSlug(team.name)}`)}
+                    className="w-full text-left flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1 items-center">
+                        <div 
+                          className="w-4 h-4 rounded-full border border-gray-400 flex-shrink-0"
+                          style={{ backgroundColor: team.color || '#808080' }}
+                        />
+                        <div 
+                          className="w-4 h-4 rounded-full border border-gray-400 flex-shrink-0"
+                          style={{ backgroundColor: team.secondary_color || team.color || '#808080' }}
+                        />
                       </div>
+                      <h4 className="font-bold text-white text-lg group-hover:text-blue-400 transition-colors">
+                        {team.name}
+                      </h4>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <div className="text-xs text-gray-400">
+                        {team.totalPoints.toLocaleString()} pts
+                      </div>
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-4 w-4 text-gray-400 group-hover:text-blue-400 transition-colors" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate(`/teams/${createTeamSlug(team.name)}`)}
-                  className={`mt-3 w-full py-2 px-3 text-xs font-medium rounded-md transition-colors ${
-                    color === 'bg-blue-500' 
-                      ? 'bg-blue-600/20 text-blue-300 hover:bg-blue-600/30' 
-                      : 'bg-orange-600/20 text-orange-300 hover:bg-orange-600/30'
-                  }`}
-                >
-                  View Team Details →
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -139,6 +168,11 @@ const LeagueInfo = () => {
           <div className="w-32 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-400 mx-auto rounded-full mb-6"></div>
           <p className="text-lg md:text-xl text-blue-200 text-center max-w-3xl mx-auto">
             The official rulebook and standings for the Rocket League Beer League
+            {activeSeason && (
+              <span className="block mt-2 text-base text-gray-300">
+                Current Season: <span className="text-blue-300 font-semibold">{activeSeason.season_name}</span>
+              </span>
+            )}
           </p>
         </div>
       </div>

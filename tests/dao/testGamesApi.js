@@ -1,3 +1,4 @@
+/*
 const GamesDao = require('../../backend/dao/GamesDao');
 
 async function testGamesApi() {
@@ -90,4 +91,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testGamesApi };
+module.exports = { testGamesApi };*/

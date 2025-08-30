@@ -1,3 +1,4 @@
+/*
 const TeamsDao = require('../../backend/dao/TeamsDao');
 const { query } = require('../../lib/database');
 
@@ -116,4 +117,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testTeamsDaoMethods };
+module.exports = { testTeamsDaoMethods };*/

@@ -67,42 +67,18 @@ export default function Landing() {
 
       {/* Main Content */}
       <div className="relative z-20 flex items-center justify-center w-full h-full spacing-container">
-        <div className={`text-center max-w-6xl mx-auto ${isLoaded ? 'animate-luxury-fade-in' : 'opacity-0'}`}>
+        <div className={`text-center max-w-7xl mx-auto px-4 ${isLoaded ? 'animate-luxury-fade-in' : 'opacity-0'}`}>
           
           {/* Premium Logo/Title Section */}
           <div className="mb-12 relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
             <div className="relative">
-              <h1 className="text-6xl md:text-8xl font-black holographic mb-4 tracking-tight">
-                RLBL
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black holographic mb-6 tracking-tight leading-tight py-4 whitespace-nowrap">
+                Rocket League Beer League
               </h1>
-              <div className="h-px w-64 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
-              <h2 className="text-2xl md:text-4xl font-bold text-white/90 tracking-wide">
-                ROCKET LEAGUE BEER LEAGUE
-              </h2>
             </div>
           </div>
 
-          {/* Premium Description */}
-          <div className="glass-dark rounded-3xl p-8 md:p-12 mb-12 shadow-luxury animate-premium-slide-up">
-            <p className="text-xl md:text-2xl text-gray-200 font-light leading-relaxed mb-6">
-              Dylan Wilding Dylan WildingDylan Wilding Dylan Wilding    Dylan Wilding Dylan Wilding Dylan Wilding Dylan WildingDylan Wilding ylaWildingDyWildinDylanlding
-            </p>
-            <div className="flex flex-wrap justify-center gap-6 text-sm text-blue-300">
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Live Statistics
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                idk what to put here
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
-                uh doi
-              </span>
-            </div>
-          </div>
 
           {/* Premium Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-large justify-center items-center">

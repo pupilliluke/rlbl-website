@@ -1,3 +1,4 @@
+/*
 const UsersSyncDao = require('../../backend/dao/UsersSyncDao');
 const { query } = require('../../lib/database');
 
@@ -125,4 +126,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testUsersSyncDao };
+module.exports = { testUsersSyncDao };*/

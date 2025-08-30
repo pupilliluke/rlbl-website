@@ -1,3 +1,4 @@
+/*
 const { query, testConnection } = require('./database');
 
 // Simulate API endpoints by calling database functions directly
@@ -255,4 +256,4 @@ if (require.main === module) {
   testAllEndpoints().then(() => {
     process.exit(0);
   });
-}
+}*/

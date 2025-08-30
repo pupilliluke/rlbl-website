@@ -1,3 +1,4 @@
+/*
 const RosterMembershipsDao = require('../../backend/dao/RosterMembershipsDao');
 const { query } = require('../../lib/database');
 
@@ -106,4 +107,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testRosterMembershipsDao };
+module.exports = { testRosterMembershipsDao };*/

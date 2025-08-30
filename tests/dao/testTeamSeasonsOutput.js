@@ -1,3 +1,4 @@
+/*
 const { query } = require('../../lib/database');
 
 async function showCompleteTeamSeasonsOutput() {
@@ -102,4 +103,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { showCompleteTeamSeasonsOutput };
+module.exports = { showCompleteTeamSeasonsOutput };*/

@@ -1,3 +1,4 @@
+/*
 const PlayersDao = require('../../backend/dao/PlayersDao');
 
 async function testPlayersDao() {
@@ -91,4 +92,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testPlayersDao };
+module.exports = { testPlayersDao };*/

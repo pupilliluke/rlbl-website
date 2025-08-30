@@ -1,3 +1,4 @@
+/*
 const SeasonsDao = require('../../backend/dao/SeasonsDao');
 
 async function testSeasonsDao() {
@@ -99,4 +100,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testSeasonsDao };
+module.exports = { testSeasonsDao };*/

@@ -36,6 +36,33 @@ class PlayersDao extends BaseDao {
     );
     return r.rows;
   }
+
+  async getAllPlayersWithTeams(seasonId = null) {
+    const { query } = require('../../lib/database');
+    let sql = `
+      SELECT 
+        p.id, 
+        p.player_name, 
+        p.gamertag,
+        COALESCE(t.team_name, 'No Team') as team_name,
+        COALESCE(t.color, '#808080') as team_color
+      FROM players p
+      LEFT JOIN roster_memberships rm ON p.id = rm.player_id
+      LEFT JOIN team_seasons ts ON rm.team_season_id = ts.id
+      LEFT JOIN teams t ON ts.team_id = t.id
+    `;
+    
+    const params = [];
+    if (seasonId) {
+      sql += ' WHERE ts.season_id = $1';
+      params.push(seasonId);
+    }
+    
+    sql += ' ORDER BY t.team_name, p.player_name';
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
 }
 
 module.exports = PlayersDao;
