@@ -108,8 +108,8 @@ class PlayerGameStatsDao extends BaseDao {
       id: player.id,
       player_name: player.player_name,
       gamertag: player.gamertag,
-      team_name: 'Mock Team',
-      team_color: '#808080',
+      team_name: 'Career Total',
+      team_color: '#999999',
       total_points: Math.floor(Math.random() * 500) + 100,
       total_goals: Math.floor(Math.random() * 50) + 10,
       total_assists: Math.floor(Math.random() * 30) + 5,
@@ -180,9 +180,43 @@ class PlayerGameStatsDao extends BaseDao {
       const result = await query(sql);
       return result.rows;
     } catch (error) {
-      console.error('Failed to get aggregated stats:', error);
-      // Return mock data if query fails
-      return this.getPlayerStatsWithTeams();
+      console.error('Failed to get aggregated stats:', error.message);
+      console.error('Falling back to simple player query without stats aggregation');
+      
+      // Try simpler approach without player_game_stats table
+      try {
+        const simpleResult = await query(`
+          SELECT 
+            p.id,
+            p.player_name,
+            p.gamertag,
+            'Career Total' as team_name,
+            '#999999' as team_color,
+            0 as total_points,
+            0 as total_goals,
+            0 as total_assists,
+            0 as total_saves,
+            0 as total_shots,
+            0 as total_mvps,
+            0 as total_demos,
+            0 as total_epic_saves,
+            0 as games_played,
+            0 as avg_points_per_game,
+            0 as avg_goals_per_game,
+            0 as avg_saves_per_game,
+            'Career' as season_name
+          FROM players p
+          ORDER BY p.player_name
+          LIMIT 50
+        `);
+        
+        console.log(`Returning ${simpleResult.rows.length} players with zero stats`);
+        return simpleResult.rows;
+      } catch (fallbackError) {
+        console.error('Even simple player query failed:', fallbackError.message);
+        // Return mock data as last resort
+        return this.getPlayerStatsWithTeams();
+      }
     }
   }
 }
