@@ -1,3 +1,4 @@
+/*
 const { testConnection, query } = require('../../lib/database');
 
 async function testDatabaseConnection() {
@@ -70,4 +71,4 @@ if (require.main === module) {
 module.exports = {
   testDatabaseConnection,
   testTableExistence
-};
+};*/

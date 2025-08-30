@@ -1,16 +1,5 @@
-// Load environment variables
-const { Pool } = require('pg');
-
-// Create connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-});
-
-// Query helper function
-const query = (text, params) => {
-  return pool.query(text, params);
-};
+// Import shared database configuration
+const { query } = require('../lib/database');
 
 export default async function handler(req, res) {
   // Enable CORS

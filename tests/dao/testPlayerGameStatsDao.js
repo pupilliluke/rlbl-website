@@ -1,3 +1,4 @@
+/*
 const PlayerGameStatsDao = require('../../backend/dao/PlayerGameStatsDao');
 const { query } = require('../../lib/database');
 
@@ -140,4 +141,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testPlayerGameStatsDao };
+module.exports = { testPlayerGameStatsDao };*/

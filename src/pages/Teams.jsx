@@ -16,12 +16,23 @@ export default function Teams() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching teams and players data from API...');
+        console.log('Fetching teams and players data from API for season:', selectedSeason);
         
-        const [teamsData, playersData] = await Promise.all([
-          apiService.getTeams(selectedSeason),
-          apiService.getPlayers()
-        ]);
+        let teamsData, playersData;
+        
+        // Use team_seasons endpoint for specific seasons to get historical data
+        if (selectedSeason === 'season1') {
+          teamsData = await apiService.getTeamSeasonData(1);
+        } else if (selectedSeason === 'season2') {
+          teamsData = await apiService.getTeamSeasonData(2);
+        } else if (selectedSeason === 'season2_playoffs') {
+          teamsData = await apiService.getTeamSeasonData(2);
+        } else {
+          // For current/career, use teams endpoint (now returns team_seasons structure)
+          teamsData = await apiService.getTeams(selectedSeason);
+        }
+        
+        playersData = await apiService.getPlayers();
         
         console.log('Teams data received:', teamsData);
         console.log('Players data received:', playersData);
@@ -45,9 +56,14 @@ export default function Teams() {
     fetchData();
   }, [selectedSeason]);
 
-  // Group players by team
+  // Group players by team - handle both team_seasons and teams data structures
   const getPlayersForTeam = (teamName) => {
-    return players.filter(player => player.team_name === teamName);
+    return players.filter(player => {
+      // Handle different team name fields from different endpoints
+      return player.team_name === teamName || 
+             player.team_name === teamName ||
+             (player.original_team_name && player.original_team_name === teamName);
+    });
   };
 
   if (loading) {
@@ -120,28 +136,61 @@ export default function Teams() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
               {teams.map((team) => {
-                const teamPlayers = getPlayersForTeam(team.team_name);
+                // Handle different field names from team_seasons vs teams endpoint
+                const teamName = team.display_name || team.team_name || team.original_team_name;
+                const teamPrimaryColor = team.primary_color || team.color || team.original_color;
+                const teamSecondaryColor = team.secondary_color;
+                const teamRanking = team.ranking;
+                const teamId = team.team_season_id || team.team_id || team.id;
+                
+                const teamPlayers = getPlayersForTeam(teamName);
                 
                 return (
-                  <Link to={`/teams/${slugify(team.team_name)}`} key={team.team_id || team.id}>
+                  <Link to={`/teams/${slugify(teamName)}`} key={teamId}>
                     <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
-                      {/* Team Color Strip */}
+                      {/* Team Color Strip - Dual Colors if Available */}
                       <div className="flex mb-4 rounded-lg overflow-hidden h-3">
                         <div
-                          className="flex-1"
-                          style={{ backgroundColor: team.color }}
+                          className={teamSecondaryColor ? "flex-1" : "w-full"}
+                          style={{ backgroundColor: teamPrimaryColor }}
                         />
+                        {teamSecondaryColor && (
+                          <div
+                            className="flex-1"
+                            style={{ backgroundColor: teamSecondaryColor }}
+                          />
+                        )}
                       </div>
                       
                       <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xl font-bold text-white">
-                          {team.team_name}
-                        </h3>
-                        <div className="flex space-x-2">
-                          <div
-                            className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                            style={{ backgroundColor: team.color }}
-                          />
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {teamName}
+                          </h3>
+                          {team.season_name && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              {team.season_name}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2 items-center">
+                          {teamRanking && teamRanking > 0 && (
+                            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-bold">
+                              #{teamRanking}
+                            </span>
+                          )}
+                          <div className="flex space-x-1">
+                            <div
+                              className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                              style={{ backgroundColor: teamPrimaryColor }}
+                            />
+                            {teamSecondaryColor && (
+                              <div
+                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                                style={{ backgroundColor: teamSecondaryColor }}
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
                       
@@ -170,16 +219,35 @@ export default function Teams() {
                         </div>
                       </div>
                       
-                      {team.logo_url && (
+                      {(team.logo_url || team.alt_logo_url) && (
                         <div className="mt-4 text-center">
                           <img 
-                            src={team.logo_url} 
-                            alt={`${team.team_name} logo`}
+                            src={team.alt_logo_url || team.logo_url} 
+                            alt={`${teamName} logo`}
                             className="h-12 w-12 mx-auto rounded-full border-2 border-gray-600"
                             onError={(e) => e.target.style.display = 'none'}
                           />
                         </div>
                       )}
+                      
+                      {/* Debug: Show all team_seasons fields */}
+                      <div className="mt-4 p-3 bg-gray-700/50 rounded-lg text-xs">
+                        <h4 className="text-white font-semibold mb-2">Team Data (Debug)</h4>
+                        <div className="grid grid-cols-2 gap-1 text-gray-300">
+                          <div>ID: {team.team_season_id || team.id || 'N/A'}</div>
+                          <div>Team ID: {team.team_id || 'N/A'}</div>
+                          <div>Season ID: {team.season_id || 'N/A'}</div>
+                          <div>Ranking: {teamRanking || 'N/A'}</div>
+                          <div>Primary: {teamPrimaryColor || 'N/A'}</div>
+                          <div>Secondary: {teamSecondaryColor || 'N/A'}</div>
+                          {team.created_at && (
+                            <div className="col-span-2">Created: {new Date(team.created_at).toLocaleDateString()}</div>
+                          )}
+                          {team.updated_at && (
+                            <div className="col-span-2">Updated: {new Date(team.updated_at).toLocaleDateString()}</div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 );

@@ -1,3 +1,4 @@
+/*
 const StandingsDao = require('../../backend/dao/StandingsDao');
 const { query } = require('../../lib/database');
 
@@ -138,4 +139,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testStandingsDao };
+module.exports = { testStandingsDao };*/

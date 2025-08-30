@@ -36,8 +36,12 @@ function Navbar() {
           
           {/* Logo Section */}
           <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-luxury group-hover:animate-glow-pulse">
-              <span className="text-xl font-black text-white">RL</span>
+            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-luxury group-hover:animate-glow-pulse">
+              <img 
+                src="/assets/images/rlbl-logo.jpg" 
+                alt="RLBL Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className="hidden md:block">
               <div className="text-xl font-bold holographic">RLBL</div>

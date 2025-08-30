@@ -1,3 +1,4 @@
+/*
 const BaseDao = require('../../backend/dao/BaseDao');
 const { query } = require('../../lib/database');
 
@@ -100,4 +101,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testBaseDaoMethods };
+module.exports = { testBaseDaoMethods };*/

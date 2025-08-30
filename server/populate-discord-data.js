@@ -1,3 +1,4 @@
+/*
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
 
@@ -383,4 +384,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { migrateDiscordData };
+module.exports = { migrateDiscordData };*/

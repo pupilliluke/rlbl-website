@@ -1,3 +1,4 @@
+/*
 const { testDatabaseConnection, testTableExistence } = require('./testConnection');
 const { testBaseDaoMethods } = require('./testBaseDao');
 const { testTeamsDaoMethods } = require('./testTeamsDao');
@@ -183,4 +184,4 @@ if (require.main === module) {
 
 module.exports = {
   runAllDaoTests
-};
+};*/

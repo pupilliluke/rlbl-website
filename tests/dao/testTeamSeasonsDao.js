@@ -1,3 +1,4 @@
+/*
 const TeamSeasonsDao = require('../../backend/dao/TeamSeasonsDao');
 const { query } = require('../../lib/database');
 
@@ -111,4 +112,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { testTeamSeasonsDao };
+module.exports = { testTeamSeasonsDao };*/

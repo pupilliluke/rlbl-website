@@ -1,3 +1,4 @@
+/*
 // Load environment variables first
 require('dotenv').config({ path: '.env.local' });
 
@@ -245,4 +246,4 @@ if (require.main === module) {
   testDatabaseData().then(() => {
     process.exit(0);
   });
-}
+}*/

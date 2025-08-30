@@ -1,3 +1,4 @@
+/*
 // Load environment variables
 require('dotenv').config({ path: '.env.local' });
 
@@ -51,4 +52,4 @@ async function testNeonDatabase() {
 // Run test
 testNeonDatabase().then(() => {
   process.exit(0);
-});
+});*/

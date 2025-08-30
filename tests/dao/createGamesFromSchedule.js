@@ -1,3 +1,4 @@
+/*
 const GamesDao = require('../../backend/dao/GamesDao');
 const { query } = require('../../lib/database');
 
@@ -201,4 +202,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { createGamesFromSchedule };
+module.exports = { createGamesFromSchedule };*/

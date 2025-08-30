@@ -39,7 +39,13 @@ export const apiService = {
   getPlayers: () => apiCall('/players'),
 
   // Standings
-  getStandings: () => apiCall('/standings'),
+  getStandings: (seasonId) => {
+    const endpoint = seasonId ? `/standings?season_id=${encodeURIComponent(seasonId)}` : '/standings';
+    return apiCall(endpoint);
+  },
+
+  // Seasons
+  getSeasons: () => apiCall('/seasons'),
 
   // Schedule - using our new games API
   getGames: (seasonId = null) => {
@@ -78,6 +84,9 @@ export const apiService = {
     const endpoint = seasonId ? `/team_seasons?season=${seasonId}` : '/team_seasons';
     return apiCall(endpoint);
   },
+
+  // Roster memberships endpoint
+  getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
 
   // Admin endpoints for data management (using separate admin server)
   updatePlayer: async (id, playerData) => {

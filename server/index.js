@@ -3,7 +3,29 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-// Import database functions
+// Import DAO layer instead of direct database access
+const {
+  TeamsDao,
+  PlayersDao,
+  StandingsDao,
+  PowerRankingsDao,
+  PlayerGameStatsDao,
+  GamesDao,
+  SeasonsDao,
+  RosterMembershipsDao
+} = require('../backend/index');
+
+// Initialize DAO instances
+const teamsDao = new TeamsDao();
+const playersDao = new PlayersDao();
+const standingsDao = new StandingsDao();
+const powerRankingsDao = new PowerRankingsDao();
+const playerGameStatsDao = new PlayerGameStatsDao();
+const gamesDao = new GamesDao();
+const seasonsDao = new SeasonsDao();
+const rosterMembershipsDao = new RosterMembershipsDao();
+
+// Import database functions for health check only
 const { query, testConnection } = require('./database');
 
 const app = express();
@@ -32,12 +54,8 @@ app.get('/api/health', async (req, res) => {
 // Teams routes
 app.get('/api/teams', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT id, team_name, logo_url, color, created_at 
-      FROM teams 
-      ORDER BY team_name
-    `);
-    res.json(result.rows);
+    const teams = await teamsDao.findAll();
+    res.json(teams);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch teams', details: error.message });
   }
@@ -46,19 +64,9 @@ app.get('/api/teams', async (req, res) => {
 // Players routes
 app.get('/api/players', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT 
-        p.id, 
-        p.player_name, 
-        p.gamertag,
-        t.team_name,
-        t.color as team_color
-      FROM players p
-      LEFT JOIN player_seasons ps ON p.id = ps.player_id
-      LEFT JOIN teams t ON ps.team_id = t.id
-      ORDER BY t.team_name, p.player_name
-    `);
-    res.json(result.rows);
+    const seasonId = req.query.season_id;
+    const players = await playersDao.getAllPlayersWithTeams(seasonId);
+    res.json(players);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch players', details: error.message });
   }
@@ -67,31 +75,8 @@ app.get('/api/players', async (req, res) => {
 // Schedule routes
 app.get('/api/schedule', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT 
-        g.id,
-        g.week,
-        g.game_date,
-        g.home_score,
-        g.away_score,
-        g.is_playoffs,
-        ht.team_name as home_team_name,
-        ht.color as home_team_color,
-        ht.logo_url as home_team_logo,
-        at.team_name as away_team_name,
-        at.color as away_team_color,
-        at.logo_url as away_team_logo,
-        CASE 
-          WHEN g.home_score > g.away_score THEN ht.team_name
-          WHEN g.away_score > g.home_score THEN at.team_name
-          ELSE 'TIE'
-        END as winner
-      FROM games g
-      JOIN teams ht ON g.home_team_id = ht.id
-      JOIN teams at ON g.away_team_id = at.id
-      ORDER BY g.week, g.game_date
-    `);
-    res.json(result.rows);
+    const schedule = await gamesDao.getScheduleWithTeams();
+    res.json(schedule);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch schedule', details: error.message });
   }
@@ -100,24 +85,41 @@ app.get('/api/schedule', async (req, res) => {
 // Standings routes
 app.get('/api/standings', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT 
-        t.id,
-        t.team_name,
-        t.logo_url,
-        t.color,
-        s.wins,
-        s.losses,
-        s.ties,
-        s.points_for,
-        s.points_against,
-        (s.points_for - s.points_against) as point_diff,
-        ROUND((CAST(s.wins as FLOAT) / NULLIF(s.wins + s.losses + s.ties, 0)) * 100, 1) as win_percentage
-      FROM standings s
-      JOIN teams t ON s.team_id = t.id
-      ORDER BY s.wins DESC, point_diff DESC
-    `);
-    res.json(result.rows);
+    const seasonId = req.query.season_id;
+    const standings = await standingsDao.getStandingsWithTeams(seasonId);
+    
+    // Check for duplicate team names and add warnings
+    const teamNameCounts = {};
+    const duplicateWarnings = [];
+    
+    standings.forEach(team => {
+      const name = team.team_name.toLowerCase().trim();
+      teamNameCounts[name] = (teamNameCounts[name] || 0) + 1;
+    });
+    
+    Object.keys(teamNameCounts).forEach(name => {
+      if (teamNameCounts[name] > 1) {
+        duplicateWarnings.push(`Duplicate team name detected: "${name}" (${teamNameCounts[name]} instances)`);
+      }
+    });
+    
+    // Add metadata to response
+    const response = {
+      standings: standings,
+      metadata: {
+        season_id: seasonId,
+        total_teams: standings.length,
+        duplicate_warnings: duplicateWarnings,
+        has_duplicates: duplicateWarnings.length > 0
+      }
+    };
+    
+    // Log warnings to console for debugging
+    if (duplicateWarnings.length > 0) {
+      console.warn('⚠️  Duplicate team names found:', duplicateWarnings);
+    }
+    
+    res.json(response);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch standings', details: error.message });
   }
@@ -126,21 +128,8 @@ app.get('/api/standings', async (req, res) => {
 // Power Rankings routes
 app.get('/api/power-rankings', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT 
-        pr.rank,
-        pr.week,
-        pr.reasoning,
-        t.id as team_id,
-        t.team_name,
-        t.logo_url,
-        t.color
-      FROM power_rankings pr
-      JOIN teams t ON pr.team_id = t.id
-      WHERE pr.week = (SELECT MAX(week) FROM power_rankings)
-      ORDER BY pr.rank
-    `);
-    res.json(result.rows);
+    const rankings = await powerRankingsDao.getLatestRankings();
+    res.json(rankings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch power rankings', details: error.message });
   }
@@ -149,58 +138,101 @@ app.get('/api/power-rankings', async (req, res) => {
 // Stats routes
 app.get('/api/stats', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT 
-        p.id,
-        p.player_name,
-        p.gamertag,
-        t.team_name,
-        t.color as team_color,
-        SUM(pgs.points) as total_points,
-        SUM(pgs.goals) as total_goals,
-        SUM(pgs.assists) as total_assists,
-        SUM(pgs.saves) as total_saves,
-        SUM(pgs.shots) as total_shots,
-        SUM(pgs.mvps) as total_mvps,
-        SUM(pgs.demos) as total_demos,
-        SUM(pgs.epic_saves) as total_epic_saves,
-        COUNT(pgs.game_id) as games_played,
-        ROUND(CAST(SUM(pgs.points) as FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 1) as avg_points_per_game
-      FROM player_game_stats pgs
-      JOIN players p ON pgs.player_id = p.id
-      JOIN teams t ON pgs.team_id = t.id
-      GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color
-      ORDER BY total_points DESC
-    `);
-    res.json(result.rows);
+    const season = req.query.season;
+    const stats = await playerGameStatsDao.getPlayerStatsWithTeams(season);
+    res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch stats', details: error.message });
   }
 });
 
-// Test endpoint to run database tests
-app.get('/api/test', async (req, res) => {
+// Games/Schedule routes
+app.get('/api/games', async (req, res) => {
   try {
-    const { testDatabaseData } = require('./test-database');
-    
-    // Capture console output
-    const originalLog = console.log;
-    let output = '';
-    console.log = (...args) => {
-      output += args.join(' ') + '\n';
-      originalLog(...args);
-    };
-    
-    await testDatabaseData();
-    console.log = originalLog;
-    
-    res.json({ 
-      message: 'Database test completed successfully!', 
-      output: output,
-      timestamp: new Date().toISOString()
-    });
+    const seasonId = req.query.season_id;
+    if (seasonId) {
+      const games = await gamesDao.listBySeason(seasonId);
+      res.json(games);
+    } else {
+      // For all games, use the schedule method
+      const games = await gamesDao.getScheduleWithTeams();
+      res.json(games);
+    }
   } catch (error) {
-    res.status(500).json({ error: 'Database test failed', details: error.message });
+    res.status(500).json({ error: 'Failed to fetch games', details: error.message });
+  }
+});
+
+app.get('/api/games/season/:seasonId', async (req, res) => {
+  try {
+    const { seasonId } = req.params;
+    const games = await gamesDao.listBySeason(seasonId);
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch games for season', details: error.message });
+  }
+});
+
+// Seasons routes
+app.get('/api/seasons', async (req, res) => {
+  try {
+    const seasons = await seasonsDao.findAll();
+    res.json(seasons);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch seasons', details: error.message });
+  }
+});
+
+// Roster memberships routes
+app.get('/api/roster-memberships/team/:teamId/season/:seasonId', async (req, res) => {
+  try {
+    const { teamId, seasonId } = req.params;
+    
+    // First, we need to get the team_season_id from the team_seasons table
+    const teamSeasonResult = await query(
+      'SELECT id FROM team_seasons WHERE team_id = $1 AND season_id = $2',
+      [teamId, seasonId]
+    );
+    
+    if (teamSeasonResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Team season combination not found' });
+    }
+    
+    const teamSeasonId = teamSeasonResult.rows[0].id;
+    const roster = await rosterMembershipsDao.listByTeamSeason(teamSeasonId);
+    res.json(roster);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch roster memberships', details: error.message });
+  }
+});
+
+// Diagnostic endpoint to check data
+app.get('/api/diagnostic', async (req, res) => {
+  try {
+    // Check table record counts
+    const tables = ['teams', 'players', 'games', 'player_game_stats', 'standings'];
+    const results = {};
+    
+    for (const table of tables) {
+      try {
+        const result = await query(`SELECT COUNT(*) as count FROM ${table}`);
+        results[table] = result.rows[0].count;
+      } catch (error) {
+        results[table] = `Error: ${error.message}`;
+      }
+    }
+    
+    // Check specific player_game_stats sample
+    try {
+      const sampleStats = await query('SELECT * FROM player_game_stats LIMIT 3');
+      results.player_game_stats_sample = sampleStats.rows;
+    } catch (error) {
+      results.player_game_stats_sample = `Error: ${error.message}`;
+    }
+    
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: 'Diagnostic failed', details: error.message });
   }
 });
 
