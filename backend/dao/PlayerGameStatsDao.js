@@ -122,6 +122,69 @@ class PlayerGameStatsDao extends BaseDao {
       avg_points_per_game: Math.floor(Math.random() * 30) + 10
     }));
   }
+
+  async getAggregatedStats(seasonFilter = '') {
+    const { query } = require('../../lib/database');
+    
+    try {
+      const sql = `
+        SELECT 
+          p.id,
+          p.player_name,
+          p.gamertag,
+          t.team_name,
+          t.color as team_color,
+          SUM(pgs.points) as total_points,
+          SUM(pgs.goals) as total_goals,
+          SUM(pgs.assists) as total_assists,
+          SUM(pgs.saves) as total_saves,
+          SUM(pgs.shots) as total_shots,
+          SUM(pgs.mvps) as total_mvps,
+          SUM(pgs.demos) as total_demos,
+          SUM(pgs.epic_saves) as total_epic_saves,
+          COUNT(pgs.game_id) as games_played,
+          ROUND(
+            CASE 
+              WHEN COUNT(pgs.game_id) > 0 
+              THEN (CAST(SUM(pgs.points) as FLOAT) / COUNT(pgs.game_id)) 
+              ELSE 0 
+            END::numeric, 1
+          ) as avg_points_per_game,
+          ROUND(
+            CASE 
+              WHEN COUNT(pgs.game_id) > 0 
+              THEN (CAST(SUM(pgs.goals) as FLOAT) / COUNT(pgs.game_id)) 
+              ELSE 0 
+            END::numeric, 1
+          ) as avg_goals_per_game,
+          ROUND(
+            CASE 
+              WHEN COUNT(pgs.game_id) > 0 
+              THEN (CAST(SUM(pgs.saves) as FLOAT) / COUNT(pgs.game_id)) 
+              ELSE 0 
+            END::numeric, 1
+          ) as avg_saves_per_game,
+          seasons.season_name
+        FROM player_game_stats pgs
+        JOIN players p ON pgs.player_id = p.id
+        JOIN games g ON pgs.game_id = g.id
+        JOIN seasons ON g.season_id = seasons.id
+        JOIN roster_memberships rm ON rm.player_id = p.id AND rm.season_id = seasons.id
+        JOIN teams t ON rm.team_id = t.id
+        WHERE 1=1 ${seasonFilter}
+        GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color, seasons.season_name
+        HAVING SUM(pgs.points) > 0
+        ORDER BY total_points DESC, total_goals DESC
+      `;
+      
+      const result = await query(sql);
+      return result.rows;
+    } catch (error) {
+      console.error('Failed to get aggregated stats:', error);
+      // Return mock data if query fails
+      return this.getPlayerStatsWithTeams();
+    }
+  }
 }
 
 module.exports = PlayerGameStatsDao;
