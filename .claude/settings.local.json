@@ -3,7 +3,9 @@
     "allow": [
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
-      "Bash(npm run server:*)"
+      "Bash(npm run server:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
