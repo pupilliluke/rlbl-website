@@ -13,6 +13,7 @@ const standingsRouter = require('./standings');
 const powerRankingsRouter = require('./powerRankings');
 const bracketsRouter = require('./brackets');
 const usersRouter = require('./users');
+const statsRouter = require('./stats');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -40,7 +41,8 @@ router.get('/', (req, res) => {
       standings: '/api/standings',
       powerRankings: '/api/power-rankings',
       brackets: '/api/brackets',
-      users: '/api/users'
+      users: '/api/users',
+      stats: '/api/stats'
     },
     health: '/api/health'
   });
@@ -58,6 +60,7 @@ router.use('/standings', standingsRouter);
 router.use('/power-rankings', powerRankingsRouter);
 router.use('/brackets', bracketsRouter);
 router.use('/users', usersRouter);
+router.use('/stats', statsRouter);
 
 // 404 handler for undefined API routes
 router.use('*', (req, res) => {
@@ -75,7 +78,8 @@ router.use('*', (req, res) => {
       standings: '/api/standings',
       powerRankings: '/api/power-rankings',
       brackets: '/api/brackets',
-      users: '/api/users'
+      users: '/api/users',
+      stats: '/api/stats'
     }
   });
 });
