@@ -132,8 +132,8 @@ class PlayerGameStatsDao extends BaseDao {
           p.id,
           p.player_name,
           p.gamertag,
-          t.team_name,
-          t.color as team_color,
+          COALESCE(t.team_name, 'Career Total') as team_name,
+          COALESCE(t.color, '#999999') as team_color,
           SUM(pgs.points) as total_points,
           SUM(pgs.goals) as total_goals,
           SUM(pgs.assists) as total_assists,
@@ -169,8 +169,8 @@ class PlayerGameStatsDao extends BaseDao {
         JOIN players p ON pgs.player_id = p.id
         JOIN games g ON pgs.game_id = g.id
         JOIN seasons ON g.season_id = seasons.id
-        JOIN roster_memberships rm ON rm.player_id = p.id AND rm.season_id = seasons.id
-        JOIN teams t ON rm.team_id = t.id
+        LEFT JOIN roster_memberships rm ON rm.player_id = p.id AND rm.season_id = seasons.id
+        LEFT JOIN teams t ON rm.team_id = t.id
         WHERE 1=1 ${seasonFilter}
         GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color, seasons.season_name
         HAVING SUM(pgs.points) > 0
