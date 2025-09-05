@@ -3,79 +3,292 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export default function Landing() {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth) * 100,
-        y: (e.clientY / window.innerHeight) * 100,
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden bg-gradient-executive z-[1]">
-      {/* Neural Network Background */}
-      <div className="absolute inset-0 neural-bg opacity-30">
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-2 h-2 bg-blue-400 rounded-full animate-neural-network opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 4}s`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Floating Data Streams */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(8)].map((_, i) => (
+    <div className="fixed inset-0 w-screen h-screen overflow-hidden z-[1]" style={{
+      background: `
+        radial-gradient(ellipse at top, #1e3a8a 0%, #1e1b4b 25%, #0f172a 60%, #000000 100%),
+        radial-gradient(ellipse at bottom right, #312e81 0%, transparent 50%),
+        radial-gradient(ellipse at bottom left, #1e40af 0%, transparent 50%)
+      `
+    }}>
+      {/* Starfield Background */}
+      <div className="absolute inset-0">
+        {/* Large bright stars */}
+        {[...Array(50)].map((_, i) => (
           <div
-            key={i}
-            className="absolute w-px h-20 bg-gradient-to-b from-transparent via-blue-400 to-transparent animate-data-stream opacity-30"
+            key={`star-${i}`}
+            className="absolute rounded-full animate-pulse"
             style={{
-              left: `${10 + i * 12}%`,
-              animationDelay: `${i * 1.2}s`,
-              animationDuration: `${6 + Math.random() * 4}s`,
+              width: `${1 + Math.random() * 2}px`,
+              height: `${1 + Math.random() * 2}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: '#ffffff',
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${3 + Math.random() * 4}s`,
+              boxShadow: '0 0 6px rgba(255, 255, 255, 0.8)',
+            }}
+          />
+        ))}
+        
+        {/* Medium stars */}
+        {[...Array(80)].map((_, i) => (
+          <div
+            key={`star-med-${i}`}
+            className="absolute rounded-full"
+            style={{
+              width: '1px',
+              height: '1px',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: '#e0e7ff',
+              boxShadow: '0 0 3px rgba(224, 231, 255, 0.6)',
+            }}
+          />
+        ))}
+        
+        {/* Small distant stars */}
+        {[...Array(150)].map((_, i) => (
+          <div
+            key={`star-small-${i}`}
+            className="absolute rounded-full"
+            style={{
+              width: '0.5px',
+              height: '0.5px',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              backgroundColor: '#cbd5e1',
+              opacity: 0.7,
+            }}
+          />
+        ))}
+
+        {/* Distant galaxies/nebulae */}
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={`nebula-${i}`}
+            className="absolute rounded-full animate-pulse opacity-20"
+            style={{
+              width: `${100 + Math.random() * 200}px`,
+              height: `${50 + Math.random() * 100}px`,
+              left: `${Math.random() * 80}%`,
+              top: `${Math.random() * 80}%`,
+              background: `radial-gradient(ellipse, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.2) 40%, transparent 70%)`,
+              filter: 'blur(20px)',
+              animationDuration: `${8 + Math.random() * 6}s`,
+              animationDelay: `${Math.random() * 10}s`,
+            }}
+          />
+        ))}
+
+        {/* Cosmic dust clouds */}
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={`dust-${i}`}
+            className="absolute animate-float opacity-10"
+            style={{
+              width: `${200 + Math.random() * 300}px`,
+              height: `${100 + Math.random() * 150}px`,
+              left: `${Math.random() * 60}%`,
+              top: `${Math.random() * 70}%`,
+              background: `radial-gradient(ellipse, rgba(30, 58, 138, 0.4) 0%, rgba(30, 27, 75, 0.3) 30%, transparent 60%)`,
+              filter: 'blur(40px)',
+              animationDuration: `${20 + Math.random() * 30}s`,
+              animationDelay: `${Math.random() * 15}s`,
             }}
           />
         ))}
       </div>
 
-      {/* Interactive Cursor Effect */}
-      <div
-        className="absolute pointer-events-none z-10"
-        style={{
-          left: `${mousePosition.x}%`,
-          top: `${mousePosition.y}%`,
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        <div className="w-96 h-96 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 rounded-full blur-3xl animate-glow-pulse" />
+      {/* Cosmic Energy Streams */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Bright cosmic streams */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-px h-20 animate-data-stream opacity-30"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 15}s`,
+              animationDuration: `${6 + Math.random() * 8}s`,
+              background: 'linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.8), transparent)',
+              boxShadow: '0 0 4px rgba(59, 130, 246, 0.6)',
+            }}
+          />
+        ))}
+        
+        {/* Stellar wind streams */}
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={`stream-${i}`}
+            className="absolute w-px h-32 animate-data-stream opacity-25"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 20}s`,
+              animationDuration: `${8 + Math.random() * 10}s`,
+              background: 'linear-gradient(to bottom, transparent, rgba(147, 197, 253, 0.7), transparent)',
+              boxShadow: '0 0 3px rgba(147, 197, 253, 0.4)',
+            }}
+          />
+        ))}
+        
+        {/* Cosmic dust trails */}
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={`sliver-${i}`}
+            className="absolute w-px h-40 animate-data-stream opacity-20"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 25}s`,
+              animationDuration: `${10 + Math.random() * 12}s`,
+              background: 'linear-gradient(to bottom, transparent, rgba(191, 219, 254, 0.6), transparent)',
+              boxShadow: '0 0 2px rgba(191, 219, 254, 0.3)',
+            }}
+          />
+        ))}
       </div>
+
+      {/* Floating Glass Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large floating glass orbs */}
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={`orb-${i}`}
+            className="absolute glass rounded-full animate-float opacity-20 shadow-luxury"
+            style={{
+              width: `${60 + Math.random() * 80}px`,
+              height: `${60 + Math.random() * 80}px`,
+              left: `${Math.random() * 90}%`,
+              top: `${Math.random() * 90}%`,
+              animationDelay: `${Math.random() * 20}s`,
+              animationDuration: `${26 + Math.random() * 14}s`,
+            }}
+          />
+        ))}
+        
+        {/* Medium floating glass rectangles */}
+        {[...Array(8)].map((_, i) => (
+          <div
+            key={`rect-${i}`}
+            className="absolute glass-dark rounded-xl animate-float opacity-15 border border-white/20"
+            style={{
+              width: `${40 + Math.random() * 60}px`,
+              height: `${30 + Math.random() * 40}px`,
+              left: `${Math.random() * 85}%`,
+              top: `${Math.random() * 85}%`,
+              animationDelay: `${Math.random() * 26}s`,
+              animationDuration: `${20 + Math.random() * 20}s`,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }}
+          />
+        ))}
+        
+        {/* Small floating glass diamonds */}
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={`diamond-${i}`}
+            className="absolute glass rounded-lg animate-float opacity-25 border border-blue-400/30"
+            style={{
+              width: `${15 + Math.random() * 25}px`,
+              height: `${15 + Math.random() * 25}px`,
+              left: `${Math.random() * 95}%`,
+              top: `${Math.random() * 95}%`,
+              animationDelay: `${Math.random() * 33}s`,
+              animationDuration: `${13 + Math.random() * 27}s`,
+              transform: `rotate(45deg)`,
+            }}
+          />
+        ))}
+        
+        {/* Glass hexagons with glow */}
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={`hex-${i}`}
+            className="absolute animate-float opacity-30"
+            style={{
+              left: `${15 + Math.random() * 70}%`,
+              top: `${15 + Math.random() * 70}%`,
+              animationDelay: `${Math.random() * 40}s`,
+              animationDuration: `${33 + Math.random() * 20}s`,
+            }}
+          >
+            <div 
+              className="glass-dark border border-purple-400/40 shadow-executive animate-glow-pulse"
+              style={{
+                width: `${50 + Math.random() * 40}px`,
+                height: `${50 + Math.random() * 40}px`,
+                clipPath: 'polygon(30% 0%, 70% 0%, 100% 50%, 70% 100%, 30% 100%, 0% 50%)',
+              }}
+            />
+          </div>
+        ))}
+        
+        {/* Floating glass particles with trails */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={`particle-${i}`}
+            className="absolute animate-data-stream opacity-40"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${100 + Math.random() * 20}%`,
+              animationDelay: `${Math.random() * 50}s`,
+              animationDuration: `${26 + Math.random() * 40}s`,
+            }}
+          >
+            <div className="w-1 h-8 bg-gradient-to-b from-transparent via-cyan-400 to-transparent glass rounded-full" />
+          </div>
+        ))}
+        
+        {/* Large floating glass panels */}
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={`panel-${i}`}
+            className="absolute glass-dark border border-white/10 rounded-2xl animate-float opacity-10 shadow-luxury"
+            style={{
+              width: `${120 + Math.random() * 100}px`,
+              height: `${80 + Math.random() * 60}px`,
+              left: `${Math.random() * 70}%`,
+              top: `${Math.random() * 80}%`,
+              animationDelay: `${Math.random() * 66}s`,
+              animationDuration: `${50 + Math.random() * 33}s`,
+              transform: `rotate(${Math.random() * 30 - 15}deg)`,
+            }}
+          >
+            <div className="absolute inset-2 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 animate-glow-pulse" />
+          </div>
+        ))}
+      </div>
+
 
       {/* Main Content */}
       <div className="relative z-20 flex items-center justify-center w-full h-full spacing-container">
         <div className={`text-center max-w-7xl mx-auto px-4 ${isLoaded ? 'animate-luxury-fade-in' : 'opacity-0'}`}>
           
-          {/* Premium Logo/Title Section */}
-          <div className="mb-12 relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
-            <div className="relative">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black holographic mb-6 tracking-tight leading-tight py-4 whitespace-nowrap">
-                Rocket League Beer League
-              </h1>
+          {/* Modern Header Section */}
+          <div className="mb-16 relative">
+            <div className="relative text-center space-y-4">
+              <div className="inline-block">
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extralight tracking-wider text-white leading-none">
+                  ROCKET
+                </h1>
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-400 to-transparent mt-2 mb-2" />
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extralight tracking-wider text-white leading-none">
+                  LEAGUE
+                </h1>
+              </div>
+              <div className="flex items-center justify-center gap-4 mt-6">
+                <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-400" />
+                <span className="text-lg sm:text-xl md:text-2xl font-light tracking-widest text-blue-300 uppercase">
+                  Beer League
+                </span>
+                <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-400" />
+              </div>
             </div>
           </div>
 
@@ -97,7 +310,7 @@ export default function Landing() {
 
             <Link
               to="/legacy"
-              className="group spacing-container bg-gray-800/90 border border-gray-500 text-white font-semibold text-lg rounded-full hover:border-blue-400 transition-smooth hover:shadow-executive"
+              className="group spacing-container bg-gray-800/90 text-white font-semibold text-lg rounded-full transition-smooth hover:shadow-executive"
             >
               <span className="flex items-center gap-standard">
                 <svg className="w-6 h-6 group-hover:animate-ai-processing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,16 +322,16 @@ export default function Landing() {
           </div>
 
           {/* Status Indicators */}
-          <div className="mt-16 flex justify-center gap-8">
-            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
+          <div className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 max-w-4xl mx-auto px-4">
+            <div className="bg-gray-800/90 rounded-2xl px-6 py-4 w-full sm:w-auto text-center">
               <div className="text-3xl font-bold text-green-400">99.9%</div>
               <div className="text-sm text-gray-300">Uptime</div>
             </div>
-            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
+            <div className="bg-gray-800/90 rounded-2xl px-6 py-4 w-full sm:w-auto text-center">
               <div className="text-3xl font-bold text-blue-400">24/7</div>
               <div className="text-sm text-gray-300">Monitoring</div>
             </div>
-            <div className="bg-gray-800/90 border border-gray-600 rounded-2xl px-6 py-4">
+            <div className="bg-gray-800/90 rounded-2xl px-6 py-4 w-full sm:w-auto text-center">
               <div className="text-3xl font-bold text-purple-400">Live</div>
               <div className="text-sm text-gray-300">Data Feed</div>
             </div>

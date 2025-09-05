@@ -35,7 +35,7 @@ function Navbar() {
         <div className="flex items-center justify-between h-20">
           
           {/* Logo Section */}
-          <Link to="/" className="flex items-center space-x-3 group">
+          <Link to="/leagueinfo" className="flex items-center space-x-3 group">
             <div className="w-12 h-12 rounded-xl overflow-hidden shadow-luxury group-hover:animate-glow-pulse">
               <img 
                 src="/assets/images/rlbl-logo.jpg" 
@@ -83,36 +83,36 @@ function Navbar() {
               <span className="text-green-400 font-medium">Live</span>
             </div>
 
-            {/* Admin Access */}
+            {/* Admin Access - Always visible, responsive sizing */}
             <Link
               to="/admin"
-              className="group relative spacing-card bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-luxury hover-luxury"
+              className="group relative z-10 p-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl shadow-luxury hover-luxury flex items-center justify-center min-w-[44px] min-h-[44px] touch-manipulation"
             >
-              <span className="relative z-10 flex items-center gap-2">
-                <svg className="w-4 h-4 group-hover:animate-ai-processing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 group-hover:animate-ai-processing flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span className="hidden sm:inline">Admin</span>
-              </span>
+                <span className="hidden sm:inline text-sm">Admin</span>
+              </div>
             </Link>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - Fixed clickable area */}
             <button 
               onClick={toggleMobileMenu}
-              className="lg:hidden spacing-card rounded-xl glass hover:bg-white/10 transition-fast"
+              className="lg:hidden relative z-50 p-4 rounded-xl glass hover:bg-white/10 transition-fast ml-6 min-w-[48px] min-h-[48px] flex items-center justify-center touch-manipulation"
               aria-label="Toggle mobile menu"
             >
-              <div className="w-6 h-6 relative">
-                <span className={`block absolute h-0.5 w-6 bg-white transform transition duration-300 ease-in-out ${
-                  isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : '-translate-y-0.5'
-                }`}></span>
-                <span className={`block absolute h-0.5 w-6 bg-white transform transition duration-300 ease-in-out translate-y-1 ${
+              <div className="w-6 h-6 relative pointer-events-none">
+                <div className={`absolute top-0 left-0 w-full h-0.5 bg-white transform transition duration-300 ease-in-out ${
+                  isMobileMenuOpen ? 'rotate-45 translate-y-2.5' : 'translate-y-0'
+                }`}></div>
+                <div className={`absolute top-2 left-0 w-full h-0.5 bg-white transform transition duration-300 ease-in-out ${
                   isMobileMenuOpen ? 'opacity-0' : 'opacity-100'
-                }`}></span>
-                <span className={`block absolute h-0.5 w-6 bg-white transform transition duration-300 ease-in-out ${
-                  isMobileMenuOpen ? '-rotate-45 translate-y-2.5' : 'translate-y-2.5'
-                }`}></span>
+                }`}></div>
+                <div className={`absolute top-4 left-0 w-full h-0.5 bg-white transform transition duration-300 ease-in-out ${
+                  isMobileMenuOpen ? '-rotate-45 -translate-y-2.5' : 'translate-y-0'
+                }`}></div>
               </div>
             </button>
           </div>

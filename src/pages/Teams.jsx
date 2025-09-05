@@ -10,7 +10,7 @@ export default function Teams() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState("career");
+  const [selectedSeason, setSelectedSeason] = useState("current");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,7 +78,7 @@ export default function Teams() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative">
       {/* Header */}
       <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
@@ -100,7 +100,6 @@ export default function Teams() {
                 className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
               >
                 <option value="current" className="text-black bg-white">🚀 Season 3 - Summer 25 (Not Started)</option>
-                <option value="career" className="text-black bg-white">🌟 Active Season Teams</option>
                 <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
                 <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
                 <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
@@ -114,7 +113,6 @@ export default function Teams() {
         <div className="mb-12">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
             {selectedSeason === 'current' ? 'Season 3 Teams (Not Started)' :
-             selectedSeason === 'career' ? 'Active Season Teams' :
              selectedSeason === 'season1' ? 'Season 1 Teams' :
              selectedSeason === 'season2' ? 'Season 2 Teams' :
              selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
@@ -194,13 +192,13 @@ export default function Teams() {
                         </div>
                       </div>
                       
-                      <div className="mt-4">
-                        <p className="text-sm text-gray-300 mb-3 font-medium">
-                          Players ({teamPlayers.length}):
-                        </p>
-                        <div className="grid grid-cols-1 gap-2">
-                          {teamPlayers.length > 0 ? (
-                            teamPlayers.map((player) => (
+                      {teamPlayers.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-sm text-gray-300 mb-3 font-medium">
+                            Players:
+                          </p>
+                          <div className="grid grid-cols-1 gap-2">
+                            {teamPlayers.map((player) => (
                               <div
                                 key={player.id}
                                 className="text-base text-white bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50"
@@ -210,14 +208,10 @@ export default function Teams() {
                                   ({player.gamertag})
                                 </span>
                               </div>
-                            ))
-                          ) : (
-                            <div className="text-gray-400 text-sm">
-                              No players found
-                            </div>
-                          )}
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                       
                       {(team.logo_url || team.alt_logo_url) && (
                         <div className="mt-4 text-center">
@@ -229,25 +223,6 @@ export default function Teams() {
                           />
                         </div>
                       )}
-                      
-                      {/* Debug: Show all team_seasons fields */}
-                      <div className="mt-4 p-3 bg-gray-700/50 rounded-lg text-xs">
-                        <h4 className="text-white font-semibold mb-2">Team Data (Debug)</h4>
-                        <div className="grid grid-cols-2 gap-1 text-gray-300">
-                          <div>ID: {team.team_season_id || team.id || 'N/A'}</div>
-                          <div>Team ID: {team.team_id || 'N/A'}</div>
-                          <div>Season ID: {team.season_id || 'N/A'}</div>
-                          <div>Ranking: {teamRanking || 'N/A'}</div>
-                          <div>Primary: {teamPrimaryColor || 'N/A'}</div>
-                          <div>Secondary: {teamSecondaryColor || 'N/A'}</div>
-                          {team.created_at && (
-                            <div className="col-span-2">Created: {new Date(team.created_at).toLocaleDateString()}</div>
-                          )}
-                          {team.updated_at && (
-                            <div className="col-span-2">Updated: {new Date(team.updated_at).toLocaleDateString()}</div>
-                          )}
-                        </div>
-                      </div>
                     </div>
                   </Link>
                 );

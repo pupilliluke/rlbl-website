@@ -36,13 +36,21 @@ class StandingsDao extends BaseDao {
   async getStandingsWithTeams(seasonId = null) {
     const { query } = require('../../lib/database');
     
+    if (!seasonId) {
+      // If no season specified, return empty array or default to latest season
+      return [];
+    }
+    
     try {
+      // Get teams for the specific season with standings data
       let sql = `
         SELECT 
+          ts.id as team_season_id,
           t.id,
-          t.team_name,
+          COALESCE(ts.display_name, t.team_name) as team_name,
           t.logo_url,
-          t.color,
+          COALESCE(ts.primary_color, t.color) as color,
+          ts.secondary_color,
           COALESCE(s.wins, 0) as wins,
           COALESCE(s.losses, 0) as losses,
           COALESCE(s.ties, 0) as ties,
@@ -54,66 +62,20 @@ class StandingsDao extends BaseDao {
             THEN CAST(COALESCE(s.wins, 0) AS FLOAT) / (COALESCE(s.wins, 0) + COALESCE(s.losses, 0) + COALESCE(s.ties, 0)) * 100 
             ELSE 0 
           END as win_percentage,
-          ${seasonId || 0} as season_id
-        FROM teams t
-        LEFT JOIN (
-          SELECT ts.*, s.wins, s.losses, s.ties, s.points_for, s.points_against, s.season_id
-          FROM team_seasons ts
-          LEFT JOIN standings s ON s.team_season_id = ts.id
-          ${seasonId ? 'WHERE ts.season_id = $1' : ''}
-        ) s ON s.team_id = t.id
+          $1 as season_id
+        FROM team_seasons ts
+        JOIN teams t ON ts.team_id = t.id
+        LEFT JOIN standings s ON s.team_season_id = ts.id AND s.season_id = $1
+        WHERE ts.season_id = $1
+        ORDER BY COALESCE(s.wins, 0) DESC, COALESCE((s.points_for - s.points_against), 0) DESC, COALESCE(ts.display_name, t.team_name)
       `;
       
-      const params = [];
-      if (seasonId) {
-        params.push(seasonId);
-      }
-      
-      sql += ` ORDER BY COALESCE(s.wins, 0) DESC, COALESCE((s.points_for - s.points_against), 0) DESC, t.team_name`;
-      
-      const r = await query(sql, params);
+      const r = await query(sql, [seasonId]);
       return r.rows;
     } catch (error) {
-      console.log('Standings query failed, trying fallback:', error.message);
-      
-      // Try simpler approach - show all teams with zero stats if no standings data
-      try {
-        let fallbackSql = `
-          SELECT 
-            t.id,
-            t.team_name,
-            t.logo_url,
-            t.color,
-            COALESCE(s.wins, 0) as wins,
-            COALESCE(s.losses, 0) as losses,
-            COALESCE(s.ties, 0) as ties,
-            COALESCE(s.points_for, 0) as points_for,
-            COALESCE(s.points_against, 0) as points_against,
-            COALESCE((s.points_for - s.points_against), 0) as point_diff,
-            CASE 
-              WHEN (COALESCE(s.wins, 0) + COALESCE(s.losses, 0) + COALESCE(s.ties, 0)) > 0 
-              THEN CAST(COALESCE(s.wins, 0) AS FLOAT) / (COALESCE(s.wins, 0) + COALESCE(s.losses, 0) + COALESCE(s.ties, 0)) * 100 
-              ELSE 0 
-            END as win_percentage,
-            ${seasonId || 0} as season_id
-          FROM teams t
-          LEFT JOIN standings s ON t.id = s.team_id ${seasonId ? 'AND s.season_id = $1' : ''}
-        `;
-        
-        const fallbackParams = [];
-        if (seasonId) {
-          fallbackParams.push(seasonId);
-        }
-        
-        fallbackSql += ' ORDER BY COALESCE(s.wins, 0) DESC, COALESCE((s.points_for - s.points_against), 0) DESC, t.team_name';
-        
-        const r = await query(fallbackSql, fallbackParams);
-        return r.rows;
-      } catch (fallbackError) {
-        console.log('Fallback standings query also failed:', fallbackError.message);
-        // Return empty array if everything fails
-        return [];
-      }
+      console.log('Standings query failed:', error.message);
+      // Return empty array if query fails
+      return [];
     }
   }
 }

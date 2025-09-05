@@ -72,46 +72,72 @@ const Stats = () => {
     });
   }, [stats]);
 
-  // Calculate team stats from all teams and merge with player data
+  // Calculate team stats - use team data from API for current season, player aggregation for historical seasons
   const teamStats = useMemo(() => {
-    // Start with all teams from the teams endpoint
     const teamMap = {};
     
-    // Initialize all teams with zero stats
-    teams.forEach(team => {
-      teamMap[team.team_name] = {
-        team: team.team_name,
-        teamId: team.id,
-        color: team.color,
-        logo_url: team.logo_url,
-        players: 0,
-        totalPoints: 0,
-        totalGoals: 0,
-        totalAssists: 0,
-        totalSaves: 0,
-        totalShots: 0,
-        totalMVPs: 0,
-        totalDemos: 0,
-        totalEpicSaves: 0,
-        totalGames: 0,
-        avgPPG: 0,
-        avgGPG: 0,
-        avgAPG: 0,
-        avgSVPG: 0,
-        avgSH: 0
-      };
-    });
+    // For current season or career, use teams from API since they may not have game stats yet
+    const currentSeasonModes = ['current', 'career', 'season3'];
+    const isCurrentSeason = currentSeasonModes.includes(selectedSeason);
     
+    if (isCurrentSeason && teams.length > 0) {
+      // Use teams from the API (for Season 3 and current season)
+      teams.forEach(team => {
+        const teamName = team.display_name || team.team_name;
+        teamMap[teamName] = {
+          team: teamName,
+          teamId: team.team_id || team.id,
+          color: team.primary_color || team.color || '#808080',
+          logo_url: team.logo_url || team.alt_logo_url,
+          players: 0,
+          totalPoints: 0,
+          totalGoals: 0,
+          totalAssists: 0,
+          totalSaves: 0,
+          totalShots: 0,
+          totalMVPs: 0,
+          totalDemos: 0,
+          totalEpicSaves: 0,
+          totalGames: 0,
+          avgPPG: 0,
+          avgGPG: 0,
+          avgAPG: 0,
+          avgSVPG: 0,
+          avgSH: 0
+        };
+      });
+    }
+
     // Add player statistics to teams
     processedStats.forEach(player => {
-      // Handle cases where team_name might not match exactly or player has no team
-      const teamName = player.team_name || 'Free Agent';
+      let teamName = player.team_name || 'Free Agent';
       
-      // If team doesn't exist in teamMap, create it (for cases like 'Free Agent' or 'Career Total')
+      // Skip Free Agent players
+      if (teamName === 'Free Agent' || teamName === 'Career Total') {
+        return;
+      }
+      
+      // For current season, match against our team list
+      if (isCurrentSeason && !teamMap[teamName]) {
+        // Try to find team with similar name
+        const matchingTeam = Object.keys(teamMap).find(t => 
+          t.toLowerCase().includes(teamName.toLowerCase()) || 
+          teamName.toLowerCase().includes(t.toLowerCase())
+        );
+        if (matchingTeam) {
+          // Use the matched team name instead
+          teamName = matchingTeam;
+        } else {
+          // Skip if no matching team found for current season
+          return;
+        }
+      }
+      
+      // If team doesn't exist in teamMap, create it (for historical seasons)
       if (!teamMap[teamName]) {
         teamMap[teamName] = {
           team: teamName,
-          teamId: null,
+          teamId: player.team_id || null,
           color: player.team_color || '#808080',
           logo_url: null,
           players: 0,
@@ -145,7 +171,11 @@ const Stats = () => {
       team.totalGames += player.games_played;
     });
 
-    return Object.values(teamMap).map(team => ({
+    // For current season, show all teams even with 0 games. For historical seasons, filter out teams with no games.
+    const teamsArray = Object.values(teamMap);
+    const filteredTeams = isCurrentSeason ? teamsArray : teamsArray.filter(team => team.totalGames > 0);
+    
+    return filteredTeams.map(team => ({
       ...team,
       avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
       avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames) : 0,
@@ -153,7 +183,7 @@ const Stats = () => {
       avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
       avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
     }));
-  }, [teams, processedStats]);
+  }, [teams, processedStats, selectedSeason]);
 
   // Sort and filter data
   const sortedData = useMemo(() => {

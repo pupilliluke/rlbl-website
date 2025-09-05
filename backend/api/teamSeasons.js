@@ -4,11 +4,21 @@ const TeamSeasonsDao = require('../dao/TeamSeasonsDao');
 
 const teamSeasonsDao = new TeamSeasonsDao();
 
-// GET /team-seasons - Get all team seasons
+// GET /team-seasons - Get all team seasons with optional season filtering
 router.get('/', async (req, res) => {
   try {
-    const teamSeasons = await teamSeasonsDao.findAll();
-    res.json(teamSeasons);
+    const seasonParam = req.query.season || req.query.season_id;
+    
+    if (seasonParam && !isNaN(parseInt(seasonParam))) {
+      // Return team seasons for specific season
+      const seasonId = parseInt(seasonParam);
+      const teamSeasons = await teamSeasonsDao.listBySeason(seasonId);
+      res.json(teamSeasons);
+    } else {
+      // Return all team seasons
+      const teamSeasons = await teamSeasonsDao.findAll();
+      res.json(teamSeasons);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch team seasons', details: error.message });
   }

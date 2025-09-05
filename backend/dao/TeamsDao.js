@@ -79,6 +79,60 @@ class TeamsDao extends BaseDao {
     const result = await query(sql, params);
     return result.rows[0];
   }
+
+  async getTeamsBySeason(seasonId) {
+    const { query } = require('../../lib/database');
+    const result = await query(
+      `SELECT 
+         ts.id as team_season_id,
+         t.id as team_id,
+         t.team_name as original_team_name,
+         COALESCE(ts.display_name, t.team_name) as team_name,
+         COALESCE(ts.display_name, t.team_name) as display_name,
+         t.logo_url,
+         COALESCE(ts.alt_logo_url, t.logo_url) as alt_logo_url,
+         COALESCE(ts.primary_color, t.color) as color,
+         COALESCE(ts.primary_color, t.color) as primary_color,
+         COALESCE(ts.secondary_color, t.secondary_color) as secondary_color,
+         ts.ranking,
+         ts.season_id,
+         s.season_name
+       FROM team_seasons ts
+       JOIN teams t ON ts.team_id = t.id
+       JOIN seasons s ON ts.season_id = s.id
+       WHERE ts.season_id = $1
+       ORDER BY COALESCE(ts.ranking, 999999), COALESCE(ts.display_name, t.team_name)`,
+      [seasonId]
+    );
+    return result.rows;
+  }
+
+  async getAllTeamsFromAllSeasons() {
+    const { query } = require('../../lib/database');
+    const result = await query(
+      `SELECT DISTINCT ON (t.team_name)
+         ts.id as team_season_id,
+         t.id as team_id,
+         t.team_name as original_team_name,
+         COALESCE(ts.display_name, t.team_name) as team_name,
+         COALESCE(ts.display_name, t.team_name) as display_name,
+         t.logo_url,
+         COALESCE(ts.alt_logo_url, t.logo_url) as alt_logo_url,
+         COALESCE(ts.primary_color, t.color) as color,
+         COALESCE(ts.primary_color, t.color) as primary_color,
+         COALESCE(ts.secondary_color, t.secondary_color) as secondary_color,
+         ts.ranking,
+         ts.season_id,
+         s.season_name,
+         'career' as mode
+       FROM team_seasons ts
+       JOIN teams t ON ts.team_id = t.id
+       JOIN seasons s ON ts.season_id = s.id
+       ORDER BY t.team_name, ts.season_id DESC`,
+      []
+    );
+    return result.rows;
+  }
 }
 
 module.exports = TeamsDao;
