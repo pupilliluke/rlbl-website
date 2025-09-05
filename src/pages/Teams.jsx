@@ -61,8 +61,8 @@ export default function Teams() {
     return players.filter(player => {
       // Handle different team name fields from different endpoints
       return player.team_name === teamName || 
-             player.team_name === teamName ||
-             (player.original_team_name && player.original_team_name === teamName);
+             (player.original_team_name && player.original_team_name === teamName) ||
+             (player.current_team_name && player.current_team_name === teamName);
     });
   };
 

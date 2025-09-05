@@ -4,11 +4,20 @@ const PlayersDao = require('../dao/PlayersDao');
 
 const playersDao = new PlayersDao();
 
-// GET /players - Get all players
+// GET /players - Get all players with optional team information
 router.get('/', async (req, res) => {
   try {
-    const players = await playersDao.findAll();
-    res.json(players);
+    const seasonId = req.query.season_id;
+    
+    if (seasonId) {
+      // Get players with team information for specific season
+      const players = await playersDao.getAllPlayersWithTeams(seasonId);
+      res.json(players);
+    } else {
+      // Get all players with team information (current season or all-time)
+      const players = await playersDao.getAllPlayersWithTeams();
+      res.json(players);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch players', details: error.message });
   }
