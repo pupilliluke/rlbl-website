@@ -53,6 +53,7 @@ router.use('/teams', teamsRouter);
 router.use('/players', playersRouter);
 router.use('/seasons', seasonsRouter);
 router.use('/team-seasons', teamSeasonsRouter);
+router.use('/team_seasons', teamSeasonsRouter); // Alias for frontend compatibility
 router.use('/roster-memberships', rosterMembershipsRouter);
 router.use('/games', gamesRouter);
 router.use('/player-game-stats', playerGameStatsRouter);

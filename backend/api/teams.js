@@ -4,11 +4,38 @@ const TeamsDao = require('../dao/TeamsDao');
 
 const teamsDao = new TeamsDao();
 
-// GET /teams - Get all teams
+// GET /teams - Get all teams with optional season filtering
 router.get('/', async (req, res) => {
   try {
-    const teams = await teamsDao.findAll();
-    res.json(teams);
+    // Handle different season parameter formats from the frontend
+    const seasonParam = req.query.season || req.query.season_id;
+    
+    if (seasonParam && !isNaN(parseInt(seasonParam))) {
+      // Return teams for specific season (team_seasons structure)
+      const seasonId = parseInt(seasonParam);
+      const teams = await teamsDao.getTeamsBySeason(seasonId);
+      res.json(teams);
+    } else if (seasonParam === 'current') {
+      // Return teams for current/active season (season 3 is currently active)
+      const teams = await teamsDao.getTeamsBySeason(3);
+      res.json(teams);
+    } else if (seasonParam === 'career') {
+      // Return all teams from all seasons (career stats should include everyone)
+      const teams = await teamsDao.getAllTeamsFromAllSeasons();
+      res.json(teams);
+    } else if (seasonParam === 'season1') {
+      // Return teams for season 1
+      const teams = await teamsDao.getTeamsBySeason(1);
+      res.json(teams);
+    } else if (seasonParam === 'season2') {
+      // Return teams for season 2
+      const teams = await teamsDao.getTeamsBySeason(2);
+      res.json(teams);
+    } else {
+      // Return all base teams (original behavior)
+      const teams = await teamsDao.findAll();
+      res.json(teams);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch teams', details: error.message });
   }

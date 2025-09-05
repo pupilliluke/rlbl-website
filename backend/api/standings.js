@@ -4,11 +4,20 @@ const StandingsDao = require('../dao/StandingsDao');
 
 const standingsDao = new StandingsDao();
 
-// GET /standings - Get all standings
+// GET /standings - Get all standings with optional season filtering
 router.get('/', async (req, res) => {
   try {
-    const standings = await standingsDao.findAll();
-    res.json(standings);
+    const seasonId = req.query.season_id ? parseInt(req.query.season_id) : null;
+    
+    if (seasonId) {
+      // Use the enhanced method that includes teams data
+      const standings = await standingsDao.getStandingsWithTeams(seasonId);
+      res.json(standings);
+    } else {
+      // Return all standings
+      const standings = await standingsDao.findAll();
+      res.json(standings);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch standings', details: error.message });
   }
@@ -30,7 +39,9 @@ router.get('/:id', async (req, res) => {
 // GET /standings/season/:seasonId - Get standings table for season
 router.get('/season/:seasonId', async (req, res) => {
   try {
-    const standings = await standingsDao.table(parseInt(req.params.seasonId));
+    const seasonId = parseInt(req.params.seasonId);
+    // Use the enhanced method that includes team details and colors
+    const standings = await standingsDao.getStandingsWithTeams(seasonId);
     res.json(standings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch standings table', details: error.message });

@@ -1,12 +1,12 @@
 // API Service for Rocket League app - Using unified mock server
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api' 
-  : 'http://localhost:5000/api';
+  : 'http://localhost:3001/api';
 
 // Use same base URL for admin functions
 const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api' 
-  : 'http://localhost:5000/api';
+  : 'http://localhost:3001/api';
 
 // Generic API call function
 const apiCall = async (endpoint) => {

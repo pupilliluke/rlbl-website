@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { players } from "../data/players";
-import { powerRankings } from "../data/powerRankings";
-import { schedule } from "../data/schedule";
-import { homerConference, garfieldConference, overall } from "../data/standings";
-import { teams } from "../data/teams";
-import { gameStats } from "../data/gameStats";
-import { careerStats } from "../data/careerStats";
+import { apiService } from "../services/apiService";
 
 const Admin = () => {
   const [authenticated, setAuthenticated] = useState(false);
@@ -14,66 +8,26 @@ const Admin = () => {
   const [showError, setShowError] = useState(false);
   const [activeTab, setActiveTab] = useState("players");
   
-  // Data state for each tab - with error handling
-  const [playersData, setPlayersData] = useState(() => {
-    try {
-      return [...players];
-    } catch (err) {
-      console.error("Error loading players data:", err);
-      return [];
-    }
-  });
-  const [teamsData, setTeamsData] = useState(() => {
-    try {
-      return [...teams];
-    } catch (err) {
-      console.error("Error loading teams data:", err);
-      return [];
-    }
-  });
-  const [standingsData, setStandingsData] = useState(() => {
-    try {
-      return {
-        homer: [...homerConference],
-        garfield: [...garfieldConference],
-        overall: [...overall]
-      };
-    } catch (err) {
-      console.error("Error loading standings data:", err);
-      return { homer: [], garfield: [], overall: [] };
-    }
-  });
-  const [scheduleData, setScheduleData] = useState(() => {
-    try {
-      return [...schedule];
-    } catch (err) {
-      console.error("Error loading schedule data:", err);
-      return [];
-    }
-  });
-  const [gameStatsData, setGameStatsData] = useState(() => {
-    try {
-      return [...gameStats];
-    } catch (err) {
-      console.error("Error loading game stats data:", err);
-      return [];
-    }
-  });
-  const [powerRankingsData, setPowerRankingsData] = useState(() => {
-    try {
-      return [...powerRankings];
-    } catch (err) {
-      console.error("Error loading power rankings data:", err);
-      return [];
-    }
-  });
-  const [careerStatsData, setCareerStatsData] = useState(() => {
-    try {
-      return [...careerStats];
-    } catch (err) {
-      console.error("Error loading career stats data:", err);
-      return [];
-    }
+  // Data state for each tab - loaded from API
+  const [playersData, setPlayersData] = useState([]);
+  const [teamsData, setTeamsData] = useState([]);
+  const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
+  const [scheduleData, setScheduleData] = useState([]);
+  const [gameStatsData, setGameStatsData] = useState([]);
+  const [powerRankingsData, setPowerRankingsData] = useState([]);
+  const [seasonsData, setSeasonsData] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState(null);
+  
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({
+    players: false,
+    teams: false,
+    standings: false,
+    schedule: false,
+    gameStats: false,
+    powerRankings: false,
+    seasons: false
   });
   
   // Form states
@@ -89,6 +43,148 @@ const Admin = () => {
       return () => clearTimeout(timeout);
     }
   }, [error]);
+
+  // Load seasons data on component mount
+  useEffect(() => {
+    if (authenticated) {
+      loadSeasons();
+    }
+  }, [authenticated]);
+
+  // Load initial data for the selected season when season changes
+  useEffect(() => {
+    if (authenticated && selectedSeason) {
+      loadAllData();
+    }
+  }, [authenticated, selectedSeason]);
+
+  // API Loading Functions
+  const setLoadingState = (key, loading) => {
+    setLoadingStates(prev => ({ ...prev, [key]: loading }));
+  };
+
+  const loadSeasons = async () => {
+    try {
+      setLoadingState('seasons', true);
+      const seasons = await apiService.getSeasons();
+      setSeasonsData(seasons);
+      
+      // Set default season to current active season or first season
+      if (seasons.length > 0) {
+        const activeSeason = seasons.find(s => s.is_active) || seasons[0];
+        setSelectedSeason(activeSeason.id);
+      }
+    } catch (error) {
+      console.error('Failed to load seasons:', error);
+      setError('Failed to load seasons data');
+    } finally {
+      setLoadingState('seasons', false);
+    }
+  };
+
+  const loadAllData = async () => {
+    if (!selectedSeason) return;
+    
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadPlayers(),
+        loadTeams(),
+        loadStandings(),
+        loadGames(),
+        loadPowerRankings(),
+        loadStats()
+      ]);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      setError('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadPlayers = async () => {
+    try {
+      setLoadingState('players', true);
+      const players = await apiService.getPlayers();
+      setPlayersData(players);
+    } catch (error) {
+      console.error('Failed to load players:', error);
+      setError('Failed to load players data');
+    } finally {
+      setLoadingState('players', false);
+    }
+  };
+
+  const loadTeams = async () => {
+    try {
+      setLoadingState('teams', true);
+      const teams = await apiService.getTeams(selectedSeason);
+      setTeamsData(teams);
+    } catch (error) {
+      console.error('Failed to load teams:', error);
+      setError('Failed to load teams data');
+    } finally {
+      setLoadingState('teams', false);
+    }
+  };
+
+  const loadStandings = async () => {
+    try {
+      setLoadingState('standings', true);
+      const standings = await apiService.getStandings(selectedSeason);
+      // Convert flat standings into conference structure if needed
+      setStandingsData({
+        homer: standings.standings || standings,
+        garfield: [],
+        overall: standings.standings || standings
+      });
+    } catch (error) {
+      console.error('Failed to load standings:', error);
+      setError('Failed to load standings data');
+    } finally {
+      setLoadingState('standings', false);
+    }
+  };
+
+  const loadGames = async () => {
+    try {
+      setLoadingState('schedule', true);
+      const games = await apiService.getGames(selectedSeason);
+      setScheduleData(games);
+    } catch (error) {
+      console.error('Failed to load games:', error);
+      setError('Failed to load games data');
+    } finally {
+      setLoadingState('schedule', false);
+    }
+  };
+
+  const loadPowerRankings = async () => {
+    try {
+      setLoadingState('powerRankings', true);
+      const rankings = await apiService.getPowerRankings();
+      setPowerRankingsData(rankings);
+    } catch (error) {
+      console.error('Failed to load power rankings:', error);
+      setError('Failed to load power rankings data');
+    } finally {
+      setLoadingState('powerRankings', false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      setLoadingState('gameStats', true);
+      const stats = await apiService.getStats(selectedSeason);
+      setGameStatsData(stats);
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+      setError('Failed to load stats data');
+    } finally {
+      setLoadingState('gameStats', false);
+    }
+  };
 
   const handleAuth = () => {
     console.log('Entered password:', password);
@@ -118,7 +214,6 @@ const Admin = () => {
       case "schedule": return scheduleData;
       case "gameStats": return gameStatsData;
       case "powerRankings": return powerRankingsData;
-      case "careerStats": return careerStatsData;
       default: return [];
     }
   };
@@ -142,9 +237,6 @@ const Admin = () => {
         break;
       case "powerRankings":
         setPowerRankingsData(newData);
-        break;
-      case "careerStats":
-        setCareerStatsData(newData);
         break;
       default:
         break;
@@ -216,36 +308,51 @@ const Admin = () => {
           trend: "",
           reasoning: ""
         };
-      case "careerStats":
-        return {
-          player: "",
-          team: "",
-          gamesPlayed: null,
-          points: 0,
-          ppg: 0,
-          goals: 0,
-          gpg: 0,
-          assists: 0,
-          apg: 0,
-          saves: 0,
-          svpg: 0,
-          shots: 0,
-          shPercent: 0,
-          mvps: 0,
-          demos: 0,
-          epicSaves: 0
-        };
       default:
         return {};
     }
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!formData || Object.keys(formData).length === 0) return;
-    const currentData = getCurrentData();
-    setCurrentData([...currentData, formData]);
-    setFormData(getDefaultFormData());
-    setShowAddForm(false);
+    
+    try {
+      setLoading(true);
+      
+      switch (activeTab) {
+        case 'players':
+          await apiService.createPlayer(formData);
+          await loadPlayers();
+          break;
+        case 'teams':
+          // Teams creation would need to be added to apiService
+          console.log('Team creation not yet implemented');
+          break;
+        case 'standings':
+          console.log('Standings creation not yet implemented');
+          break;
+        case 'schedule':
+          console.log('Games creation not yet implemented');
+          break;
+        case 'gameStats':
+          console.log('Game stats creation not yet implemented');
+          break;
+        case 'powerRankings':
+          console.log('Power rankings creation not yet implemented');
+          break;
+        default:
+          console.log(`Add operation not implemented for ${activeTab}`);
+      }
+      
+      setFormData(getDefaultFormData());
+      setShowAddForm(false);
+      setError(''); // Clear any previous errors
+    } catch (error) {
+      console.error(`Failed to add ${activeTab}:`, error);
+      setError(`Failed to add ${activeTab}. Please try again.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = (item, index) => {
@@ -253,20 +360,89 @@ const Admin = () => {
     setFormData({ ...item });
   };
 
-  const handleSave = () => {
-    const currentData = getCurrentData();
-    const updated = [...currentData];
-    updated[editingItem] = formData;
-    setCurrentData(updated);
-    setEditingItem(null);
-    setFormData({});
+  const handleSave = async () => {
+    if (!formData || editingItem === null) return;
+    
+    try {
+      setLoading(true);
+      const currentData = getCurrentData();
+      const itemToUpdate = currentData[editingItem];
+      
+      switch (activeTab) {
+        case 'players':
+          await apiService.updatePlayer(itemToUpdate.id, formData);
+          await loadPlayers();
+          break;
+        case 'teams':
+          // Teams update would need to be added to apiService
+          console.log('Team update not yet implemented');
+          break;
+        case 'standings':
+          console.log('Standings update not yet implemented');
+          break;
+        case 'schedule':
+          console.log('Games update not yet implemented');
+          break;
+        case 'gameStats':
+          console.log('Game stats update not yet implemented');
+          break;
+        case 'powerRankings':
+          console.log('Power rankings update not yet implemented');
+          break;
+        default:
+          console.log(`Update operation not implemented for ${activeTab}`);
+      }
+      
+      setEditingItem(null);
+      setFormData({});
+      setError(''); // Clear any previous errors
+    } catch (error) {
+      console.error(`Failed to update ${activeTab}:`, error);
+      setError(`Failed to update ${activeTab}. Please try again.`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (index) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
+  const handleDelete = async (index) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    
+    try {
+      setLoading(true);
       const currentData = getCurrentData();
-      const filtered = currentData.filter((_, i) => i !== index);
-      setCurrentData(filtered);
+      const itemToDelete = currentData[index];
+      
+      switch (activeTab) {
+        case 'players':
+          await apiService.deletePlayer(itemToDelete.id);
+          await loadPlayers();
+          break;
+        case 'teams':
+          // Teams delete would need to be added to apiService
+          console.log('Team deletion not yet implemented');
+          break;
+        case 'standings':
+          console.log('Standings deletion not yet implemented');
+          break;
+        case 'schedule':
+          console.log('Games deletion not yet implemented');
+          break;
+        case 'gameStats':
+          console.log('Game stats deletion not yet implemented');
+          break;
+        case 'powerRankings':
+          console.log('Power rankings deletion not yet implemented');
+          break;
+        default:
+          console.log(`Delete operation not implemented for ${activeTab}`);
+      }
+      
+      setError(''); // Clear any previous errors
+    } catch (error) {
+      console.error(`Failed to delete ${activeTab}:`, error);
+      setError(`Failed to delete ${activeTab}. Please try again.`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -363,13 +539,40 @@ const Admin = () => {
     // Get all possible keys from all objects to ensure consistent columns
     const allKeys = [...new Set(currentData.flatMap(item => Object.keys(item)))];
 
+    // Show loading state
+    const isCurrentTabLoading = loadingStates[activeTab === 'schedule' ? 'schedule' : 
+                                              activeTab === 'gameStats' ? 'gameStats' : activeTab];
+
     return (
       <div className="bg-gray-800/90 border border-gray-600 rounded-2xl overflow-hidden">
         <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-gray-600">
-          <h3 className="text-xl font-bold text-white">Data Table</h3>
+          <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            Data Table
+            {(loading || isCurrentTabLoading) && (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+            )}
+          </h3>
           <p className="text-sm text-gray-300 mt-1">Click edit to modify entries</p>
         </div>
-        <div className="overflow-x-auto">
+        
+        {(loading || isCurrentTabLoading) ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading {activeTab} data...</p>
+            </div>
+          </div>
+        ) : currentData.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-gray-400 text-lg mb-2">No {activeTab} data available</p>
+              <p className="text-gray-500 text-sm">
+                {selectedSeason ? 'Try selecting a different season' : 'Select a season to view data'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
               <tr>
@@ -435,7 +638,8 @@ const Admin = () => {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -563,7 +767,6 @@ const Admin = () => {
               { id: "schedule", label: "📅 Schedule", icon: "⏰" },
               { id: "gameStats", label: "📈 Game Stats", icon: "📋" },
               { id: "powerRankings", label: "👑 Rankings", icon: "🥇" },
-              { id: "careerStats", label: "🌟 Career Stats", icon: "📜" }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -583,6 +786,32 @@ const Admin = () => {
                 {tab.label}
               </button>
             ))}
+          </div>
+
+          {/* Season Selector */}
+          <div className="flex items-center gap-4 mb-6 p-4 bg-gray-700/50 rounded-xl">
+            <label className="text-white font-semibold flex items-center gap-2">
+              <span className="text-xl">🗓️</span>
+              Season:
+            </label>
+            <select
+              value={selectedSeason || ''}
+              onChange={(e) => setSelectedSeason(parseInt(e.target.value))}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg border border-gray-500 focus:border-blue-400"
+              disabled={loadingStates.seasons}
+            >
+              <option value="">Select Season...</option>
+              {seasonsData.map(season => (
+                <option key={season.id} value={season.id}>
+                  {season.season_name} {season.is_active && '(Current)'}
+                </option>
+              ))}
+            </select>
+            {loadingStates.seasons && (
+              <div className="text-blue-400">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+              </div>
+            )}
           </div>
 
           {/* Conference selector for standings */}

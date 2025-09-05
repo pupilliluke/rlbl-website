@@ -99,8 +99,7 @@ class PlayerGameStatsDao extends BaseDao {
     const playersResult = await query(`
       SELECT p.id, p.player_name, p.gamertag 
       FROM players p 
-      ORDER BY p.player_name 
-      LIMIT 10
+      ORDER BY p.player_name
     `);
     
     // Generate mock stats for testing
@@ -127,57 +126,78 @@ class PlayerGameStatsDao extends BaseDao {
     const { query } = require('../../lib/database');
     
     try {
-      const sql = `
+      // Try to get players with roster memberships first
+      let sql = `
         SELECT 
           p.id,
           p.player_name,
           p.gamertag,
           COALESCE(t.team_name, 'Career Total') as team_name,
           COALESCE(t.color, '#999999') as team_color,
-          SUM(pgs.points) as total_points,
-          SUM(pgs.goals) as total_goals,
-          SUM(pgs.assists) as total_assists,
-          SUM(pgs.saves) as total_saves,
-          SUM(pgs.shots) as total_shots,
-          SUM(pgs.mvps) as total_mvps,
-          SUM(pgs.demos) as total_demos,
-          SUM(pgs.epic_saves) as total_epic_saves,
-          COUNT(pgs.game_id) as games_played,
-          ROUND(
-            CASE 
-              WHEN COUNT(pgs.game_id) > 0 
-              THEN (CAST(SUM(pgs.points) as FLOAT) / COUNT(pgs.game_id)) 
-              ELSE 0 
-            END::numeric, 1
-          ) as avg_points_per_game,
-          ROUND(
-            CASE 
-              WHEN COUNT(pgs.game_id) > 0 
-              THEN (CAST(SUM(pgs.goals) as FLOAT) / COUNT(pgs.game_id)) 
-              ELSE 0 
-            END::numeric, 1
-          ) as avg_goals_per_game,
-          ROUND(
-            CASE 
-              WHEN COUNT(pgs.game_id) > 0 
-              THEN (CAST(SUM(pgs.saves) as FLOAT) / COUNT(pgs.game_id)) 
-              ELSE 0 
-            END::numeric, 1
-          ) as avg_saves_per_game,
-          seasons.season_name
-        FROM player_game_stats pgs
-        JOIN players p ON pgs.player_id = p.id
-        JOIN games g ON pgs.game_id = g.id
-        JOIN seasons ON g.season_id = seasons.id
-        LEFT JOIN roster_memberships rm ON rm.player_id = p.id AND rm.season_id = seasons.id
-        LEFT JOIN teams t ON rm.team_id = t.id
+          COALESCE(SUM(pgs.points), 0) as total_points,
+          COALESCE(SUM(pgs.goals), 0) as total_goals,
+          COALESCE(SUM(pgs.assists), 0) as total_assists,
+          COALESCE(SUM(pgs.saves), 0) as total_saves,
+          COALESCE(SUM(pgs.shots), 0) as total_shots,
+          COALESCE(SUM(pgs.mvps), 0) as total_mvps,
+          COALESCE(SUM(pgs.demos), 0) as total_demos,
+          COALESCE(SUM(pgs.epic_saves), 0) as total_epic_saves,
+          COALESCE(COUNT(pgs.game_id), 0) as games_played,
+          0 as avg_points_per_game,
+          0 as avg_goals_per_game,
+          0 as avg_saves_per_game,
+          COALESCE(seasons.season_name, 'Career') as season_name
+        FROM roster_memberships rm
+        JOIN players p ON rm.player_id = p.id
+        JOIN team_seasons ts ON rm.team_season_id = ts.id
+        JOIN teams t ON ts.team_id = t.id
+        LEFT JOIN seasons ON ts.season_id = seasons.id
+        LEFT JOIN player_game_stats pgs ON pgs.player_id = p.id AND pgs.team_season_id = ts.id
         WHERE 1=1 ${seasonFilter}
         GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color, seasons.season_name
-        HAVING SUM(pgs.points) > 0
         ORDER BY total_points DESC, total_goals DESC
       `;
       
       const result = await query(sql);
+      
+      // If no results and we're querying a specific historical season, return all players with zero stats
+      if (result.rows.length === 0 && seasonFilter.includes('Season')) {
+        console.log('No roster data found for historical season, returning all players with zero stats');
+        
+        // Determine season name based on filter
+        let seasonName = 'Career';
+        if (seasonFilter.includes('Season 1')) {
+          seasonName = 'Fall 2024';
+        } else if (seasonFilter.includes('Season 2')) {
+          seasonName = 'Summer 2025';
+        }
+        
+        const fallbackResult = await query(`
+          SELECT 
+            p.id,
+            p.player_name,
+            p.gamertag,
+            'Career Total' as team_name,
+            '#999999' as team_color,
+            0 as total_points,
+            0 as total_goals,
+            0 as total_assists,
+            0 as total_saves,
+            0 as total_shots,
+            0 as total_mvps,
+            0 as total_demos,
+            0 as total_epic_saves,
+            0 as games_played,
+            0 as avg_points_per_game,
+            0 as avg_goals_per_game,
+            0 as avg_saves_per_game,
+            $1 as season_name
+          FROM players p
+          ORDER BY p.player_name
+        `, [seasonName]);
+        return fallbackResult.rows;
+      }
+      
       return result.rows;
     } catch (error) {
       console.error('Failed to get aggregated stats:', error.message);
@@ -207,7 +227,6 @@ class PlayerGameStatsDao extends BaseDao {
             'Career' as season_name
           FROM players p
           ORDER BY p.player_name
-          LIMIT 50
         `);
         
         console.log(`Returning ${simpleResult.rows.length} players with zero stats`);
