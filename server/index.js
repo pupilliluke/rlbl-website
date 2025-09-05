@@ -54,17 +54,7 @@ app.get('/api/health', async (req, res) => {
 // Mount backend API routes
 app.use('/api/teams', require('../backend/api/teams'));
 app.use('/api/stats', require('../backend/api/stats'));
-
-// Players routes
-app.get('/api/players', async (req, res) => {
-  try {
-    const seasonId = req.query.season_id;
-    const players = await playersDao.getAllPlayersWithTeams(seasonId);
-    res.json(players);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch players', details: error.message });
-  }
-});
+app.use('/api/players', require('../backend/api/players'));
 
 // Schedule routes
 app.get('/api/schedule', async (req, res) => {
