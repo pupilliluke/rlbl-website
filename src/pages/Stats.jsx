@@ -275,7 +275,7 @@ const Stats = () => {
       <div className="absolute inset-0 neural-bg opacity-20" />
       
       {/* Executive Header */}
-      <div className="relative z-10 glass-dark border-b border-white/10">
+      <div className="relative z-10 glass-dark border-b border-white/10 pt-20">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
