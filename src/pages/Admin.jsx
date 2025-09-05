@@ -6,7 +6,7 @@ const Admin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
-  const [activeTab, setActiveTab] = useState("players");
+  const [activeTab, setActiveTab] = useState("gameResults");
   
   // Data state for each tab - loaded from API
   const [playersData, setPlayersData] = useState([]);
@@ -14,6 +14,7 @@ const Admin = () => {
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
   const [gameStatsData, setGameStatsData] = useState([]);
+  const [gameResultsData, setGameResultsData] = useState([]);
   const [powerRankingsData, setPowerRankingsData] = useState([]);
   const [seasonsData, setSeasonsData] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState(null);
@@ -26,6 +27,7 @@ const Admin = () => {
     standings: false,
     schedule: false,
     gameStats: false,
+    gameResults: false,
     powerRankings: false,
     seasons: false
   });
@@ -35,6 +37,11 @@ const Admin = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({});
   const [selectedConference, setSelectedConference] = useState("homer");
+  
+  // Game Results specific states
+  const [collapsedWeeks, setCollapsedWeeks] = useState(new Set());
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [showGameStatsModal, setShowGameStatsModal] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -57,6 +64,20 @@ const Admin = () => {
       loadAllData();
     }
   }, [authenticated, selectedSeason]);
+
+  // Body scroll lock when modal is open
+  useEffect(() => {
+    if (showAddForm || editingItem !== null || showGameStatsModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showAddForm, editingItem, showGameStatsModal]);
 
   // API Loading Functions
   const setLoadingState = (key, loading) => {
@@ -93,7 +114,8 @@ const Admin = () => {
         loadStandings(),
         loadGames(),
         loadPowerRankings(),
-        loadStats()
+        loadStats(),
+        loadGameResults()
       ]);
     } catch (error) {
       console.error('Failed to load data:', error);
@@ -186,6 +208,57 @@ const Admin = () => {
     }
   };
 
+  const loadGameResults = async () => {
+    try {
+      setLoadingState('gameResults', true);
+      
+      // Load games with full details
+      const games = await apiService.getGames(selectedSeason);
+      const playerGameStats = await apiService.getPlayerGameStats();
+      const players = await apiService.getPlayers();
+      
+      // Create comprehensive game results by combining games with player stats
+      const gameResults = games.map(game => {
+        // Get all player stats for this game
+        const gamePlayerStats = playerGameStats.filter(stat => stat.game_id === game.id);
+        
+        // Get players for home and away teams
+        const homeTeamStats = gamePlayerStats.filter(stat => stat.team_season_id === game.home_team_season_id);
+        const awayTeamStats = gamePlayerStats.filter(stat => stat.team_season_id === game.away_team_season_id);
+        
+        // Add player names to stats
+        const enrichedHomeStats = homeTeamStats.map(stat => {
+          const player = players.find(p => p.id === stat.player_id);
+          return { ...stat, player_name: player?.player_name || 'Unknown', gamertag: player?.gamertag || 'Unknown' };
+        });
+        
+        const enrichedAwayStats = awayTeamStats.map(stat => {
+          const player = players.find(p => p.id === stat.player_id);
+          return { ...stat, player_name: player?.player_name || 'Unknown', gamertag: player?.gamertag || 'Unknown' };
+        });
+        
+        return {
+          ...game,
+          home_team_stats: enrichedHomeStats,
+          away_team_stats: enrichedAwayStats,
+          total_home_points: enrichedHomeStats.reduce((sum, stat) => sum + (stat.points || 0), 0),
+          total_away_points: enrichedAwayStats.reduce((sum, stat) => sum + (stat.points || 0), 0)
+        };
+      });
+      
+      setGameResultsData(gameResults);
+      
+      // Initialize all weeks as collapsed on data load
+      const allWeeks = [...new Set(gameResults.map(game => game.week).filter(week => week != null))];
+      setCollapsedWeeks(new Set(allWeeks));
+    } catch (error) {
+      console.error('Failed to load game results:', error);
+      setError('Failed to load game results data');
+    } finally {
+      setLoadingState('gameResults', false);
+    }
+  };
+
   const handleAuth = () => {
     console.log('Entered password:', password);
     console.log('Expected password:', process.env.REACT_APP_ADMIN_PASSWORD);
@@ -213,6 +286,7 @@ const Admin = () => {
       case "standings": return standingsData[selectedConference];
       case "schedule": return scheduleData;
       case "gameStats": return gameStatsData;
+      case "gameResults": return gameResultsData;
       case "powerRankings": return powerRankingsData;
       default: return [];
     }
@@ -235,6 +309,9 @@ const Admin = () => {
       case "gameStats":
         setGameStatsData(newData);
         break;
+      case "gameResults":
+        setGameResultsData(newData);
+        break;
       case "powerRankings":
         setPowerRankingsData(newData);
         break;
@@ -247,49 +324,35 @@ const Admin = () => {
     switch (activeTab) {
       case "players":
         return {
-          player: "",
+          player_name: "",
           gamertag: "",
-          team: "",
-          gamesPlayed: null,
-          points: 0,
-          ppg: 0,
-          goals: 0,
-          gpg: 0,
-          assists: 0,
-          apg: 0,
-          saves: 0,
-          svpg: 0,
-          shots: 0,
-          shPercent: 0,
-          mvps: 0,
-          demos: 0,
-          epicSaves: 0
+          team_name: ""
         };
       case "teams":
         return {
-          name: "",
-          primaryColor: "#000000",
-          secondaryColor: "#ffffff",
-          players: []
+          team_name: "",
+          color: "#000000",
+          secondary_color: "#ffffff",
+          logo_url: ""
         };
       case "standings":
         return {
-          team: "",
+          season_id: selectedSeason || 3,
+          team_season_id: null,
           wins: 0,
           losses: 0,
-          winPercentage: 0,
-          pointsFor: 0,
-          pointsAgainst: 0,
-          pointDifferential: 0
+          ties: 0,
+          points_for: 0,
+          points_against: 0
         };
       case "schedule":
         return {
+          season_id: selectedSeason || 3,
+          home_team_season_id: null,
+          away_team_season_id: null,
+          game_date: "",
           week: 1,
-          date: "",
-          homeTeam: "",
-          awayTeam: "",
-          time: "",
-          status: "scheduled"
+          is_playoffs: false
         };
       case "gameStats":
         return {
@@ -300,12 +363,26 @@ const Admin = () => {
           season: "2025",
           playerStats: []
         };
+      case "gameResults":
+        return {
+          game_id: null,
+          player_id: null,
+          team_season_id: null,
+          points: 0,
+          goals: 0,
+          assists: 0,
+          saves: 0,
+          shots: 0,
+          mvps: 0,
+          demos: 0,
+          epic_saves: 0
+        };
       case "powerRankings":
         return {
+          season_id: selectedSeason || 3,
+          week: 1,
+          team_season_id: null,
           rank: 1,
-          team: "",
-          record: "",
-          trend: "",
           reasoning: ""
         };
       default:
@@ -325,20 +402,27 @@ const Admin = () => {
           await loadPlayers();
           break;
         case 'teams':
-          // Teams creation would need to be added to apiService
-          console.log('Team creation not yet implemented');
+          await apiService.createTeam(formData);
+          await loadTeams();
           break;
         case 'standings':
-          console.log('Standings creation not yet implemented');
+          await apiService.createStanding(formData);
+          await loadStandings();
           break;
         case 'schedule':
-          console.log('Games creation not yet implemented');
+          await apiService.createGame(formData);
+          await loadGames();
           break;
         case 'gameStats':
           console.log('Game stats creation not yet implemented');
           break;
+        case 'gameResults':
+          await apiService.createPlayerGameStats(formData);
+          await loadGameResults();
+          break;
         case 'powerRankings':
-          console.log('Power rankings creation not yet implemented');
+          await apiService.createPowerRanking(formData);
+          await loadPowerRankings();
           break;
         default:
           console.log(`Add operation not implemented for ${activeTab}`);
@@ -355,9 +439,32 @@ const Admin = () => {
     }
   };
 
-  const handleEdit = (item, index) => {
+  const handleEdit = async (item, index) => {
     setEditingItem(index);
-    setFormData({ ...item });
+    
+    // For players, load complete stats data
+    if (activeTab === 'players') {
+      try {
+        setLoading(true);
+        // Load complete player stats which includes all fields
+        const stats = await apiService.getStats();
+        const playerStats = stats.find(stat => stat.id === item.id);
+        
+        if (playerStats) {
+          setFormData({ ...playerStats });
+        } else {
+          // Fallback to basic player data if no stats found
+          setFormData({ ...item });
+        }
+      } catch (error) {
+        console.error('Failed to load player stats:', error);
+        setFormData({ ...item });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      setFormData({ ...item });
+    }
   };
 
   const handleSave = async () => {
@@ -374,20 +481,27 @@ const Admin = () => {
           await loadPlayers();
           break;
         case 'teams':
-          // Teams update would need to be added to apiService
-          console.log('Team update not yet implemented');
+          await apiService.updateTeam(itemToUpdate.id, formData);
+          await loadTeams();
           break;
         case 'standings':
-          console.log('Standings update not yet implemented');
+          await apiService.updateStanding(itemToUpdate.id, formData);
+          await loadStandings();
           break;
         case 'schedule':
-          console.log('Games update not yet implemented');
+          await apiService.updateGame(itemToUpdate.id, formData);
+          await loadGames();
           break;
         case 'gameStats':
           console.log('Game stats update not yet implemented');
           break;
+        case 'gameResults':
+          await apiService.updatePlayerGameStats(itemToUpdate.id, formData);
+          await loadGameResults();
+          break;
         case 'powerRankings':
-          console.log('Power rankings update not yet implemented');
+          await apiService.updatePowerRanking(itemToUpdate.id, formData);
+          await loadPowerRankings();
           break;
         default:
           console.log(`Update operation not implemented for ${activeTab}`);
@@ -418,20 +532,27 @@ const Admin = () => {
           await loadPlayers();
           break;
         case 'teams':
-          // Teams delete would need to be added to apiService
-          console.log('Team deletion not yet implemented');
+          await apiService.deleteTeam(itemToDelete.id);
+          await loadTeams();
           break;
         case 'standings':
-          console.log('Standings deletion not yet implemented');
+          await apiService.deleteStanding(itemToDelete.id);
+          await loadStandings();
           break;
         case 'schedule':
-          console.log('Games deletion not yet implemented');
+          await apiService.deleteGame(itemToDelete.id);
+          await loadGames();
           break;
         case 'gameStats':
           console.log('Game stats deletion not yet implemented');
           break;
+        case 'gameResults':
+          await apiService.deletePlayerGameStats(itemToDelete.id);
+          await loadGameResults();
+          break;
         case 'powerRankings':
-          console.log('Power rankings deletion not yet implemented');
+          await apiService.deletePowerRanking(itemToDelete.id);
+          await loadPowerRankings();
           break;
         default:
           console.log(`Delete operation not implemented for ${activeTab}`);
@@ -452,6 +573,26 @@ const Admin = () => {
     setShowAddForm(false);
   };
 
+  const toggleWeekCollapse = (week) => {
+    const newCollapsedWeeks = new Set(collapsedWeeks);
+    if (newCollapsedWeeks.has(week)) {
+      newCollapsedWeeks.delete(week);
+    } else {
+      newCollapsedWeeks.add(week);
+    }
+    setCollapsedWeeks(newCollapsedWeeks);
+  };
+
+  const handleManageGameStats = (game) => {
+    setSelectedGame(game);
+    setShowGameStatsModal(true);
+  };
+
+  const handleCloseGameStatsModal = () => {
+    setSelectedGame(null);
+    setShowGameStatsModal(false);
+  };
+
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -459,7 +600,7 @@ const Admin = () => {
   const renderFormField = (field, value, type = "text") => {
     const isTextarea = field === "reasoning" || field === "players";
     const isColor = field.includes("Color");
-    const isNumber = ["rank", "week", "gamesPlayed", "points", "goals", "assists", "saves", "shots", "mvps", "demos", "epicSaves", "wins", "losses", "pointsFor", "pointsAgainst"].includes(field);
+    const isNumber = ["rank", "week", "gamesPlayed", "points", "goals", "assists", "saves", "shots", "mvps", "demos", "epicSaves", "wins", "losses", "pointsFor", "pointsAgainst", "total_points", "total_goals", "total_assists", "total_saves", "total_shots", "total_mvps", "total_demos", "total_epic_saves", "games_played", "avg_points_per_game", "avg_goals_per_game", "avg_saves_per_game", "id", "season_id", "team_season_id", "home_team_season_id", "away_team_season_id", "home_score", "away_score"].includes(field);
 
     if (isTextarea) {
       return (
@@ -538,10 +679,16 @@ const Admin = () => {
 
     // Get all possible keys from all objects to ensure consistent columns
     const allKeys = [...new Set(currentData.flatMap(item => Object.keys(item)))];
+    
+    // Filter out technical columns for schedule tab
+    const filteredKeys = activeTab === "schedule" 
+      ? allKeys.filter(key => !["id", "season_id", "home_team_season_id", "away_team_season_id", "home_score", "away_score"].includes(key))
+      : allKeys;
 
     // Show loading state
     const isCurrentTabLoading = loadingStates[activeTab === 'schedule' ? 'schedule' : 
-                                              activeTab === 'gameStats' ? 'gameStats' : activeTab];
+                                              activeTab === 'gameStats' ? 'gameStats' :
+                                              activeTab === 'gameResults' ? 'gameResults' : activeTab];
 
     return (
       <div className="bg-gray-800/90 border border-gray-600 rounded-2xl overflow-hidden">
@@ -576,7 +723,7 @@ const Admin = () => {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
               <tr>
-                {allKeys.map((key) => (
+                {filteredKeys.map((key) => (
                   <th key={key} className="px-4 py-3 text-left font-bold text-white border-r border-white/5 last:border-r-0">
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </th>
@@ -589,7 +736,7 @@ const Admin = () => {
                 const itemKey = item.id || item.player || item.team || item.rank || `admin-item-${Date.now()}-${Math.random()}`;
                 return (
                   <tr key={itemKey} className="border-b border-gray-600 hover:bg-gray-700/50 transition-all duration-300">
-                    {allKeys.map((key) => {
+                    {filteredKeys.map((key) => {
                       const value = item[key];
                       let displayValue;
                       
@@ -644,52 +791,202 @@ const Admin = () => {
     );
   };
 
+  const renderGameResultsTable = () => {
+    if (!gameResultsData || gameResultsData.length === 0) {
+      return (
+        <div className="bg-gray-800/90 border border-gray-600 rounded-2xl p-12 text-center">
+          <div className="text-6xl mb-4">🏒</div>
+          <h3 className="text-2xl font-bold text-white mb-2">No Game Results Available</h3>
+          <p className="text-gray-300">Start by adding player stats to completed games.</p>
+        </div>
+      );
+    }
+
+    // Group games by week
+    const gamesByWeek = gameResultsData.reduce((acc, game) => {
+      const week = game.week;
+      if (!acc[week]) {
+        acc[week] = [];
+      }
+      acc[week].push(game);
+      return acc;
+    }, {});
+
+    // Sort weeks in ascending order
+    const sortedWeeks = Object.keys(gamesByWeek).sort((a, b) => parseInt(a) - parseInt(b));
+
+    return (
+      <div className="space-y-4">
+        {sortedWeeks.map(week => {
+          const weekNumber = parseInt(week);
+          const isCollapsed = collapsedWeeks.has(weekNumber);
+          const weekGames = gamesByWeek[week];
+          
+          return (
+            <div key={week} className="bg-gray-800/90 border border-gray-600 rounded-2xl overflow-hidden">
+              {/* Week Header - Collapsible */}
+              <button
+                onClick={() => toggleWeekCollapse(weekNumber)}
+                className="w-full bg-gradient-to-r from-red-600/20 via-orange-500/20 to-yellow-400/20 px-6 py-4 border-b border-gray-600 hover:from-red-600/30 hover:via-orange-500/30 hover:to-yellow-400/30 transition-all duration-200"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="text-2xl">
+                      {isCollapsed ? '▶️' : '🔽'}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white text-left">
+                        Week {weekNumber}
+                      </h3>
+                      <p className="text-gray-300 text-left">
+                        {weekGames.length} game{weekGames.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-300">
+                    {isCollapsed ? 'Click to expand' : 'Click to collapse'}
+                  </div>
+                </div>
+              </button>
+
+              {/* Week Games - Collapsible Content */}
+              {!isCollapsed && (
+                <div className="space-y-4 p-6">
+                  {weekGames.map((game, gameIndex) => (
+                    <div key={game.id} className="bg-gray-700/30 border border-gray-500/30 rounded-xl overflow-hidden">
+                      {/* Individual Game Header */}
+                      <div className="bg-gray-700/50 px-4 py-3 border-b border-gray-500/30">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="text-lg font-bold text-white">
+                              {game.home_display} vs {game.away_display}
+                            </h4>
+                            <p className="text-gray-400 text-sm">
+                              Game #{game.id} • {game.game_date ? new Date(game.game_date).toLocaleDateString() : 'Date TBD'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-white">
+                              {game.total_home_points} - {game.total_away_points}
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              Total Points
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Teams and Player Stats */}
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          
+                          {/* Home Team */}
+                          <div className="bg-gray-600/30 rounded-lg p-3">
+                            <h5 className="text-lg font-bold text-white mb-3 text-center">
+                              🏠 {game.home_display}
+                            </h5>
+                            {game.home_team_stats.length > 0 ? (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-gray-500">
+                                      <th className="text-left py-2 text-gray-300">Player</th>
+                                      <th className="text-center py-2 text-gray-300">PTS</th>
+                                      <th className="text-center py-2 text-gray-300">G</th>
+                                      <th className="text-center py-2 text-gray-300">A</th>
+                                      <th className="text-center py-2 text-gray-300">S</th>
+                                      <th className="text-center py-2 text-gray-300">SH</th>
+                                      <th className="text-center py-2 text-gray-300">MVP</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {game.home_team_stats.map((stat, statIndex) => (
+                                      <tr key={stat.id} className="border-b border-gray-500/30 hover:bg-gray-500/20">
+                                        <td className="py-1 text-white font-medium">{stat.player_name}</td>
+                                        <td className="text-center py-1 text-yellow-400 font-bold">{stat.points}</td>
+                                        <td className="text-center py-1 text-white">{stat.goals}</td>
+                                        <td className="text-center py-1 text-white">{stat.assists}</td>
+                                        <td className="text-center py-1 text-white">{stat.saves}</td>
+                                        <td className="text-center py-1 text-white">{stat.shots}</td>
+                                        <td className="text-center py-1 text-white">{stat.mvps}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="text-center text-gray-400 py-3 text-sm">No stats recorded</div>
+                            )}
+                          </div>
+
+                          {/* Away Team */}
+                          <div className="bg-gray-600/30 rounded-lg p-3">
+                            <h5 className="text-lg font-bold text-white mb-3 text-center">
+                              ✈️ {game.away_display}
+                            </h5>
+                            {game.away_team_stats.length > 0 ? (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-gray-500">
+                                      <th className="text-left py-2 text-gray-300">Player</th>
+                                      <th className="text-center py-2 text-gray-300">PTS</th>
+                                      <th className="text-center py-2 text-gray-300">G</th>
+                                      <th className="text-center py-2 text-gray-300">A</th>
+                                      <th className="text-center py-2 text-gray-300">S</th>
+                                      <th className="text-center py-2 text-gray-300">SH</th>
+                                      <th className="text-center py-2 text-gray-300">MVP</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {game.away_team_stats.map((stat, statIndex) => (
+                                      <tr key={stat.id} className="border-b border-gray-500/30 hover:bg-gray-500/20">
+                                        <td className="py-1 text-white font-medium">{stat.player_name}</td>
+                                        <td className="text-center py-1 text-yellow-400 font-bold">{stat.points}</td>
+                                        <td className="text-center py-1 text-white">{stat.goals}</td>
+                                        <td className="text-center py-1 text-white">{stat.assists}</td>
+                                        <td className="text-center py-1 text-white">{stat.saves}</td>
+                                        <td className="text-center py-1 text-white">{stat.shots}</td>
+                                        <td className="text-center py-1 text-white">{stat.mvps}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="text-center text-gray-400 py-3 text-sm">No stats recorded</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Action Button */}
+                        <div className="mt-4 text-center">
+                          <button
+                            onClick={() => handleManageGameStats(game)}
+                            className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-6 py-2 rounded-lg font-bold transition-all duration-300 shadow-lg text-sm"
+                          >
+                            ⚡ Manage Game Stats
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderTabContent = () => {
+    if (activeTab === 'gameResults') {
+      return renderGameResultsTable();
+    }
+    
     return (
       <div className="space-y-6">
-        {/* Add/Edit Form */}
-        {(showAddForm || editingItem !== null) && (
-          <div className="bg-gray-800/90 border border-gray-600 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">
-                {editingItem !== null ? "Edit" : "Add New"} {activeTab.slice(0, -1)}
-              </h3>
-              <button
-                onClick={handleCancel}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {Object.keys(getDefaultFormData()).map((field) => (
-                <div key={field} className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">
-                    {field.charAt(0).toUpperCase() + field.slice(1)}
-                  </label>
-                  {renderFormField(field, formData[field])}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-4 justify-end">
-              <button
-                onClick={handleCancel}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={editingItem !== null ? handleSave : handleAdd}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-luxury"
-              >
-                {editingItem !== null ? "Save Changes" : "Add Entry"}
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Data Table */}
         {renderDataTable()}
       </div>
@@ -733,7 +1030,7 @@ const Admin = () => {
       <div className="absolute inset-0 neural-bg opacity-20" />
       
       {/* Executive Header */}
-      <div className="relative z-10 glass-dark border-b border-white/10">
+      <div className="relative z-10 glass-dark border-b border-white/10 pt-20">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex items-center justify-between">
             <div>
@@ -761,6 +1058,7 @@ const Admin = () => {
         <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-600">
           <div className="flex flex-wrap gap-2 mb-6">
             {[
+              { id: "gameResults", label: "🏒 GAME RESULTS", icon: "🎯", featured: true },
               { id: "players", label: "👥 Players", icon: "🏃‍♂️" },
               { id: "teams", label: "🏆 Teams", icon: "⚽" },
               { id: "standings", label: "📊 Standings", icon: "🏅" },
@@ -778,8 +1076,12 @@ const Admin = () => {
                 }}
                 className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
                   activeTab === tab.id
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury"
-                    : "bg-gray-700/80 border border-gray-500 text-white hover:text-blue-300 hover:bg-gray-600"
+                    ? tab.featured 
+                      ? "bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white shadow-luxury text-lg"
+                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury"
+                    : tab.featured
+                      ? "bg-gradient-to-r from-red-700/50 to-orange-600/50 border-2 border-orange-400 text-orange-200 hover:from-red-600/70 hover:to-orange-500/70 text-lg"
+                      : "bg-gray-700/80 border border-gray-500 text-white hover:text-blue-300 hover:bg-gray-600"
                 }`}
               >
                 <span className="mr-2">{tab.icon}</span>
@@ -856,6 +1158,237 @@ const Admin = () => {
         {/* Content Area */}
         {renderTabContent()}
       </div>
+
+      {/* Modal for Edit and Add New - Rendered at top level */}
+      {(showAddForm || editingItem !== null) && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleCancel}
+          />
+          <div className="relative bg-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-600">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {editingItem !== null ? `Edit ${activeTab.slice(0, -1)}` : `Add New ${activeTab.slice(0, -1)}`}
+              </h3>
+              <button
+                onClick={handleCancel}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading data...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.keys(formData).map((field) => {
+                  if (field === 'id') return null; // Skip ID field
+                  
+                  return (
+                    <div key={field}>
+                      <label className="block text-white font-semibold mb-2">
+                        {field.charAt(0).toUpperCase() + field.slice(1)}
+                      </label>
+                      {renderFormField(field, formData[field])}
+                    </div>
+                  );
+                })}
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    onClick={showAddForm ? handleAdd : handleSave}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold transition-all duration-300"
+                    disabled={loading}
+                  >
+                    {showAddForm ? "Add" : "Save Changes"}
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl font-bold transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Game Stats Management Modal */}
+      {showGameStatsModal && selectedGame && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleCloseGameStatsModal}
+          />
+          <div className="relative bg-gray-800 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-600">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  Manage Game Stats
+                </h3>
+                <p className="text-gray-300">
+                  Week {selectedGame.week}: {selectedGame.home_display} vs {selectedGame.away_display}
+                </p>
+              </div>
+              <button
+                onClick={handleCloseGameStatsModal}
+                className="text-gray-400 hover:text-white transition-colors text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Game Summary */}
+              <div className="bg-gray-700/50 rounded-xl p-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white mb-2">
+                    {selectedGame.total_home_points} - {selectedGame.total_away_points}
+                  </div>
+                  <div className="text-gray-300">
+                    Game #{selectedGame.id} • {selectedGame.game_date ? new Date(selectedGame.game_date).toLocaleDateString() : 'Date TBD'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Stats Management */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Home Team Stats */}
+                <div className="bg-gray-700/30 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-bold text-white">
+                      🏠 {selectedGame.home_display}
+                    </h4>
+                    <button
+                      onClick={() => {
+                        console.log('Add player stat for home team', selectedGame.home_team_season_id);
+                        // Here you can implement adding player stats for home team
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                    >
+                      + Add Player
+                    </button>
+                  </div>
+                  
+                  {selectedGame.home_team_stats.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedGame.home_team_stats.map((stat, index) => (
+                        <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3 flex justify-between items-center">
+                          <div>
+                            <div className="font-medium text-white">{stat.player_name}</div>
+                            <div className="text-sm text-gray-300">
+                              {stat.points} pts • {stat.goals}g • {stat.assists}a • {stat.saves}s
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                console.log('Edit stat', stat.id);
+                                // Implement edit functionality
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                console.log('Delete stat', stat.id);
+                                // Implement delete functionality
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Del
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400 py-4">
+                      No player stats recorded
+                    </div>
+                  )}
+                </div>
+
+                {/* Away Team Stats */}
+                <div className="bg-gray-700/30 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-bold text-white">
+                      ✈️ {selectedGame.away_display}
+                    </h4>
+                    <button
+                      onClick={() => {
+                        console.log('Add player stat for away team', selectedGame.away_team_season_id);
+                        // Here you can implement adding player stats for away team
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                    >
+                      + Add Player
+                    </button>
+                  </div>
+                  
+                  {selectedGame.away_team_stats.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedGame.away_team_stats.map((stat, index) => (
+                        <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3 flex justify-between items-center">
+                          <div>
+                            <div className="font-medium text-white">{stat.player_name}</div>
+                            <div className="text-sm text-gray-300">
+                              {stat.points} pts • {stat.goals}g • {stat.assists}a • {stat.saves}s
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                console.log('Edit stat', stat.id);
+                                // Implement edit functionality
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                console.log('Delete stat', stat.id);
+                                // Implement delete functionality
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Del
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-400 py-4">
+                      No player stats recorded
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  onClick={handleCloseGameStatsModal}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl font-bold transition-all duration-300"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

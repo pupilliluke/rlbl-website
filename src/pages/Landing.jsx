@@ -10,7 +10,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-screen h-screen overflow-hidden z-[1]" style={{
+    <div className="fixed inset-0 w-full h-full overflow-auto z-[1]" style={{
       background: `
         radial-gradient(ellipse at top, #1e3a8a 0%, #1e1b4b 25%, #0f172a 60%, #000000 100%),
         radial-gradient(ellipse at bottom right, #312e81 0%, transparent 50%),
@@ -268,23 +268,23 @@ export default function Landing() {
 
       {/* Main Content */}
       <div className="relative z-20 flex items-center justify-center w-full h-full spacing-container">
-        <div className={`text-center max-w-7xl mx-auto px-4 ${isLoaded ? 'animate-luxury-fade-in' : 'opacity-0'}`}>
+        <div className={`text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isLoaded ? 'animate-luxury-fade-in' : 'opacity-0'}`}>
           
           {/* Modern Header Section */}
-          <div className="mb-16 relative">
+          <div className="mb-8 sm:mb-12 md:mb-16 relative mt-4 sm:mt-8">
             <div className="relative text-center space-y-4">
               <div className="inline-block">
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extralight tracking-wider text-white leading-none">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extralight tracking-wider text-white leading-none">
                   ROCKET
                 </h1>
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-400 to-transparent mt-2 mb-2" />
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-extralight tracking-wider text-white leading-none">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extralight tracking-wider text-white leading-none">
                   LEAGUE
                 </h1>
               </div>
               <div className="flex items-center justify-center gap-4 mt-6">
                 <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-400" />
-                <span className="text-lg sm:text-xl md:text-2xl font-light tracking-widest text-blue-300 uppercase">
+                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-light tracking-widest text-blue-300 uppercase">
                   Beer League
                 </span>
                 <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-400" />
@@ -322,7 +322,7 @@ export default function Landing() {
           </div>
 
           {/* Status Indicators */}
-          <div className="mt-16 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 max-w-4xl mx-auto px-4">
+          <div className="mt-8 sm:mt-12 md:mt-16 flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-8 max-w-4xl mx-auto px-4">
             <div className="bg-gray-800/90 rounded-2xl px-6 py-4 w-full sm:w-auto text-center">
               <div className="text-3xl font-bold text-green-400">99.9%</div>
               <div className="text-sm text-gray-300">Uptime</div>

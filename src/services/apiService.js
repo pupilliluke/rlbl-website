@@ -1,12 +1,12 @@
-// API Service for Rocket League app - Using unified mock server
+// API Service for Rocket League app - Using backend server
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api' 
-  : 'http://localhost:3001/api';
+  : 'http://localhost:5000/api';
 
 // Use same base URL for admin functions
 const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? '/api' 
-  : 'http://localhost:3001/api';
+  : 'http://localhost:5000/api';
 
 // Generic API call function
 const apiCall = async (endpoint) => {
@@ -88,6 +88,64 @@ export const apiService = {
   // Roster memberships endpoint
   getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
 
+  // Player Game Stats endpoints
+  getPlayerGameStats: () => apiCall('/player-game-stats'),
+  getPlayerGameStatsByGame: (gameId) => apiCall(`/player-game-stats/game/${gameId}`),
+
+  // Player Game Stats CRUD operations
+  createPlayerGameStats: async (statsData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/player-game-stats`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(statsData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create player game stats:', error);
+      throw error;
+    }
+  },
+
+  updatePlayerGameStats: async (id, statsData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/player-game-stats/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(statsData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update player game stats ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deletePlayerGameStats: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/player-game-stats/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete player game stats ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Admin endpoints for data management (using separate admin server)
   updatePlayer: async (id, playerData) => {
     try {
@@ -138,6 +196,222 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.error(`Failed to delete player ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Teams CRUD operations
+  createTeam: async (teamData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/teams`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(teamData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create team:', error);
+      throw error;
+    }
+  },
+
+  updateTeam: async (id, teamData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/teams/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(teamData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update team ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteTeam: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/teams/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete team ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Standings CRUD operations
+  createStanding: async (standingData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/standings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(standingData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create standing:', error);
+      throw error;
+    }
+  },
+
+  updateStanding: async (id, standingData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/standings/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(standingData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update standing ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteStanding: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/standings/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete standing ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Games/Schedule CRUD operations
+  createGame: async (gameData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/games`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gameData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create game:', error);
+      throw error;
+    }
+  },
+
+  updateGame: async (id, gameData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/games/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gameData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update game ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteGame: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/games/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete game ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Power Rankings CRUD operations
+  createPowerRanking: async (rankingData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rankingData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create power ranking:', error);
+      throw error;
+    }
+  },
+
+  updatePowerRanking: async (id, rankingData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rankingData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update power ranking ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deletePowerRanking: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete power ranking ${id}:`, error);
       throw error;
     }
   },
