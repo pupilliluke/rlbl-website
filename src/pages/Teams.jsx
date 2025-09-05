@@ -80,7 +80,7 @@ export default function Teams() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30">
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30 pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -99,7 +99,7 @@ export default function Teams() {
                 onChange={(e) => setSelectedSeason(e.target.value)}
                 className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
               >
-                <option value="current" className="text-black bg-white">🚀 Season 3 - Summer 25 (Not Started)</option>
+                <option value="current" className="text-black bg-white">🚀 Season 3 - Fall 2025</option>
                 <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
                 <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
                 <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
@@ -112,7 +112,7 @@ export default function Teams() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="mb-12">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
-            {selectedSeason === 'current' ? 'Season 3 Teams (Not Started)' :
+            {selectedSeason === 'current' ? 'Season 3 Teams - Fall 2025' :
              selectedSeason === 'season1' ? 'Season 1 Teams' :
              selectedSeason === 'season2' ? 'Season 2 Teams' :
              selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
