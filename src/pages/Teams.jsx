@@ -172,11 +172,6 @@ export default function Teams() {
                           )}
                         </div>
                         <div className="flex space-x-2 items-center">
-                          {teamRanking && teamRanking > 0 && (
-                            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-bold">
-                              #{teamRanking}
-                            </span>
-                          )}
                           <div className="flex space-x-1">
                             <div
                               className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
