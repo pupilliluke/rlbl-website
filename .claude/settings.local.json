@@ -18,7 +18,10 @@
       "Bash(chmod:*)",
       "Bash(netstat:*)",
       "Bash(curl:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run start:*)",
+      "WebSearch",
+      "Bash(NODE_ENV=production npm run server)"
     ],
     "deny": [],
     "ask": []

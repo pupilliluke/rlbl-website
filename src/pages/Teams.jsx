@@ -99,10 +99,10 @@ export default function Teams() {
                 onChange={(e) => setSelectedSeason(e.target.value)}
                 className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
               >
-                <option value="current" className="text-black bg-white">🚀 Season 3 - Fall 2025</option>
-                <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
-                <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
-                <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
+                <option value="current" className="text-black bg-white">Season 3 - Fall 2025</option>
+                <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
+                <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
+                <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
               </select>
             </div>
           </div>
@@ -123,7 +123,7 @@ export default function Teams() {
             <div className="text-center text-gray-400">
               {selectedSeason === 'current' ? (
                 <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-600">
-                  <div className="text-4xl mb-4">🚀</div>
+                  <div className="text-4xl mb-4"></div>
                   <p className="text-xl text-white mb-2">Season 3 - Summer 25</p>
                   <p>No teams registered yet. Season hasn't started!</p>
                 </div>

@@ -388,11 +388,11 @@ const Stats = () => {
                 onChange={(e) => setSelectedSeason(e.target.value)}
                 className="px-6 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
               >
-                <option value="current" className="text-black bg-white">🚀 Season 3 - Summer 25 (Not Started)</option>
-                <option value="career" className="text-black bg-white">🌟 Career Stats (All-Time)</option>
-                <option value="season2" className="text-black bg-white">🏅 Season 2 - Spring 25</option>
-                <option value="season2_playoffs" className="text-black bg-white">🏆 Season 2 Playoffs</option>
-                <option value="season1" className="text-black bg-white">🎯 Season 1 - Fall 24</option>
+                <option value="current" className="text-black bg-white">Season 3 - Summer 25 (Not Started)</option>
+                <option value="career" className="text-black bg-white">Career Stats (All-Time)</option>
+                <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
+                <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
+                <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
               </select>
 
               {/* Premium Results Count */}
@@ -430,7 +430,7 @@ const Stats = () => {
             <div className="relative mb-8">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
               <div className="relative">
-                <h3 className="text-4xl font-black text-white mb-4">🚀 Season 3 - Summer 25</h3>
+                <h3 className="text-4xl font-black text-white mb-4">Season 3 - Summer 25</h3>
                 <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
               </div>
             </div>
