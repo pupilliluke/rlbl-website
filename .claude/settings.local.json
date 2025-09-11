@@ -21,7 +21,11 @@
       "Bash(find:*)",
       "Bash(npm run start:*)",
       "WebSearch",
-      "Bash(NODE_ENV=production npm run server)"
+      "Bash(NODE_ENV=production npm run server)",
+      "Bash(git checkout:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git stash:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

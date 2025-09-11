@@ -1,15 +1,14 @@
 const express = require('express');
 const cors = require('cors');
+const apiRouter = require('../backend/api');
 
 const app = express();
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Import API routes from backend
-const apiRouter = require('../backend/api');
 
 // Health check for root
 app.get('/', (req, res) => {
@@ -42,5 +41,12 @@ app.use('*', (req, res) => {
   });
 });
 
-// Export for Vercel
+// Export the app for Vercel
 module.exports = app;
+
+// Only start server if this file is run directly (not imported)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
