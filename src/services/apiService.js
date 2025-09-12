@@ -85,12 +85,14 @@ export const apiService = {
     return apiCall(endpoint);
   },
 
-  // Roster memberships endpoint
+  // Roster memberships endpoints
   getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
+  getRosterMembershipsByTeamSeason: (teamSeasonId) => apiCall(`/roster-memberships/team-season/${teamSeasonId}`),
 
   // Player Game Stats endpoints
   getPlayerGameStats: () => apiCall('/player-game-stats'),
   getPlayerGameStatsByGame: (gameId) => apiCall(`/player-game-stats/game/${gameId}`),
+  getPlayerGameStat: (playerId, gameId) => apiCall(`/player-game-stats/player/${playerId}/game/${gameId}`),
 
   // Player Game Stats CRUD operations
   createPlayerGameStats: async (statsData) => {

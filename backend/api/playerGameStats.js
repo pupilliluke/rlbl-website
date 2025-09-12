@@ -37,6 +37,19 @@ router.get('/game/:gameId', async (req, res) => {
   }
 });
 
+// GET /player-game-stats/player/:playerId/game/:gameId - Get specific player's stats for a game
+router.get('/player/:playerId/game/:gameId', async (req, res) => {
+  try {
+    const stat = await playerGameStatsDao.getPlayerGameStat(parseInt(req.params.playerId), parseInt(req.params.gameId));
+    if (!stat) {
+      return res.status(404).json({ error: 'Player game stat not found' });
+    }
+    res.json(stat);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch player game stat', details: error.message });
+  }
+});
+
 // GET /player-game-stats/team-season/:teamSeasonId/totals - Get totals for team season
 router.get('/team-season/:teamSeasonId/totals', async (req, res) => {
   try {
@@ -166,11 +179,22 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
-    const stats = await playerGameStatsDao.update(req.params.id, updateData);
-    if (!stats) {
+    // Use custom update query since player_game_stats doesn't have updated_at column
+    const { query } = require('../../lib/database');
+    const keys = Object.keys(updateData);
+    const values = Object.values(updateData);
+    const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
+    
+    const result = await query(
+      `UPDATE player_game_stats SET ${setClause} WHERE id = $1 RETURNING *`,
+      [req.params.id, ...values]
+    );
+    
+    if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Player game stats not found' });
     }
-    res.json(stats);
+    
+    res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update player game stats', details: error.message });
   }

@@ -42,6 +42,17 @@ const Admin = () => {
   const [collapsedWeeks, setCollapsedWeeks] = useState(new Set());
   const [selectedGame, setSelectedGame] = useState(null);
   const [showGameStatsModal, setShowGameStatsModal] = useState(false);
+  const [homeRoster, setHomeRoster] = useState([]);
+  const [awayRoster, setAwayRoster] = useState([]);
+  const [editingPlayerStat, setEditingPlayerStat] = useState(null);
+  const [playerStatFormData, setPlayerStatFormData] = useState({});
+  const [showAddPlayerStatForm, setShowAddPlayerStatForm] = useState(false);
+  const [addingStatForTeam, setAddingStatForTeam] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedPlayerGame, setSelectedPlayerGame] = useState(null);
+  const [showPlayerStatsModal, setShowPlayerStatsModal] = useState(false);
+  const [playerStatsData, setPlayerStatsData] = useState(null);
+  const [isPlayerStatsNew, setIsPlayerStatsNew] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -58,6 +69,17 @@ const Admin = () => {
     }
   }, [authenticated]);
 
+  // Auto-focus modals for keyboard navigation
+  useEffect(() => {
+    if (showPlayerStatsModal || showAddForm || editingItem !== null || showGameStatsModal) {
+      // Small delay to ensure modal is rendered
+      setTimeout(() => {
+        const modal = document.querySelector('[tabIndex="-1"]');
+        if (modal) modal.focus();
+      }, 100);
+    }
+  }, [showPlayerStatsModal, showAddForm, editingItem, showGameStatsModal]);
+
   // Load initial data for the selected season when season changes
   useEffect(() => {
     if (authenticated && selectedSeason) {
@@ -67,7 +89,7 @@ const Admin = () => {
 
   // Body scroll lock when modal is open
   useEffect(() => {
-    if (showAddForm || editingItem !== null || showGameStatsModal) {
+    if (showAddForm || editingItem !== null || showGameStatsModal || showAddPlayerStatForm || editingPlayerStat !== null || showPlayerStatsModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -77,7 +99,7 @@ const Admin = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [showAddForm, editingItem, showGameStatsModal]);
+  }, [showAddForm, editingItem, showGameStatsModal, showAddPlayerStatForm, editingPlayerStat, showPlayerStatsModal]);
 
   // API Loading Functions
   const setLoadingState = (key, loading) => {
@@ -222,7 +244,7 @@ const Admin = () => {
         // Get all player stats for this game
         const gamePlayerStats = playerGameStats.filter(stat => stat.game_id === game.id);
         
-        // Get players for home and away teams
+        // Get players for home and away teams based on stats
         const homeTeamStats = gamePlayerStats.filter(stat => stat.team_season_id === game.home_team_season_id);
         const awayTeamStats = gamePlayerStats.filter(stat => stat.team_season_id === game.away_team_season_id);
         
@@ -241,8 +263,8 @@ const Admin = () => {
           ...game,
           home_team_stats: enrichedHomeStats,
           away_team_stats: enrichedAwayStats,
-          total_home_points: enrichedHomeStats.reduce((sum, stat) => sum + (stat.points || 0), 0),
-          total_away_points: enrichedAwayStats.reduce((sum, stat) => sum + (stat.points || 0), 0)
+          total_home_goals: enrichedHomeStats.reduce((sum, stat) => sum + (stat.goals || 0), 0),
+          total_away_goals: enrichedAwayStats.reduce((sum, stat) => sum + (stat.goals || 0), 0)
         };
       });
       
@@ -583,18 +605,227 @@ const Admin = () => {
     setCollapsedWeeks(newCollapsedWeeks);
   };
 
-  const handleManageGameStats = (game) => {
+  const handleManageGameStats = async (game) => {
     setSelectedGame(game);
     setShowGameStatsModal(true);
+    
+    // Load team rosters
+    try {
+      const [homeRosterData, awayRosterData] = await Promise.all([
+        apiService.getRosterMembershipsByTeamSeason(game.home_team_season_id),
+        apiService.getRosterMembershipsByTeamSeason(game.away_team_season_id)
+      ]);
+      setHomeRoster(homeRosterData || []);
+      setAwayRoster(awayRosterData || []);
+    } catch (error) {
+      console.error('Failed to load team rosters:', error);
+      setHomeRoster([]);
+      setAwayRoster([]);
+    }
   };
 
   const handleCloseGameStatsModal = () => {
     setSelectedGame(null);
     setShowGameStatsModal(false);
+    setHomeRoster([]);
+    setAwayRoster([]);
+    setEditingPlayerStat(null);
+    setPlayerStatFormData({});
+    setShowAddPlayerStatForm(false);
+    setAddingStatForTeam(null);
   };
 
   const handleFormChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Player Stats Management Functions
+  const handleAddPlayerStat = (teamType, teamSeasonId) => {
+    setAddingStatForTeam({ type: teamType, teamSeasonId });
+    setPlayerStatFormData({
+      game_id: selectedGame.id,
+      player_id: null,
+      team_season_id: teamSeasonId,
+      points: 0,
+      goals: 0,
+      assists: 0,
+      saves: 0,
+      shots: 0,
+      mvps: 0,
+      demos: 0,
+      epic_saves: 0
+    });
+    setShowAddPlayerStatForm(true);
+  };
+
+  const handleEditPlayerStat = (stat, index) => {
+    setEditingPlayerStat(stat);
+    setPlayerStatFormData({ ...stat });
+  };
+
+  const handleSavePlayerStat = async () => {
+    try {
+      setLoading(true);
+      
+      if (editingPlayerStat) {
+        // Update existing stat
+        await apiService.updatePlayerGameStats(editingPlayerStat.id, playerStatFormData);
+      } else {
+        // Create new stat
+        await apiService.createPlayerGameStats(playerStatFormData);
+      }
+      
+      // Reload game results to refresh stats
+      await loadGameResults();
+      
+      // Reset form state
+      setEditingPlayerStat(null);
+      setPlayerStatFormData({});
+      setShowAddPlayerStatForm(false);
+      setAddingStatForTeam(null);
+      
+      setError('');
+    } catch (error) {
+      console.error('Failed to save player stat:', error);
+      setError('Failed to save player stat. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePlayerStat = async (statId) => {
+    if (!window.confirm('Are you sure you want to delete this player stat?')) return;
+    
+    try {
+      setLoading(true);
+      await apiService.deletePlayerGameStats(statId);
+      await loadGameResults();
+      setError('');
+    } catch (error) {
+      console.error('Failed to delete player stat:', error);
+      setError('Failed to delete player stat. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelPlayerStat = () => {
+    setEditingPlayerStat(null);
+    setPlayerStatFormData({});
+    setShowAddPlayerStatForm(false);
+    setAddingStatForTeam(null);
+  };
+
+  const handlePlayerStatFormChange = (field, value) => {
+    setPlayerStatFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Player Slug Modal Functions
+  const handlePlayerClick = async (player, game) => {
+    setSelectedPlayer(player);
+    setSelectedPlayerGame(game);
+    setLoading(true);
+    
+    try {
+      // Try to get existing stats for this player and game
+      const existingStats = await apiService.getPlayerGameStat(player.player_id, game.id);
+      
+      if (existingStats) {
+        setPlayerStatsData(existingStats);
+        setIsPlayerStatsNew(false);
+      } else {
+        // This should not happen as API should return existing stats
+        throw new Error('Unexpected empty response');
+      }
+      
+      setShowPlayerStatsModal(true);
+    } catch (error) {
+      console.error('Failed to load player stats:', error);
+      
+      // If 404 or any error, create new stats entry (expected behavior for new records)
+      // Determine team_season_id based on roster membership, not existing stats
+      console.log('Determining team for player:', player);
+      console.log('Home roster:', homeRoster.map(r => ({ player_id: r.player_id, team_season_id: r.team_season_id })));
+      console.log('Away roster:', awayRoster.map(r => ({ player_id: r.player_id, team_season_id: r.team_season_id })));
+      console.log('Game team_season_ids:', { home: game.home_team_season_id, away: game.away_team_season_id });
+      
+      const isHomeTeamPlayer = homeRoster.some(r => r.player_id === player.player_id);
+      const isAwayTeamPlayer = awayRoster.some(r => r.player_id === player.player_id);
+      
+      console.log('Team membership:', { isHomeTeamPlayer, isAwayTeamPlayer });
+      
+      let teamSeasonId;
+      if (isHomeTeamPlayer) {
+        teamSeasonId = game.home_team_season_id;
+      } else if (isAwayTeamPlayer) {
+        teamSeasonId = game.away_team_season_id;
+      } else {
+        // Fallback - this shouldn't happen if rosters are set up correctly
+        console.error('Player not found in either team roster:', player);
+        teamSeasonId = game.home_team_season_id; // Default to home team
+      }
+      
+      console.log('Assigned team_season_id:', teamSeasonId);
+        
+      setPlayerStatsData({
+        game_id: game.id,
+        player_id: player.player_id,
+        team_season_id: teamSeasonId,
+        points: 0,
+        goals: 0,
+        assists: 0,
+        saves: 0,
+        shots: 0,
+        mvps: 0,
+        demos: 0,
+        epic_saves: 0,
+        player_name: player.player_name,
+        gamertag: player.gamertag
+      });
+      setIsPlayerStatsNew(true);
+      setShowPlayerStatsModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClosePlayerStatsModal = () => {
+    setSelectedPlayer(null);
+    setSelectedPlayerGame(null);
+    setShowPlayerStatsModal(false);
+    setPlayerStatsData(null);
+    setIsPlayerStatsNew(false);
+  };
+
+  const handleSavePlayerStats = async () => {
+    if (!playerStatsData) return;
+    
+    try {
+      setLoading(true);
+      
+      if (isPlayerStatsNew) {
+        await apiService.createPlayerGameStats(playerStatsData);
+      } else {
+        await apiService.updatePlayerGameStats(playerStatsData.id, playerStatsData);
+      }
+      
+      // Reload game results to refresh stats and get updated data
+      await loadGameResults();
+      
+      // The selectedGame will be updated when the modal is opened again
+      // or we can keep the modal open and it will show updated data
+      handleClosePlayerStatsModal();
+      setError('');
+    } catch (error) {
+      console.error('Failed to save player stats:', error);
+      setError('Failed to save player stats. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePlayerStatsChange = (field, value) => {
+    setPlayerStatsData(prev => ({ ...prev, [field]: value }));
   };
 
   const renderFormField = (field, value, type = "text") => {
@@ -720,7 +951,7 @@ const Admin = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full">
             <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
               <tr>
                 {filteredKeys.map((key) => (
@@ -867,18 +1098,18 @@ const Admin = () => {
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-white">
-                              {game.total_home_points} - {game.total_away_points}
+                              {game.total_home_goals || 0} - {game.total_away_goals || 0}
                             </div>
                             <div className="text-xs text-gray-400">
-                              Total Points
+                              Final Score
                             </div>
                           </div>
                         </div>
                       </div>
 
                       {/* Teams and Player Stats */}
-                      <div className="p-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="p-3 sm:p-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                           
                           {/* Home Team */}
                           <div className="bg-gray-600/30 rounded-lg p-3">
@@ -1025,27 +1256,27 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-executive relative page-with-navbar">
+    <div className="min-h-screen bg-gradient-executive relative page-with-navbar overflow-x-hidden">
       {/* Neural Background */}
       <div className="absolute inset-0 neural-bg opacity-20" />
       
       {/* Executive Header */}
       <div className="relative z-10 glass-dark border-b border-white/10 pt-20">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-5xl font-black text-white mb-4">🛠 Admin Control Center</h1>
-              <p className="text-xl text-white font-light">
+        <div className="w-full px-4 sm:px-6 py-8 sm:py-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="w-full sm:w-auto">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-2 sm:mb-4">🛠 Admin Control Center</h1>
+              <p className="text-base sm:text-lg lg:text-xl text-white font-light">
                 Full CRUD management for all league data and operations
               </p>
             </div>
-            <div className="hidden md:flex items-center gap-4">
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-red-400">🔐</div>
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-4 py-3 text-center border border-gray-600">
+                <div className="text-xl font-bold text-red-400">🔐</div>
                 <div className="text-xs text-white">Secure</div>
               </div>
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-orange-400">⚡</div>
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-4 py-3 text-center border border-gray-600">
+                <div className="text-xl font-bold text-orange-400">⚡</div>
                 <div className="text-xs text-white">Live</div>
               </div>
             </div>
@@ -1054,9 +1285,9 @@ const Admin = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-600">
-          <div className="flex flex-wrap gap-2 mb-6">
+      <div className="relative z-10 w-full px-4 sm:px-6 py-6 sm:py-8">
+        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 border border-gray-600">
+          <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
             {[
               { id: "gameResults", label: "🏒 GAME RESULTS", icon: "🎯", featured: true },
               { id: "players", label: "👥 Players", icon: "🏃‍♂️" },
@@ -1074,32 +1305,33 @@ const Admin = () => {
                   setShowAddForm(false);
                   setFormData({});
                 }}
-                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
+                className={`px-3 sm:px-4 lg:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-bold transition-all duration-300 ${
                   activeTab === tab.id
                     ? tab.featured 
-                      ? "bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white shadow-luxury text-lg"
+                      ? "bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-white shadow-luxury"
                       : "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-luxury"
                     : tab.featured
-                      ? "bg-gradient-to-r from-red-700/50 to-orange-600/50 border-2 border-orange-400 text-orange-200 hover:from-red-600/70 hover:to-orange-500/70 text-lg"
+                      ? "bg-gradient-to-r from-red-700/50 to-orange-600/50 border-2 border-orange-400 text-orange-200 hover:from-red-600/70 hover:to-orange-500/70"
                       : "bg-gray-700/80 border border-gray-500 text-white hover:text-blue-300 hover:bg-gray-600"
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
-                {tab.label}
+                <span className="mr-1 sm:mr-2">{tab.icon}</span>
+                <span className="hidden xs:inline sm:inline">{tab.label}</span>
+                <span className="xs:hidden sm:hidden">{tab.id === "gameResults" ? "GAMES" : tab.id.toUpperCase()}</span>
               </button>
             ))}
           </div>
 
           {/* Season Selector */}
-          <div className="flex items-center gap-4 mb-6 p-4 bg-gray-700/50 rounded-xl">
-            <label className="text-white font-semibold flex items-center gap-2">
-              <span className="text-xl">🗓️</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-700/50 rounded-xl">
+            <label className="text-white font-semibold flex items-center gap-2 text-sm sm:text-base">
+              <span className="text-lg sm:text-xl">🗓️</span>
               Season:
             </label>
             <select
               value={selectedSeason || ''}
               onChange={(e) => setSelectedSeason(parseInt(e.target.value))}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg border border-gray-500 focus:border-blue-400"
+              className="bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg border border-gray-500 focus:border-blue-400 text-sm sm:text-base w-full sm:w-auto"
               disabled={loadingStates.seasons}
             >
               <option value="">Select Season...</option>
@@ -1138,20 +1370,22 @@ const Admin = () => {
           )}
 
           {/* Add New Button */}
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold text-white">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
+            <h3 className="text-lg sm:text-xl font-bold text-white">
               Manage {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               {activeTab === "standings" && ` - ${selectedConference.charAt(0).toUpperCase() + selectedConference.slice(1)} Conference`}
             </h3>
-            <button
-              onClick={() => {
-                setShowAddForm(true);
-                setFormData(getDefaultFormData());
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 shadow-luxury"
-            >
-              + Add New {activeTab === "standings" ? "Team" : activeTab.slice(0, -1)}
-            </button>
+            {activeTab !== 'gameResults' && (
+              <button
+                onClick={() => {
+                  setShowAddForm(true);
+                  setFormData(getDefaultFormData());
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold transition-all duration-300 shadow-luxury text-sm sm:text-base w-full sm:w-auto"
+              >
+                + Add New {activeTab === "standings" ? "Team" : activeTab.slice(0, -1)}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1161,12 +1395,21 @@ const Admin = () => {
 
       {/* Modal for Edit and Add New - Rendered at top level */}
       {(showAddForm || editingItem !== null) && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 9999 }}>
           <div 
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={handleCancel}
           />
-          <div className="relative bg-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-600">
+          <div 
+            className="relative bg-gray-800 rounded-2xl p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-600"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            tabIndex={-1}
+          >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-xl font-bold text-white">
                 {editingItem !== null ? `Edit ${activeTab.slice(0, -1)}` : `Add New ${activeTab.slice(0, -1)}`}
@@ -1222,12 +1465,22 @@ const Admin = () => {
 
       {/* Game Stats Management Modal */}
       {showGameStatsModal && selectedGame && (
-        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+        <div className="fixed inset-0 flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 9999 }}>
           <div 
             className="absolute inset-0 bg-black bg-opacity-50"
             onClick={handleCloseGameStatsModal}
           />
-          <div className="relative bg-gray-800 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-600">
+          <div 
+            className="relative bg-gray-800 rounded-2xl p-4 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-600"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) {
+                e.preventDefault();
+                // This modal doesn't have a single save action, so we won't auto-submit
+                // But we could add specific logic if needed
+              }
+            }}
+            tabIndex={-1}
+          >
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">
@@ -1250,7 +1503,7 @@ const Admin = () => {
               <div className="bg-gray-700/50 rounded-xl p-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-white mb-2">
-                    {selectedGame.total_home_points} - {selectedGame.total_away_points}
+                    {selectedGame.total_home_goals || 0} - {selectedGame.total_away_goals || 0}
                   </div>
                   <div className="text-gray-300">
                     Game #{selectedGame.id} • {selectedGame.game_date ? new Date(selectedGame.game_date).toLocaleDateString() : 'Date TBD'}
@@ -1259,118 +1512,217 @@ const Admin = () => {
               </div>
 
               {/* Team Stats Management */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 
                 {/* Home Team Stats */}
                 <div className="bg-gray-700/30 rounded-xl p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-xl font-bold text-white">
+                  <div className="mb-4">
+                    <h4 className="text-xl font-bold text-white text-center">
                       🏠 {selectedGame.home_display}
                     </h4>
-                    <button
-                      onClick={() => {
-                        console.log('Add player stat for home team', selectedGame.home_team_season_id);
-                        // Here you can implement adding player stats for home team
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                    >
-                      + Add Player
-                    </button>
                   </div>
                   
-                  {selectedGame.home_team_stats.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedGame.home_team_stats.map((stat, index) => (
-                        <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3 flex justify-between items-center">
-                          <div>
-                            <div className="font-medium text-white">{stat.player_name}</div>
-                            <div className="text-sm text-gray-300">
-                              {stat.points} pts • {stat.goals}g • {stat.assists}a • {stat.saves}s
+                  {/* Show current stats first */}
+                  {selectedGame.home_team_stats.length > 0 && (
+                    <div className="mb-4">
+                      <h5 className="text-sm font-semibold text-gray-300 mb-2">Current Stats</h5>
+                      <div className="space-y-2">
+                        {selectedGame.home_team_stats.map((stat, index) => (
+                          <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <button
+                                  onClick={() => handlePlayerClick({
+                                    player_id: stat.player_id,
+                                    player_name: stat.player_name,
+                                    gamertag: stat.gamertag
+                                  }, selectedGame)}
+                                  className="font-medium text-white hover:text-blue-400 hover:underline transition-colors text-left"
+                                >
+                                  {stat.player_name}
+                                </button>
+                                <div className="text-sm text-gray-300 grid grid-cols-4 gap-2 mt-1">
+                                  <span>{stat.points} pts</span>
+                                  <span>{stat.goals}g</span>
+                                  <span>{stat.assists}a</span>
+                                  <span>{stat.saves}s</span>
+                                </div>
+                                <div className="text-xs text-gray-400 grid grid-cols-3 gap-2 mt-1">
+                                  <span>{stat.shots} sh</span>
+                                  <span>{stat.mvps} mvp</span>
+                                  <span>{stat.demos} demo</span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 ml-2">
+                                <button
+                                  onClick={() => handleEditPlayerStat(stat, index)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePlayerStat(stat.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                                >
+                                  Del
+                                </button>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                console.log('Edit stat', stat.id);
-                                // Implement edit functionality
-                              }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                console.log('Delete stat', stat.id);
-                                // Implement delete functionality
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Del
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
+                  )}
+                  
+                  {/* Show available players */}
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-300 mb-2">
+                      Team Roster ({homeRoster.length} players)
+                      {homeRoster.length === 0 && <span className="text-yellow-400 ml-2">(Loading...)</span>}
+                    </h5>
+                    {homeRoster.length > 0 ? (
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        {homeRoster.map((player, index) => {
+                          const hasStats = selectedGame.home_team_stats.some(stat => stat.player_id === player.player_id);
+                          return (
+                            <div
+                              key={player.player_id || index}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Clicked home team player:', player);
+                                handlePlayerClick({
+                                  player_id: player.player_id,
+                                  player_name: player.player_name,
+                                  gamertag: player.gamertag
+                                }, selectedGame);
+                              }}
+                              className={`text-sm px-3 py-2 rounded-lg flex justify-between items-center transition-all duration-200 hover:scale-[1.02] w-full cursor-pointer border select-none ${
+                                hasStats 
+                                  ? 'bg-green-600/20 text-green-300 hover:bg-green-600/30 border-green-500/30' 
+                                  : 'bg-gray-600/20 text-gray-300 hover:bg-blue-600/30 hover:text-blue-300 border-gray-500/30'
+                              }`}
+                              style={{ userSelect: 'none' }}
+                            >
+                              <span className="font-medium pointer-events-none">{player.player_name}</span>
+                              <span className="text-lg pointer-events-none">{hasStats ? '✅' : '➕'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center text-yellow-400 py-4 bg-gray-700/20 rounded-lg">
+                        <div className="text-xl mb-2">⚠️</div>
+                        <div className="text-sm">No roster data available</div>
+                        <div className="text-xs text-gray-400 mt-1">Check team_seasons and roster_memberships tables</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {homeRoster.length === 0 && selectedGame.home_team_stats.length === 0 && (
                     <div className="text-center text-gray-400 py-4">
-                      No player stats recorded
+                      No roster or stats available
                     </div>
                   )}
                 </div>
 
                 {/* Away Team Stats */}
                 <div className="bg-gray-700/30 rounded-xl p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-xl font-bold text-white">
+                  <div className="mb-4">
+                    <h4 className="text-xl font-bold text-white text-center">
                       ✈️ {selectedGame.away_display}
                     </h4>
-                    <button
-                      onClick={() => {
-                        console.log('Add player stat for away team', selectedGame.away_team_season_id);
-                        // Here you can implement adding player stats for away team
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                    >
-                      + Add Player
-                    </button>
                   </div>
                   
-                  {selectedGame.away_team_stats.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedGame.away_team_stats.map((stat, index) => (
-                        <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3 flex justify-between items-center">
-                          <div>
-                            <div className="font-medium text-white">{stat.player_name}</div>
-                            <div className="text-sm text-gray-300">
-                              {stat.points} pts • {stat.goals}g • {stat.assists}a • {stat.saves}s
+                  {/* Show current stats first */}
+                  {selectedGame.away_team_stats.length > 0 && (
+                    <div className="mb-4">
+                      <h5 className="text-sm font-semibold text-gray-300 mb-2">Current Stats</h5>
+                      <div className="space-y-2">
+                        {selectedGame.away_team_stats.map((stat, index) => (
+                          <div key={stat.id} className="bg-gray-600/30 rounded-lg p-3">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <button
+                                  onClick={() => handlePlayerClick({
+                                    player_id: stat.player_id,
+                                    player_name: stat.player_name,
+                                    gamertag: stat.gamertag
+                                  }, selectedGame)}
+                                  className="font-medium text-white hover:text-blue-400 hover:underline transition-colors text-left"
+                                >
+                                  {stat.player_name}
+                                </button>
+                                <div className="text-sm text-gray-300 grid grid-cols-4 gap-2 mt-1">
+                                  <span>{stat.points} pts</span>
+                                  <span>{stat.goals}g</span>
+                                  <span>{stat.assists}a</span>
+                                  <span>{stat.saves}s</span>
+                                </div>
+                                <div className="text-xs text-gray-400 grid grid-cols-3 gap-2 mt-1">
+                                  <span>{stat.shots} sh</span>
+                                  <span>{stat.mvps} mvp</span>
+                                  <span>{stat.demos} demo</span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 ml-2">
+                                <button
+                                  onClick={() => handleEditPlayerStat(stat, index)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePlayerStat(stat.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors"
+                                >
+                                  Del
+                                </button>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                console.log('Edit stat', stat.id);
-                                // Implement edit functionality
-                              }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                console.log('Delete stat', stat.id);
-                                // Implement delete functionality
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Del
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  ) : (
+                  )}
+                  
+                  {/* Show available players */}
+                  {awayRoster.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-300 mb-2">Team Roster ({awayRoster.length} players)</h5>
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        {awayRoster.map((player, index) => {
+                          const hasStats = selectedGame.away_team_stats.some(stat => stat.player_id === player.player_id);
+                          return (
+                            <div
+                              key={player.player_id || index}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Clicked away team player:', player);
+                                handlePlayerClick({
+                                  player_id: player.player_id,
+                                  player_name: player.player_name,
+                                  gamertag: player.gamertag
+                                }, selectedGame);
+                              }}
+                              className={`text-sm px-3 py-2 rounded-lg flex justify-between items-center transition-all duration-200 hover:scale-[1.02] w-full cursor-pointer border select-none ${
+                                hasStats 
+                                  ? 'bg-green-600/20 text-green-300 hover:bg-green-600/30 border-green-500/30' 
+                                  : 'bg-gray-600/20 text-gray-300 hover:bg-blue-600/30 hover:text-blue-300 border-gray-500/30'
+                              }`}
+                              style={{ userSelect: 'none' }}
+                            >
+                              <span className="font-medium pointer-events-none">{player.player_name}</span>
+                              <span className="text-lg pointer-events-none">{hasStats ? '✅' : '➕'}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {awayRoster.length === 0 && selectedGame.away_team_stats.length === 0 && (
                     <div className="text-center text-gray-400 py-4">
-                      No player stats recorded
+                      No roster or stats available
                     </div>
                   )}
                 </div>
@@ -1386,6 +1738,304 @@ const Admin = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Player Stats Form Modal */}
+      {(showAddPlayerStatForm || editingPlayerStat) && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10000 }}>
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleCancelPlayerStat}
+          />
+          <div className="relative bg-gray-800 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-600">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">
+                {editingPlayerStat ? 'Edit Player Stats' : `Add Player Stats - ${addingStatForTeam?.type === 'home' ? selectedGame?.home_display : selectedGame?.away_display}`}
+              </h3>
+              <button
+                onClick={handleCancelPlayerStat}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p className="text-gray-400">Saving stats...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Player Selection (only for new stats) */}
+                {!editingPlayerStat && (
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Player</label>
+                    <select
+                      value={playerStatFormData.player_id || ''}
+                      onChange={(e) => handlePlayerStatFormChange('player_id', parseInt(e.target.value))}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      required
+                    >
+                      <option value="">Select Player...</option>
+                      {(addingStatForTeam?.type === 'home' ? homeRoster : awayRoster).map(player => (
+                        <option key={player.player_id} value={player.player_id}>
+                          {player.player_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Stats Input Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Points</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.points ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('points', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Goals</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.goals ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('goals', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Assists</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.assists ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('assists', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Saves</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.saves ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('saves', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Shots</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.shots ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('shots', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">MVPs</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.mvps ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('mvps', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Demos</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.demos ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('demos', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white font-semibold mb-2">Epic Saves</label>
+                    <input
+                      type="number"
+                      value={playerStatFormData.epic_saves ?? 0}
+                      onChange={(e) => handlePlayerStatFormChange('epic_saves', parseInt(e.target.value) || 0)}
+                      className="bg-gray-700/80 border border-gray-500 rounded-xl px-4 py-3 text-white w-full"
+                      min="0"
+                    />
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex gap-4 pt-4">
+                  <button
+                    onClick={handleSavePlayerStat}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold transition-all duration-300"
+                    disabled={loading || (!editingPlayerStat && !playerStatFormData.player_id)}
+                  >
+                    {editingPlayerStat ? 'Update Stats' : 'Add Stats'}
+                  </button>
+                  <button
+                    onClick={handleCancelPlayerStat}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-xl font-bold transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Player Stats Modal */}
+      {showPlayerStatsModal && selectedPlayer && selectedPlayerGame && playerStatsData && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 10001 }}>
+          <div 
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={handleClosePlayerStatsModal}
+          />
+          <div 
+            className="relative bg-gray-800 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-600"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !loading) {
+                e.preventDefault();
+                handleSavePlayerStats();
+              }
+            }}
+            tabIndex={-1}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white">{selectedPlayer.player_name}</h3>
+                <p className="text-sm text-gray-400">Week {selectedPlayerGame.week} • Game #{selectedPlayerGame.id}</p>
+              </div>
+              <button
+                onClick={handleClosePlayerStatsModal}
+                className="text-gray-400 hover:text-white transition-colors text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+                <p className="text-gray-400">Saving stats...</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Stats Input Grid */}
+                <div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Points</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.points === 0 ? '' : playerStatsData.points || ''}
+                        onChange={(e) => handlePlayerStatsChange('points', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Goals</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.goals === 0 ? '' : playerStatsData.goals || ''}
+                        onChange={(e) => handlePlayerStatsChange('goals', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Assists</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.assists === 0 ? '' : playerStatsData.assists || ''}
+                        onChange={(e) => handlePlayerStatsChange('assists', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Saves</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.saves === 0 ? '' : playerStatsData.saves || ''}
+                        onChange={(e) => handlePlayerStatsChange('saves', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Shots</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.shots === 0 ? '' : playerStatsData.shots || ''}
+                        onChange={(e) => handlePlayerStatsChange('shots', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">MVPs</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.mvps === 0 ? '' : playerStatsData.mvps || ''}
+                        onChange={(e) => handlePlayerStatsChange('mvps', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Demos</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.demos === 0 ? '' : playerStatsData.demos || ''}
+                        onChange={(e) => handlePlayerStatsChange('demos', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-white text-sm font-medium mb-1">Epic Saves</label>
+                      <input
+                        type="number"
+                        value={playerStatsData.epic_saves === 0 ? '' : playerStatsData.epic_saves || ''}
+                        onChange={(e) => handlePlayerStatsChange('epic_saves', e.target.value === '' ? 0 : parseInt(e.target.value) || 0)}
+                        className="bg-gray-700 border border-gray-500 rounded-lg px-3 py-2 text-white w-full text-center"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleSavePlayerStats}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 flex-1"
+                    disabled={loading}
+                  >
+                    {isPlayerStatsNew ? 'Save' : 'Update'}
+                  </button>
+                  <button
+                    onClick={handleClosePlayerStatsModal}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -181,40 +181,9 @@ export default function Standings() {
               )}
             </div>
 
-            {/* Symbol Toggle */}
-            <button
-              onClick={() => setShowSymbols(!showSymbols)}
-              className={`px-4 py-2 rounded-lg text-sm md:text-base font-medium transition-all ${
-                showSymbols 
-                  ? "bg-blue-600/50 border border-blue-500/50 text-white shadow-lg" 
-                  : "bg-gray-800/50 border border-gray-600/50 text-gray-300 hover:border-blue-500/30"
-              }`}
-            >
-              {showSymbols ? "Hide Symbols" : "Show Symbols"}
-            </button>
           </div>
         </div>
 
-        {/* Legend */}
-        {showSymbols && (
-          <div className="bg-gray-800/50 p-6 rounded-xl shadow-xl border border-gray-600/50 mb-8">
-            <h3 className="text-lg md:text-xl font-bold text-white mb-4">Legend</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm md:text-base">
-              <div className="flex items-center gap-2">
-                <span className="text-yellow-400 text-lg">👑</span>
-                <span>League Leader</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-green-400 text-lg">🟢</span>
-                <span>Playoff Position</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-red-400 text-lg">🔴</span>
-                <span>Bottom Team</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Current Standings */}
         <section className="mb-12">
@@ -247,21 +216,6 @@ export default function Standings() {
                   <tbody>
                     {standings.map((team, index) => {
                       const rank = index + 1;
-                      let symbol = "";
-                      let symbolClass = "";
-                      
-                      if (showSymbols) {
-                        if (rank === 1) {
-                          symbol = "👑";
-                          symbolClass = "text-yellow-400";
-                        } else if (rank <= 3) {
-                          symbol = "🟢";
-                          symbolClass = "text-green-400";
-                        } else if (rank === standings.length) {
-                          symbol = "🔴";
-                          symbolClass = "text-red-400";
-                        }
-                      }
 
                       const baseStyle = "transition duration-200 border-b border-gray-600/50 hover:bg-gray-700/50";
                       const styles = {
@@ -270,14 +224,12 @@ export default function Standings() {
                         3: "bg-gradient-to-r from-amber-900/30 to-amber-800/30",
                       };
 
-                      const medal = rank === 1 ? <GoldMedalIcon className="w-5 h-5" /> : rank === 2 ? <SilverMedalIcon className="w-5 h-5" /> : rank === 3 ? <BronzeMedalIcon className="w-5 h-5" /> : "";
                       const rowClass = styles[rank] || "";
 
                       return (
                         <tr key={team.id} className={`${rowClass} ${baseStyle}`}>
                           <td className="py-3 md:py-4 px-3 md:px-4 font-bold">
-                            <span className="mr-2">{medal || rank}</span>
-                            <span className={symbolClass}>{symbol}</span>
+                            <span className="mr-2">{rank}</span>
                           </td>
                           <td className="py-3 md:py-4 px-3 md:px-4 font-semibold">
                             <button
