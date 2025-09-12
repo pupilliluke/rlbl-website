@@ -34,6 +34,36 @@ class PlayerGameStatsDao extends BaseDao {
     return r.rows;
   }
 
+  async getPlayerGameStat(playerId, gameId) {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `SELECT pgs.*, p.player_name, p.gamertag, g.week, g.game_date,
+              ts_home.team_id as home_team_id, ts_away.team_id as away_team_id,
+              t_home.team_name as home_team_name, t_away.team_name as away_team_name
+         FROM player_game_stats pgs
+         JOIN players p ON pgs.player_id = p.id
+         JOIN games g ON pgs.game_id = g.id
+         LEFT JOIN team_seasons ts_home ON g.home_team_season_id = ts_home.id
+         LEFT JOIN team_seasons ts_away ON g.away_team_season_id = ts_away.id
+         LEFT JOIN teams t_home ON ts_home.team_id = t_home.id
+         LEFT JOIN teams t_away ON ts_away.team_id = t_away.id
+        WHERE pgs.player_id = $1 AND pgs.game_id = $2`,
+      [playerId, gameId]
+    );
+    return r.rows[0] || null;
+  }
+
+  async createPlayerGameStat({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0 }) {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING *`,
+      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves]
+    );
+    return r.rows[0];
+  }
+
   async totalsForTeamSeason(teamSeasonId) {
     const { query } = require('../../lib/database');
     const r = await query(
@@ -50,15 +80,15 @@ class PlayerGameStatsDao extends BaseDao {
   async getPlayerStatsWithTeams(seasonId = null) {
     const { query } = require('../../lib/database');
     
-    // First try to get stats from player_game_stats table
+    // Get comprehensive stats from player_game_stats table with team information
     try {
       let sql = `
         SELECT 
           p.id,
           p.player_name,
           p.gamertag,
-          'Unknown' as team_name,
-          '#808080' as team_color,
+          COALESCE(t.team_name, 'Multiple Teams') as team_name,
+          COALESCE(t.color, '#808080') as team_color,
           SUM(pgs.points) as total_points,
           SUM(pgs.goals) as total_goals,
           SUM(pgs.assists) as total_assists,
@@ -68,22 +98,33 @@ class PlayerGameStatsDao extends BaseDao {
           SUM(pgs.demos) as total_demos,
           SUM(pgs.epic_saves) as total_epic_saves,
           COUNT(pgs.game_id) as games_played,
-          CAST(SUM(pgs.points) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0) as avg_points_per_game
+          ROUND(CAST(SUM(pgs.points) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_points_per_game,
+          ROUND(CAST(SUM(pgs.goals) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_goals_per_game,
+          ROUND(CAST(SUM(pgs.saves) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_saves_per_game,
+          ROUND(CAST((SUM(pgs.goals) + SUM(pgs.assists)) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_goal_involvement
         FROM player_game_stats pgs
         JOIN players p ON pgs.player_id = p.id
         JOIN games g ON pgs.game_id = g.id
+        LEFT JOIN team_seasons ts ON pgs.team_season_id = ts.id
+        LEFT JOIN teams t ON ts.team_id = t.id
       `;
       
       const params = [];
+      let whereClause = [];
+      
       if (seasonId && seasonId !== 'career') {
         const seasonIdInt = parseInt(seasonId);
         if (!isNaN(seasonIdInt)) {
-          sql += ' WHERE g.season_id = $1';
+          whereClause.push('g.season_id = $' + (params.length + 1));
           params.push(seasonIdInt);
         }
       }
       
-      sql += ' GROUP BY p.id, p.player_name, p.gamertag ORDER BY total_points DESC';
+      if (whereClause.length > 0) {
+        sql += ' WHERE ' + whereClause.join(' AND ');
+      }
+      
+      sql += ' GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color ORDER BY total_points DESC';
       
       const result = await query(sql, params);
       

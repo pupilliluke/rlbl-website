@@ -298,7 +298,7 @@ const LeagueInfo = () => {
           </div>
         </div>
 
-        {/* Team Rosters Section */}
+        {/* Team Rosters Section - Commented out for later use
         <section className="mb-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -333,6 +333,7 @@ const LeagueInfo = () => {
             />
           </div>
         </section>
+        */}
 
         {/* Footer */}
         <footer className="mt-16 pt-8 border-t border-gray-800 text-center">

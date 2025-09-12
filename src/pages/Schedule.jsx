@@ -8,6 +8,8 @@ const Schedule = () => {
   const [error, setError] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState(3); // Default to season 3
   const [collapsedWeeks, setCollapsedWeeks] = useState(new Set()); // Track collapsed weeks
+  const [gameStats, setGameStats] = useState({}); // Track game stats by game ID
+  const [expandedGames, setExpandedGames] = useState(new Set()); // Track which games show stats
 
   useEffect(() => {
     fetchGames();
@@ -55,6 +57,30 @@ const Schedule = () => {
       newCollapsedWeeks.add(weekNum);
     }
     setCollapsedWeeks(newCollapsedWeeks);
+  };
+
+  const fetchGameStats = async (gameId) => {
+    try {
+      const stats = await apiService.getPlayerGameStatsByGame(gameId);
+      setGameStats(prev => ({ ...prev, [gameId]: stats }));
+    } catch (error) {
+      console.error('Error fetching game stats:', error);
+      setGameStats(prev => ({ ...prev, [gameId]: [] }));
+    }
+  };
+
+  const toggleGameStats = async (gameId) => {
+    const newExpanded = new Set(expandedGames);
+    if (newExpanded.has(gameId)) {
+      newExpanded.delete(gameId);
+    } else {
+      newExpanded.add(gameId);
+      // Fetch stats if we don't have them yet
+      if (!gameStats[gameId]) {
+        await fetchGameStats(gameId);
+      }
+    }
+    setExpandedGames(newExpanded);
   };
 
   if (loading) {
