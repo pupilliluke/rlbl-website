@@ -9,23 +9,21 @@ router.get('/', async (req, res) => {
   try {
     const { season } = req.query;
     
-    // Build season filter based on query parameter
-    let seasonFilter = '';
+    // Convert season parameter to seasonId for getPlayerStatsWithTeams
+    let seasonId = null;
     if (season && season !== 'career') {
       if (season === 'current') {
-        seasonFilter = 'AND seasons.is_active = true';
+        seasonId = 3; // Current season
       } else if (season && season.startsWith('season')) {
         const seasonNumber = season.replace('season', '');
-        seasonFilter = `AND seasons.season_name ILIKE '%Season ${seasonNumber}%'`;
+        seasonId = parseInt(seasonNumber);
       } else if (season === 'season2_playoffs') {
-        seasonFilter = `AND seasons.season_name ILIKE '%Season 2%playoff%'`;
+        seasonId = 2; // Season 2 for playoffs
       }
-    } else if (!season || season === 'current') {
-      seasonFilter = 'AND seasons.is_active = true';
     }
-    // For 'career' or no season, show all data (no additional filter)
+    // For 'career' or no season, seasonId stays null to show all data
 
-    const stats = await playerGameStatsDao.getAggregatedStats(seasonFilter);
+    const stats = await playerGameStatsDao.getPlayerStatsWithTeams(seasonId);
     res.json(stats);
   } catch (error) {
     console.error('Failed to fetch stats:', error);
