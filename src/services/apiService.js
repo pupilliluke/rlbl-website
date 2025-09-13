@@ -330,6 +330,25 @@ export const apiService = {
     }
   },
 
+  createSeriesGame: async (gameData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/games/series`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gameData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create series game:', error);
+      throw error;
+    }
+  },
+
   updateGame: async (id, gameData) => {
     try {
       const response = await fetch(`${ADMIN_API_BASE_URL}/games/${id}`, {
