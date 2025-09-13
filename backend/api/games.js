@@ -153,6 +153,55 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// POST /games/series - Create new game in existing series
+router.post('/series', async (req, res) => {
+  try {
+    const { 
+      season_id, 
+      home_team_season_id, 
+      away_team_season_id, 
+      game_date, 
+      week, 
+      is_playoffs 
+    } = req.body;
+    
+    if (!season_id || !home_team_season_id || !away_team_season_id || !week) {
+      return res.status(400).json({ 
+        error: 'season_id, home_team_season_id, away_team_season_id, and week are required' 
+      });
+    }
+
+    const gameData = {
+      seasonId: parseInt(season_id),
+      homeTeamSeasonId: parseInt(home_team_season_id),
+      awayTeamSeasonId: parseInt(away_team_season_id),
+      gameDate: game_date || null,
+      week: parseInt(week),
+      isPlayoffs: is_playoffs || false
+    };
+
+    const game = await gamesDao.createSeriesGame(gameData);
+    res.status(201).json(game);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create series game', details: error.message });
+  }
+});
+
+// GET /games/series/:seasonId/:week/:homeTeamSeasonId/:awayTeamSeasonId - Get all games in a series
+router.get('/series/:seasonId/:week/:homeTeamSeasonId/:awayTeamSeasonId', async (req, res) => {
+  try {
+    const seasonId = parseInt(req.params.seasonId);
+    const week = parseInt(req.params.week);
+    const homeTeamSeasonId = parseInt(req.params.homeTeamSeasonId);
+    const awayTeamSeasonId = parseInt(req.params.awayTeamSeasonId);
+    
+    const games = await gamesDao.getSeriesGames(seasonId, week, homeTeamSeasonId, awayTeamSeasonId);
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch series games', details: error.message });
+  }
+});
+
 // DELETE /games/season/:seasonId - Delete all games for a season
 router.delete('/season/:seasonId', async (req, res) => {
   try {

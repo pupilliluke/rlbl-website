@@ -25,7 +25,10 @@
       "Bash(git checkout:*)",
       "Bash(git ls-tree:*)",
       "Bash(git stash:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(NODE_ENV=production node server.js)",
+      "Bash(set NODE_ENV=production)",
+      "Bash(set PORT=3000)"
     ],
     "deny": [],
     "ask": []
