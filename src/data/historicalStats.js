@@ -1,7 +1,8 @@
+// DISABLED: Fake historical statistics - only use real database data
 // Historical player statistics from Discord seasons
 
 // Season 1 - Fall 24 Stats
-export const season1Stats = [
+// export const season1Stats = [
   {
     rank: 1,
     player: "Dylan",
@@ -1076,20 +1077,25 @@ export const season2PlayoffStats = [
   }
 ];
 
+// Export empty data instead of fake data
+export const season1Stats = [];
+export const season2Stats = [];
+export const season2PlayoffStats = [];
+
 export const historicalSeasons = {
   "season1": {
     name: "Season 1",
     year: "Fall 24",
-    stats: season1Stats
+    stats: []
   },
   "season2": {
     name: "Season 2", 
     year: "Spring 25",
-    stats: season2Stats
+    stats: []
   },
   "season2_playoffs": {
     name: "Season 2 Playoffs",
     year: "Winter 25",
-    stats: season2PlayoffStats
+    stats: []
   }
 };

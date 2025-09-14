@@ -4,10 +4,10 @@ const PlayerGameStatsDao = require('../dao/PlayerGameStatsDao');
 
 const playerGameStatsDao = new PlayerGameStatsDao();
 
-// GET /player-game-stats - Get all player game stats
+// GET /player-game-stats - Get all player game stats with names
 router.get('/', async (req, res) => {
   try {
-    const stats = await playerGameStatsDao.findAll();
+    const stats = await playerGameStatsDao.findAllWithNames();
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch player game stats', details: error.message });
@@ -86,6 +86,41 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // VALIDATION: Check if player is actually on this team's roster
+    try {
+      const { query } = require('../../lib/database');
+      const rosterCheck = await query(
+        `SELECT rm.id 
+         FROM roster_memberships rm 
+         WHERE rm.player_id = $1 AND rm.team_season_id = $2`,
+        [player_id, team_season_id]
+      );
+      
+      if (rosterCheck.rows.length === 0) {
+        // Get player and team names for better error message
+        const [playerInfo, teamInfo] = await Promise.all([
+          query('SELECT player_name FROM players WHERE id = $1', [player_id]),
+          query('SELECT ts.display_name FROM team_seasons ts WHERE ts.id = $1', [team_season_id])
+        ]);
+        
+        const playerName = playerInfo.rows[0]?.player_name || `Player ${player_id}`;
+        const teamName = teamInfo.rows[0]?.display_name || `Team ${team_season_id}`;
+        
+        return res.status(400).json({ 
+          error: `Validation failed: ${playerName} is not on ${teamName}'s roster for this season. Please check roster memberships.`,
+          player_id,
+          team_season_id,
+          validation: 'roster_membership_required'
+        });
+      }
+    } catch (validationError) {
+      console.error('Roster validation error:', validationError);
+      return res.status(500).json({ 
+        error: 'Failed to validate roster membership', 
+        details: validationError.message 
+      });
+    }
+
     const statsData = {
       gameId: parseInt(game_id),
       playerId: parseInt(player_id),
@@ -127,6 +162,41 @@ router.put('/upsert', async (req, res) => {
     if (!game_id || !player_id || !team_season_id) {
       return res.status(400).json({ 
         error: 'game_id, player_id, and team_season_id are required' 
+      });
+    }
+
+    // VALIDATION: Check if player is actually on this team's roster
+    try {
+      const { query } = require('../../lib/database');
+      const rosterCheck = await query(
+        `SELECT rm.id 
+         FROM roster_memberships rm 
+         WHERE rm.player_id = $1 AND rm.team_season_id = $2`,
+        [player_id, team_season_id]
+      );
+      
+      if (rosterCheck.rows.length === 0) {
+        // Get player and team names for better error message
+        const [playerInfo, teamInfo] = await Promise.all([
+          query('SELECT player_name FROM players WHERE id = $1', [player_id]),
+          query('SELECT ts.display_name FROM team_seasons ts WHERE ts.id = $1', [team_season_id])
+        ]);
+        
+        const playerName = playerInfo.rows[0]?.player_name || `Player ${player_id}`;
+        const teamName = teamInfo.rows[0]?.display_name || `Team ${team_season_id}`;
+        
+        return res.status(400).json({ 
+          error: `Validation failed: ${playerName} is not on ${teamName}'s roster for this season. Please check roster memberships.`,
+          player_id,
+          team_season_id,
+          validation: 'roster_membership_required'
+        });
+      }
+    } catch (validationError) {
+      console.error('Roster validation error:', validationError);
+      return res.status(500).json({ 
+        error: 'Failed to validate roster membership', 
+        details: validationError.message 
       });
     }
 
