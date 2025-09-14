@@ -1,5 +1,6 @@
+// DISABLED: Fake career statistics - only use real database data
 // Career statistics across all seasons
-export const careerStats = [
+// export const careerStats = [
   {
     id: 1,
     player: "Dylan",
@@ -525,4 +526,7 @@ export const careerStats = [
     svpg: 0,
     shPercent: 0
   }
-].filter(player => player.points > 0); // Remove players with no data
+// ].filter(player => player.points > 0); // Remove players with no data
+
+// Export empty array instead of fake data
+export const careerStats = [];

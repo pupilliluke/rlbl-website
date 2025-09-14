@@ -1,6 +1,7 @@
-const teamStats = [
-  {
-    name: "Backdoor Bandits",
+// DISABLED: Fake team stats data - only use real database data
+// const teamStats = [
+//   {
+//     name: "Backdoor Bandits",
     stats: {
       goals: 85,
       saves: 75,
@@ -313,4 +314,7 @@ const teamStats = [
   },
 ];
 
-export { teamStats };
+// export { teamStats };
+
+// Export empty array instead of fake data
+export const teamStats = [];

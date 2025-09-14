@@ -35,9 +35,9 @@ const Stats = () => {
         console.error('Failed to fetch data:', err);
         console.error('Error details:', err.message);
         setError(err.message);
-        console.log('Using fallback data due to API error');
-        setStats(fallbackData.stats);
-        setTeams(fallbackData.teams);
+        console.log('API error - no fallback data, showing empty state');
+        setStats([]);
+        setTeams([]);
       } finally {
         setLoading(false);
       }
@@ -87,7 +87,7 @@ const Stats = () => {
         teamMap[teamName] = {
           team: teamName,
           teamId: team.team_id || team.id,
-          color: team.primary_color || team.color || '#808080',
+          color: team.color || '#808080',
           logo_url: team.logo_url || team.alt_logo_url,
           players: 0,
           totalPoints: 0,
@@ -470,6 +470,45 @@ const Stats = () => {
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-600">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-xs text-green-400 font-medium">Systems Ready</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {!loading && processedStats.length === 0 && selectedSeason !== "current" && (
+          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
+            <div className="relative mb-8">
+              <div className="absolute -inset-4 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
+              <div className="relative">
+                <h3 className="text-4xl font-black text-white mb-4">No Statistics Available</h3>
+                <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-red-400 to-transparent mb-6" />
+              </div>
+            </div>
+            
+            <p className="text-xl text-gray-300 mb-8 font-light">
+              Unable to retrieve statistics from the database
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
+                <div className="text-3xl mb-3">🔄</div>
+                <h4 className="text-lg font-bold text-blue-400 mb-3">Database Connection</h4>
+                <ul className="text-sm text-white space-y-2 text-left">
+                  <li>• Check backend server status</li>
+                  <li>• Verify database connection</li>
+                  <li>• Ensure API endpoints are working</li>
+                </ul>
+              </div>
+              
+              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
+                <div className="text-3xl mb-3">📊</div>
+                <h4 className="text-lg font-bold text-red-400 mb-3">Data Status</h4>
+                <ul className="text-sm text-white space-y-2 text-left">
+                  <li>• No fallback data available</li>
+                  <li>• Only real database stats shown</li>
+                  <li>• Try refreshing the page</li>
+                </ul>
               </div>
             </div>
           </div>

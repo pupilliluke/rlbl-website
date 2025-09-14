@@ -114,7 +114,7 @@ export const getDefaultFormData = (activeTab) => {
         team_name: '',
         display_name: '',
         abbreviation: '',
-        primary_color: '#000000',
+        color: '#000000',
         secondary_color: '#ffffff',
         logo_url: ''
       };

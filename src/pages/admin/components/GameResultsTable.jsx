@@ -206,7 +206,13 @@ const GameResultsTable = ({
     } catch (error) {
       console.error('Failed to save player stats:', error);
       console.error('Error details:', error.message, error.stack);
-      alert(`Failed to save player stats: ${error.message}`);
+      
+      // Check if it's a validation error
+      if (error.message.includes('Validation failed')) {
+        alert(`❌ ROSTER VALIDATION ERROR:\n\n${error.message}\n\nPlease verify that all players are assigned to the correct teams in the roster management section before entering game statistics.`);
+      } else {
+        alert(`Failed to save player stats: ${error.message}`);
+      }
     } finally {
       setSavingSeriesId(null);
     }

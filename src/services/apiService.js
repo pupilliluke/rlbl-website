@@ -88,6 +88,43 @@ export const apiService = {
   // Roster memberships endpoints
   getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
   getRosterMembershipsByTeamSeason: (teamSeasonId) => apiCall(`/roster-memberships/team-season/${teamSeasonId}`),
+  
+  // Roster CRUD operations
+  createRosterMembership: async (membershipData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/roster-memberships`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(membershipData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create roster membership');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error creating roster membership:', error);
+      throw error;
+    }
+  },
+
+  deleteRosterMembership: async (membershipId) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/roster-memberships/${membershipId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete roster membership');
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error deleting roster membership:', error);
+      throw error;
+    }
+  },
 
   // Player Game Stats endpoints
   getPlayerGameStats: () => apiCall('/player-game-stats'),
@@ -441,24 +478,12 @@ export const apiService = {
   runTest: () => apiCall('/test')
 };
 
-// Fallback data in case API is not available
+// No fallback data - only use real database data
 export const fallbackData = {
-  teams: [
-    { id: 1, team_name: 'Loading...', color: '#000000', logo_url: '' }
-  ],
-  players: [
-    { id: 1, player_name: 'Loading...', gamertag: 'Loading...', team_name: 'Loading...' }
-  ],
-  standings: [
-    { id: 1, team_name: 'Loading...', wins: 0, losses: 0, ties: 0, points_for: 0, points_against: 0 }
-  ],
-  schedule: [
-    { id: 1, week: 1, home_team_name: 'Loading...', away_team_name: 'Loading...', home_score: 0, away_score: 0 }
-  ],
-  stats: [
-    { id: 1, player_name: 'Loading...', team_name: 'Loading...', total_points: 0, total_goals: 0, total_assists: 0 }
-  ],
-  powerRankings: [
-    { rank: 1, team_name: 'Loading...', reasoning: 'Loading data...' }
-  ]
+  teams: [],
+  players: [],
+  standings: [],
+  schedule: [],
+  stats: [],
+  powerRankings: []
 };

@@ -136,7 +136,7 @@ export default function Teams() {
               {teams.map((team) => {
                 // Handle different field names from team_seasons vs teams endpoint
                 const teamName = team.display_name || team.team_name || team.original_team_name;
-                const teamPrimaryColor = team.primary_color || team.color || team.original_color;
+                const teamPrimaryColor = team.color || '#808080';
                 const teamSecondaryColor = team.secondary_color;
                 const teamRanking = team.ranking;
                 const teamId = team.team_season_id || team.team_id || team.id;

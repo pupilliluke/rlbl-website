@@ -98,10 +98,10 @@ class PlayerGameStatsDao extends BaseDao {
           SUM(pgs.demos) as total_demos,
           SUM(pgs.epic_saves) as total_epic_saves,
           COUNT(pgs.game_id) as games_played,
-          ROUND(CAST(SUM(pgs.points) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_points_per_game,
-          ROUND(CAST(SUM(pgs.goals) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_goals_per_game,
-          ROUND(CAST(SUM(pgs.saves) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_saves_per_game,
-          ROUND(CAST((SUM(pgs.goals) + SUM(pgs.assists)) AS FLOAT) / NULLIF(COUNT(pgs.game_id), 0), 2) as avg_goal_involvement
+          ROUND((SUM(pgs.points)::numeric / NULLIF(COUNT(pgs.game_id), 0))::numeric, 2) as avg_points_per_game,
+          ROUND((SUM(pgs.goals)::numeric / NULLIF(COUNT(pgs.game_id), 0))::numeric, 2) as avg_goals_per_game,
+          ROUND((SUM(pgs.saves)::numeric / NULLIF(COUNT(pgs.game_id), 0))::numeric, 2) as avg_saves_per_game,
+          ROUND(((SUM(pgs.goals) + SUM(pgs.assists))::numeric / NULLIF(COUNT(pgs.game_id), 0))::numeric, 2) as avg_goal_involvement
         FROM player_game_stats pgs
         JOIN players p ON pgs.player_id = p.id
         JOIN games g ON pgs.game_id = g.id
@@ -133,34 +133,40 @@ class PlayerGameStatsDao extends BaseDao {
         return result.rows;
       }
     } catch (error) {
-      console.log('Player game stats query failed, generating mock data:', error.message);
+      console.error('Player game stats query failed:', error.message);
+      throw error; // Don't fall back to mock data, throw the error instead
     }
     
-    // If no data in player_game_stats, generate mock stats from existing players
-    const playersResult = await query(`
-      SELECT p.id, p.player_name, p.gamertag 
-      FROM players p 
-      ORDER BY p.player_name
-    `);
-    
-    // Generate mock stats for testing
-    return playersResult.rows.map((player, index) => ({
-      id: player.id,
-      player_name: player.player_name,
-      gamertag: player.gamertag,
-      team_name: 'Career Total',
-      team_color: '#999999',
-      total_points: Math.floor(Math.random() * 500) + 100,
-      total_goals: Math.floor(Math.random() * 50) + 10,
-      total_assists: Math.floor(Math.random() * 30) + 5,
-      total_saves: Math.floor(Math.random() * 40) + 15,
-      total_shots: Math.floor(Math.random() * 80) + 20,
-      total_mvps: Math.floor(Math.random() * 10),
-      total_demos: Math.floor(Math.random() * 20),
-      total_epic_saves: Math.floor(Math.random() * 5),
-      games_played: Math.floor(Math.random() * 20) + 10,
-      avg_points_per_game: Math.floor(Math.random() * 30) + 10
-    }));
+    // Return empty array if no data found instead of generating mock data
+    return [];
+  }
+
+  async findAllWithNames() {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `SELECT 
+         pgs.id,
+         pgs.points,
+         pgs.goals,
+         pgs.assists,
+         pgs.saves,
+         pgs.shots,
+         pgs.mvps,
+         pgs.demos,
+         pgs.epic_saves,
+         p.player_name,
+         p.display_name as player_display_name,
+         COALESCE(ts.display_name, t.team_name) as team_name,
+         g.week as game_week,
+         CONCAT('Week ', g.week, ' - Game ', COALESCE(g.series_game, 1)) as game_name
+       FROM player_game_stats pgs
+       JOIN players p ON pgs.player_id = p.id
+       JOIN team_seasons ts ON pgs.team_season_id = ts.id
+       JOIN teams t ON ts.team_id = t.id
+       JOIN games g ON pgs.game_id = g.id
+       ORDER BY g.week DESC, g.series_game ASC, p.player_name ASC`
+    );
+    return r.rows;
   }
 
   async getAggregatedStats(seasonFilter = '') {

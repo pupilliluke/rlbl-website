@@ -5,6 +5,7 @@ import { apiService } from "../../services/apiService";
 import AdminAuth from "./components/AdminAuth";
 import DataTable from "./components/DataTable";
 import GameResultsTable from "./components/GameResultsTable";
+import TeamsRostersTable from "./components/TeamsRostersTable";
 import EditFormModal from "./modals/EditFormModal";
 import GameEditModal from "./modals/GameEditModal";
 
@@ -681,6 +682,15 @@ const Admin = () => {
       );
     }
     
+    if (activeTab === 'teamsRosters') {
+      return (
+        <TeamsRostersTable
+          selectedSeason={selectedSeason}
+          apiService={apiService}
+        />
+      );
+    }
+    
     return (
       <div className="space-y-6">
         <DataTable
@@ -706,7 +716,19 @@ const Admin = () => {
         !key.includes('id') && 
         key !== 'id' &&
         key !== 'total_home_goals' &&
-        key !== 'total_away_goals'
+        key !== 'total_away_goals' &&
+        // Hide team columns for players tab
+        !(activeTab === 'players' && (key === 'team_name' || key === 'team_color')) &&
+        // Hide specific columns from teams tab
+        !(activeTab === 'teams' && (
+          key === 'original_team_name' || 
+          key === 'team_name' || 
+          key === 'alt_logo_url' || 
+          key === 'primary_color' || 
+          key === 'ranking' || 
+          key === 'season_id' || 
+          key === 'season_name'
+        ))
       )
     : [];
 
@@ -739,7 +761,7 @@ const Admin = () => {
                 >
                   {seasonsData.map(season => (
                     <option key={season.id} value={season.id} className="bg-gray-800">
-                      {season.name}
+                      {season.season_name || season.name}
                     </option>
                   ))}
                 </select>
@@ -757,12 +779,13 @@ const Admin = () => {
             <div className="flex flex-wrap">
               {[
                 { key: 'gameResults', label: '🏒 Game Results', icon: '🏒' },
+                { key: 'teamsRosters', label: '🛡️ Teams & Rosters', icon: '🛡️' },
                 { key: 'players', label: '👥 Players', icon: '👥' },
-                { key: 'teams', label: '🛡️ Teams', icon: '🛡️' },
+                { key: 'teams', label: '🏛️ Teams', icon: '🏛️' },
                 { key: 'standings', label: '📊 Standings', icon: '📊' },
                 { key: 'schedule', label: '📅 Schedule', icon: '📅' },
                 { key: 'gameStats', label: '📈 Game Stats', icon: '📈' },
-                { key: 'powerRankings', label: '👑 Power Rankings', icon: '👑' }
+                { key: 'powerRankings', label: '👑 Weekly', icon: '👑' }
               ].map(({ key, label, icon }) => (
                 <button
                   key={key}
@@ -806,8 +829,8 @@ const Admin = () => {
               </div>
             )}
 
-            {/* Add New Button (except for game results) */}
-            {activeTab !== 'gameResults' && (
+            {/* Add New Button (except for game results and teams rosters) */}
+            {activeTab !== 'gameResults' && activeTab !== 'teamsRosters' && (
               <div className="mb-6 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-white capitalize">
                   Manage {activeTab}
