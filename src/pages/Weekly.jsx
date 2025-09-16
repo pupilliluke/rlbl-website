@@ -87,16 +87,15 @@ export default function Weekly() {
           <div className="text-sm text-slate-300 mb-2">
             <span className="hover:underline cursor-pointer">RLBL</span>
             <span className="mx-2">></span>
-            <span className="font-medium text-slate-100">Scores & Schedules</span>
+            <span className="font-medium text-slate-100">Weekly Scores</span>
           </div>
 
           <div className="flex items-start justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-white mb-1">
-                Scores & Schedules
+                Weekly Scores
               </h1>
               <p className="text-slate-300 text-base">
-                Rocket League Business League game results and standings
               </p>
             </div>
 
