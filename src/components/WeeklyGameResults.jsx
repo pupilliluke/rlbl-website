@@ -11,6 +11,7 @@ const WeeklyGameResults = ({
   const [collapsedGames, setCollapsedGames] = React.useState(new Set());
   const [gamePlayersData, setGamePlayersData] = React.useState({});
   const [loadingGamePlayers, setLoadingGamePlayers] = React.useState(new Set());
+  const [initializedCollapse, setInitializedCollapse] = React.useState(false);
 
   // Filter games based on search query - ALL useMemo hooks must be before any early returns
   const filteredGameResultsData = React.useMemo(() => {
@@ -81,6 +82,15 @@ const WeeklyGameResults = ({
   const sortedWeeks = React.useMemo(() => {
     return Object.keys(gamesByWeek).sort((a, b) => parseInt(a) - parseInt(b));
   }, [gamesByWeek]);
+
+  // Auto-collapse all weeks on initial load
+  React.useEffect(() => {
+    if (!initializedCollapse && sortedWeeks.length > 0) {
+      const allWeekNumbers = sortedWeeks.map(week => parseInt(week));
+      setCollapsedWeeks(new Set(allWeekNumbers));
+      setInitializedCollapse(true);
+    }
+  }, [sortedWeeks, initializedCollapse]);
 
   // Show search results info
   const showSearchResults = searchQuery && searchQuery.trim() !== "";
@@ -239,23 +249,23 @@ const WeeklyGameResults = ({
               {/* Week Header - ESPN Style */}
               <button
                 onClick={() => toggleWeekCollapse(weekNumber)}
-                className={`w-full px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors text-left ${weekIndex === 0 ? 'rounded-t-lg' : ''}`}
+                className={`w-full px-6 py-4 border-b border-slate-600 bg-slate-700 hover:bg-slate-600 transition-colors text-left ${weekIndex === 0 ? 'rounded-t-lg' : ''}`}
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-4">
-                    <span className="text-base text-gray-600">
+                    <span className="text-base text-slate-300">
                       {isCollapsed ? '▶' : '▼'}
                     </span>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">
+                      <h3 className="text-xl font-bold text-white">
                         Week {weekNumber}
                       </h3>
-                      <p className="text-gray-600 text-sm mt-0.5">
+                      <p className="text-slate-300 text-sm mt-0.5">
                         {Object.keys(weekSeries).length} series • {totalGames} games
                       </p>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-500 font-medium">
+                  <div className="text-xs text-slate-300 font-medium">
                     {isCollapsed ? 'SHOW' : 'HIDE'}
                   </div>
                 </div>
@@ -302,7 +312,7 @@ const WeeklyGameResults = ({
                           return (
                             <React.Fragment key={seriesKey}>
                               {/* Series Header Row - ESPN Style */}
-                              <tr className="border-b border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                              <tr className="border-b border-gray-200 bg-gray-200 hover:bg-gray-300 transition-colors">
                                 <td
                                   className="py-3 px-6 text-gray-800 font-semibold cursor-pointer"
                                   onClick={() => toggleSeriesCollapse(seriesId)}
