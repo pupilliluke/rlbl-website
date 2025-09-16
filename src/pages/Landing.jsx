@@ -10,7 +10,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="fixed inset-0 w-full h-full overflow-auto z-[1]" style={{
+    <div className="fixed inset-0 w-full h-full overflow-auto overflow-x-hidden z-[1]" style={{
       background: `
         radial-gradient(ellipse at top, #1e3a8a 0%, #1e1b4b 25%, #0f172a 60%, #000000 100%),
         radial-gradient(ellipse at bottom right, #312e81 0%, transparent 50%),

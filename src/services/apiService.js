@@ -75,7 +75,10 @@ export const apiService = {
   getPowerRankings: () => apiCall('/power-rankings'),
 
   // Season endpoints
-  getTeamSeasons: (teamId) => apiCall(`/teams/${teamId}/seasons`),
+  getTeamSeasons: (seasonId = null) => {
+    const endpoint = seasonId ? `/team-seasons?season_id=${seasonId}` : '/team-seasons';
+    return apiCall(endpoint);
+  },
   getPlayerSeasons: (playerId) => apiCall(`/players/${playerId}/seasons`),
   getTeamStatsBySeason: (teamSlug, season = '2024') => apiCall(`/teams/${teamSlug}/stats?season=${season}`),
   
@@ -127,7 +130,10 @@ export const apiService = {
   },
 
   // Player Game Stats endpoints
-  getPlayerGameStats: () => apiCall('/player-game-stats'),
+  getPlayerGameStats: (seasonId = null) => {
+    const endpoint = seasonId ? `/player-game-stats?season_id=${seasonId}` : '/player-game-stats';
+    return apiCall(endpoint);
+  },
   getPlayerGameStatsByGame: (gameId) => apiCall(`/player-game-stats/game/${gameId}`),
   getPlayerGameStat: (playerId, gameId) => apiCall(`/player-game-stats/player/${playerId}/game/${gameId}`),
 

@@ -141,11 +141,14 @@ class PlayerGameStatsDao extends BaseDao {
     return [];
   }
 
-  async findAllWithNames() {
+  async findAllWithNames(seasonId = null) {
     const { query } = require('../../lib/database');
-    const r = await query(
-      `SELECT 
+
+    let sql = `SELECT
          pgs.id,
+         pgs.game_id,
+         pgs.player_id,
+         pgs.team_season_id,
          pgs.points,
          pgs.goals,
          pgs.assists,
@@ -155,7 +158,7 @@ class PlayerGameStatsDao extends BaseDao {
          pgs.demos,
          pgs.epic_saves,
          p.player_name,
-         p.display_name as player_display_name,
+         p.player_name as player_display_name,
          COALESCE(ts.display_name, t.team_name) as team_name,
          g.week as game_week,
          CONCAT('Week ', g.week, ' - Game ', COALESCE(g.series_game, 1)) as game_name
@@ -163,9 +166,17 @@ class PlayerGameStatsDao extends BaseDao {
        JOIN players p ON pgs.player_id = p.id
        JOIN team_seasons ts ON pgs.team_season_id = ts.id
        JOIN teams t ON ts.team_id = t.id
-       JOIN games g ON pgs.game_id = g.id
-       ORDER BY g.week DESC, g.series_game ASC, p.player_name ASC`
-    );
+       JOIN games g ON pgs.game_id = g.id`;
+
+    const params = [];
+    if (seasonId) {
+      sql += ` WHERE g.season_id = $1`;
+      params.push(parseInt(seasonId));
+    }
+
+    sql += ` ORDER BY g.week DESC, g.series_game ASC, p.player_name ASC`;
+
+    const r = await query(sql, params);
     return r.rows;
   }
 

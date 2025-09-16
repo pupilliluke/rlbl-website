@@ -270,7 +270,7 @@ const Stats = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-executive relative page-with-navbar">
+    <div className="min-h-screen bg-gradient-executive relative page-with-navbar overflow-x-hidden">
       {/* Neural Background */}
       <div className="absolute inset-0 neural-bg opacity-20" />
       

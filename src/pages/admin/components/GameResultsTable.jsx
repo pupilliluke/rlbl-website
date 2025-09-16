@@ -276,27 +276,27 @@ const GameResultsTable = ({
         const totalGames = Object.values(weekSeries).reduce((sum, games) => sum + games.length, 0);
         
         return (
-          <div key={week} className="bg-gray-900 border border-gray-700 rounded">
+          <div key={week} className="bg-slate-900 border border-slate-700 rounded-lg shadow-lg">
             {/* Week Header - Collapsible */}
             <button
               onClick={() => onToggleWeekCollapse(weekNumber)}
-              className="w-full bg-gray-800 px-4 py-3 border-b border-gray-700 hover:bg-gray-750 transition-colors text-left"
+              className="w-full bg-slate-800 px-4 py-3 border-b border-slate-600 hover:bg-slate-700 transition-colors text-left rounded-t-lg"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <span className="text-lg font-mono">
+                  <span className="text-lg font-sans text-slate-200">
                     {isCollapsed ? '►' : '▼'}
                   </span>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-200 font-mono">
+                    <h3 className="text-lg font-bold text-slate-200 font-sans">
                       WEEK {weekNumber}
                     </h3>
-                    <p className="text-gray-400 text-sm font-mono">
+                    <p className="text-slate-200 text-sm font-sans">
                       {Object.keys(weekSeries).length} series | {totalGames} games
                     </p>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 font-mono">
+                <div className="text-xs text-slate-200 font-sans">
                   {isCollapsed ? '[+]' : '[-]'}
                 </div>
               </div>
@@ -304,19 +304,19 @@ const GameResultsTable = ({
 
             {/* Week Content - Tabular Layout */}
             {!isCollapsed && (
-              <div className="p-4">
+              <div className="p-4 bg-slate-800">
                 {/* Series Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm font-mono">
+                  <table className="w-full text-sm font-sans">
                     <thead>
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left py-2 px-3 text-gray-400 font-bold">MATCHUP</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">GAME</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">DATE</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">SCORE</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">HOME STATS</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">AWAY STATS</th>
-                        <th className="text-center py-2 px-2 text-gray-400 font-bold">ACTIONS</th>
+                      <tr className="border-b border-slate-600 bg-slate-700">
+                        <th className="text-left py-2 px-3 text-slate-200 font-bold">MATCHUP</th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold">GAME</th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold">DATE</th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold">SERIES</th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold"></th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold"></th>
+                        <th className="text-center py-2 px-2 text-slate-200 font-bold">ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -326,42 +326,55 @@ const GameResultsTable = ({
                         const matchupName = `${firstGame.home_display} vs ${firstGame.away_display}`;
                         const seriesId = `${weekNumber}-${seriesKey}`;
                         const isSeriesCollapsed = collapsedSeries.has(seriesId);
-                        const totalSeriesGoals = sortedSeriesGames.reduce((sum, g) => sum + (g.total_home_goals || 0) + (g.total_away_goals || 0), 0);
+
+                        // Calculate series wins by counting game winners
+                        let homeWins = 0;
+                        let awayWins = 0;
+                        sortedSeriesGames.forEach(game => {
+                          const homeGoals = game.total_home_goals || 0;
+                          const awayGoals = game.total_away_goals || 0;
+                          if (homeGoals > awayGoals) {
+                            homeWins++;
+                          } else if (awayGoals > homeGoals) {
+                            awayWins++;
+                          }
+                          // Ties don't count towards either team
+                        });
                         
                         return (
                           <React.Fragment key={seriesKey}>
                             {/* Series Header Row */}
-                            <tr className="border-b-2 border-gray-600 bg-gray-800">
-                              <td 
-                                className="py-2 px-3 text-gray-300 font-bold cursor-pointer hover:text-gray-100 transition-colors"
+                            <tr className="border-b-2 border-slate-500 bg-slate-600">
+                              <td
+                                className="py-2 px-3 text-slate-200 font-bold cursor-pointer hover:text-slate-100 transition-colors"
                                 onClick={() => onToggleSeriesCollapse(seriesId)}
                               >
                                 <div className="flex items-center gap-2">
-                                  <span className="font-mono text-xs">
+                                  <span className="font-sans text-xs">
                                     {isSeriesCollapsed ? '►' : '▼'}
                                   </span>
                                   {matchupName}
-                                  <span className="text-xs text-gray-500 font-mono">
+                                  <span className="text-xs text-slate-200 font-sans">
                                     ({sortedSeriesGames.length} games)
                                   </span>
                                 </div>
                               </td>
-                              <td className="text-center py-2 px-2 text-gray-500 text-xs font-mono">
-                                SERIES
+                              <td className="text-center py-2 px-2 text-slate-200 text-xs font-sans">
+
                               </td>
-                              <td className="text-center py-2 px-2 text-gray-500 text-xs">
+                              <td className="text-center py-2 px-2 text-slate-200 text-xs">
                                 --
                               </td>
                               <td className="text-center py-2 px-2">
-                                <span className="text-gray-400 font-bold text-xs">
-                                  {totalSeriesGoals} total goals
+                                <span className="text-slate-200 font-bold text-xs">
+                                  {homeWins}-{awayWins}
                                 </span>
                               </td>
                               <td className="text-center py-2 px-2 text-gray-600 text-xs">
-                                {firstGame.home_display}
+
                               </td>
                               <td className="text-center py-2 px-2 text-gray-600 text-xs">
-                                {firstGame.away_display}
+
                               </td>
                               <td className="text-center py-2 px-2">
                                 <div className="flex justify-center gap-1">
@@ -374,9 +387,9 @@ const GameResultsTable = ({
                                       }
                                     }}
                                     disabled={savingSeriesId === seriesId}
-                                    className={`px-2 py-1 text-xs font-mono border transition-colors flex items-center gap-1 ${
+                                    className={`px-2 py-1 text-xs font-sans border transition-colors flex items-center gap-1 ${
                                       editingSeriesId === seriesId 
-                                        ? 'bg-green-700 hover:bg-green-600 text-white border-green-600 disabled:opacity-50' 
+                                        ? 'bg-green-700 hover:bg-green-600 text-slate-100 border-green-600 disabled:opacity-50' 
                                         : 'bg-blue-700 hover:bg-blue-600 text-gray-300 border-blue-600'
                                     }`}
                                     title={editingSeriesId === seriesId ? "Save Changes" : "Edit Series"}
@@ -394,7 +407,7 @@ const GameResultsTable = ({
                                   </button>
                                   <button
                                     onClick={() => onAddSeriesGame(firstGame)}
-                                    className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 text-xs font-mono border border-gray-600 transition-colors"
+                                    className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 text-xs font-sans border border-gray-400 transition-colors"
                                     title="Add Game to Series"
                                   >
                                     + GAME
@@ -413,14 +426,20 @@ const GameResultsTable = ({
                               return (
                                 <React.Fragment key={game.id}>
                                   {/* Game Header Row - Clickable */}
-                                  <tr 
-                                    className={`border-b border-gray-800 hover:bg-gray-850 transition-colors bg-gray-900 cursor-pointer ${isLastGameInSeries && !isGameExpanded ? 'border-b-2 border-gray-700' : ''}`}
+                                  <tr
+                                    className={`border-b border-slate-500 hover:bg-slate-400 transition-colors cursor-pointer ${
+                                      isGameExpanded
+                                        ? 'bg-slate-300 border-l-4 border-l-blue-400'
+                                        : 'bg-slate-500'
+                                    } ${isLastGameInSeries && !isGameExpanded ? 'border-b-2 border-gray-400' : ''}`}
                                     onClick={() => toggleGameCollapse(game.id)}
                                   >
                                     {/* Game Title with Expand Icon */}
-                                    <td className="py-2 px-3 pl-8 text-gray-500 text-xs">
+                                    <td className={`py-2 px-3 pl-8 text-xs ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
                                       <div className="flex items-center gap-3">
-                                        <span className="font-mono text-lg cursor-pointer hover:text-gray-300 transition-colors">
+                                        <span className={`font-sans text-lg cursor-pointer transition-colors ${
+                                          isGameExpanded ? 'text-slate-800 hover:text-slate-900' : 'text-slate-200 hover:text-slate-200'
+                                        }`}>
                                           {isGameExpanded ? '▼' : '►'}
                                         </span>
                                         └─ Game {game.series_game || (gameIndex + 1)}
@@ -428,36 +447,46 @@ const GameResultsTable = ({
                                     </td>
                                     
                                     {/* Game Number */}
-                                    <td className="text-center py-2 px-2 text-gray-400">
+                                    <td className={`text-center py-2 px-2 ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
                                       G{game.series_game || (gameIndex + 1)}
                                     </td>
                                     
                                     {/* Date */}
-                                    <td className="text-center py-2 px-2 text-gray-400">
+                                    <td className={`text-center py-2 px-2 ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
                                       {game.game_date ? new Date(game.game_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : '--'}
                                     </td>
                                     
-                                    {/* Score */}
+                                    {/* Game Winner */}
                                     <td className="text-center py-2 px-2">
-                                      <span className="text-gray-200 font-bold">
-                                        {game.total_home_goals || 0} - {game.total_away_goals || 0}
+                                      <span className={`font-bold ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
+                                        {(() => {
+                                          const homeGoals = game.total_home_goals || 0;
+                                          const awayGoals = game.total_away_goals || 0;
+                                          if (homeGoals > awayGoals) {
+                                            return `${game.home_display} W (${homeGoals}-${awayGoals})`;
+                                          } else if (awayGoals > homeGoals) {
+                                            return `${game.away_display} W (${awayGoals}-${homeGoals})`;
+                                          } else {
+                                            return `TIE (${homeGoals}-${awayGoals})`;
+                                          }
+                                        })()}
                                       </span>
                                     </td>
                                     
-                                    {/* Summary Stats */}
-                                    <td className="text-center py-2 px-2 text-gray-500 text-xs">
-                                      {isGameExpanded ? 'Expanded' : 'Click to expand'}
+                                    {/* Home/Away Stats - Now Blank */}
+                                    <td className={`text-center py-2 px-2 text-xs ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
+
                                     </td>
-                                    
-                                    <td className="text-center py-2 px-2 text-gray-500 text-xs">
-                                      {isGameExpanded ? 'Player Stats' : 'Player Stats'}
+
+                                    <td className={`text-center py-2 px-2 text-xs ${isGameExpanded ? 'text-slate-800' : 'text-slate-200'}`}>
+
                                     </td>
                                     
                                     {/* Delete Action */}
                                     <td className="text-center py-2 px-2" onClick={(e) => e.stopPropagation()}>
                                       <button
                                         onClick={() => onManageGameStats(game)}
-                                        className="bg-red-700 hover:bg-red-600 text-gray-300 px-2 py-1 text-xs font-mono border border-red-600 transition-colors"
+                                        className="bg-red-700 hover:bg-red-600 text-gray-300 px-2 py-1 text-xs font-sans border border-red-600 transition-colors"
                                         title="Delete Game"
                                       >
                                         DEL
@@ -467,29 +496,31 @@ const GameResultsTable = ({
 
                                   {/* Expanded Game Details */}
                                   {isGameExpanded && (
-                                    <tr className={`bg-gray-950 ${isLastGameInSeries ? 'border-b-2 border-gray-700' : ''}`}>
+                                    <tr className={`bg-gray-50 ${isLastGameInSeries ? 'border-b-2 border-gray-200' : ''}`}>
                                       <td colSpan="7" className="p-0">
-                                        <div className="p-4">
+                                        <div className="p-4 bg-gray-50">
                                           {isLoadingGame ? (
                                             <div className="flex items-center justify-center py-4">
                                               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                                              <span className="ml-3 text-gray-400 font-mono">Loading player stats...</span>
+                                              <span className="ml-3 text-gray-800 font-sans">Loading player stats...</span>
                                             </div>
                                           ) : gamePlayerData ? (
-                                            <div className="overflow-x-auto">
-                                              <table className="w-full text-xs font-mono">
+                                            <div className="overflow-x-auto bg-white rounded-lg border border-gray-300">
+                                              <table className="w-full text-xs font-sans bg-white">
                                                 <thead>
-                                                  <tr className="border-b border-gray-600">
-                                                    <th className="text-left py-2 px-3 text-gray-300">TEAM</th>
-                                                    <th className="text-left py-2 px-3 text-gray-300">PLAYER</th>
-                                                    <th className="text-center py-2 px-2 text-yellow-400">G</th>
-                                                    <th className="text-center py-2 px-2 text-blue-400">A</th>
-                                                    <th className="text-center py-2 px-2 text-green-400">S</th>
-                                                    <th className="text-center py-2 px-2 text-orange-400">SH</th>
-                                                    <th className="text-center py-2 px-2 text-purple-400">ES</th>
-                                                    <th className="text-center py-2 px-2 text-red-400">DEM</th>
-                                                    <th className="text-center py-2 px-2 text-pink-400">OTG</th>
-                                                    <th className="text-center py-2 px-2 text-gray-300">PTS</th>
+                                                  <tr className="border-b border-gray-300 bg-gray-100">
+                                                    <th className="text-left py-2 px-3 text-black font-bold">TEAM</th>
+                                                    <th className="text-left py-2 px-3 text-black font-bold">PLAYER</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">PTS</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">G</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">A</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">S</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">SH</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">MVP</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">DEM</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">ES</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">OTG</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold">GP</th>
                                                   </tr>
                                                 </thead>
                                                 <tbody>
@@ -500,12 +531,25 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
                                                     
                                                     return (
-                                                      <tr key={`home-${player.id}`} className="border-b border-gray-800">
-                                                        <td className="py-2 px-3 text-blue-400 font-bold">
+                                                      <tr key={`home-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                        <td className="py-2 px-3 text-black font-bold">
                                                           {idx === 0 ? `🏠 ${game.home_display}` : ''}
                                                         </td>
-                                                        <td className="py-2 px-3 text-gray-200 font-bold">
+                                                        <td className="py-2 px-3 text-black font-bold">
                                                           {player.display_name || player.player_name}
+                                                        </td>
+                                                        <td className="text-center py-2 px-2">
+                                                          {isEditing ? (
+                                                            <input
+                                                              type="number"
+                                                              min="0"
+                                                              value={displayStats.points || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400 font-bold"
+                                                            />
+                                                          ) : (
+                                                            <span className="text-black font-bold">{displayStats.points}</span>
+                                                          )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
                                                           {isEditing ? (
@@ -514,10 +558,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.goals || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'goals', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-yellow-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-yellow-400">{displayStats.goals}</span>
+                                                            <span className="text-black">{displayStats.goals}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -527,10 +571,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.assists || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'assists', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-blue-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-blue-400">{displayStats.assists}</span>
+                                                            <span className="text-black">{displayStats.assists}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -540,10 +584,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.saves || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'saves', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-green-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-green-400">{displayStats.saves}</span>
+                                                            <span className="text-black">{displayStats.saves}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -553,10 +597,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.shots || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'shots', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-orange-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-orange-400">{displayStats.shots}</span>
+                                                            <span className="text-black">{displayStats.shots}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -564,12 +608,12 @@ const GameResultsTable = ({
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.epic_saves || 0}
-                                                              onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-purple-400 text-center text-xs rounded border border-gray-600"
+                                                              value={displayStats.mvps || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'mvps', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-purple-400">{displayStats.epic_saves}</span>
+                                                            <span className="text-black">{displayStats.mvps || 0}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -579,10 +623,23 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.demos || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'demos', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-red-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-red-400">{displayStats.demos}</span>
+                                                            <span className="text-black">{displayStats.demos}</span>
+                                                          )}
+                                                        </td>
+                                                        <td className="text-center py-2 px-2">
+                                                          {isEditing ? (
+                                                            <input
+                                                              type="number"
+                                                              min="0"
+                                                              value={displayStats.epic_saves || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
+                                                            />
+                                                          ) : (
+                                                            <span className="text-black">{displayStats.epic_saves}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -592,31 +649,21 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.otg || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'otg', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-pink-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-pink-400">{displayStats.otg}</span>
+                                                            <span className="text-black">{displayStats.otg || 0}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          {isEditing ? (
-                                                            <input
-                                                              type="number"
-                                                              min="0"
-                                                              value={displayStats.points || 0}
-                                                              onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-gray-300 text-center text-xs rounded border border-gray-600 font-bold"
-                                                            />
-                                                          ) : (
-                                                            <span className="text-gray-300 font-bold">{displayStats.points}</span>
-                                                          )}
+                                                          <span className="text-black">1</span>
                                                         </td>
                                                       </tr>
                                                     );
                                                   })}
                                                   
                                                   {/* Spacer Row */}
-                                                  <tr className="border-b-2 border-gray-600">
+                                                  <tr className="border-b-2 border-gray-400 bg-gray-200">
                                                     <td colSpan="10" className="py-1"></td>
                                                   </tr>
                                                   
@@ -627,12 +674,25 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
                                                     
                                                     return (
-                                                      <tr key={`away-${player.id}`} className="border-b border-gray-800">
-                                                        <td className="py-2 px-3 text-orange-400 font-bold">
+                                                      <tr key={`away-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                        <td className="py-2 px-3 text-black font-bold">
                                                           {idx === 0 ? `✈️ ${game.away_display}` : ''}
                                                         </td>
-                                                        <td className="py-2 px-3 text-gray-200 font-bold">
+                                                        <td className="py-2 px-3 text-black font-bold">
                                                           {player.display_name || player.player_name}
+                                                        </td>
+                                                        <td className="text-center py-2 px-2">
+                                                          {isEditing ? (
+                                                            <input
+                                                              type="number"
+                                                              min="0"
+                                                              value={displayStats.points || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400 font-bold"
+                                                            />
+                                                          ) : (
+                                                            <span className="text-black font-bold">{displayStats.points}</span>
+                                                          )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
                                                           {isEditing ? (
@@ -641,10 +701,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.goals || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'goals', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-yellow-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-yellow-400">{displayStats.goals}</span>
+                                                            <span className="text-black">{displayStats.goals}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -654,10 +714,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.assists || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'assists', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-blue-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-blue-400">{displayStats.assists}</span>
+                                                            <span className="text-black">{displayStats.assists}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -667,10 +727,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.saves || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'saves', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-green-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-green-400">{displayStats.saves}</span>
+                                                            <span className="text-black">{displayStats.saves}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -680,10 +740,10 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.shots || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'shots', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-orange-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-orange-400">{displayStats.shots}</span>
+                                                            <span className="text-black">{displayStats.shots}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -691,12 +751,12 @@ const GameResultsTable = ({
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.epic_saves || 0}
-                                                              onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-purple-400 text-center text-xs rounded border border-gray-600"
+                                                              value={displayStats.mvps || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'mvps', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-purple-400">{displayStats.epic_saves}</span>
+                                                            <span className="text-black">{displayStats.mvps || 0}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -706,10 +766,23 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.demos || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'demos', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-red-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-red-400">{displayStats.demos}</span>
+                                                            <span className="text-black">{displayStats.demos}</span>
+                                                          )}
+                                                        </td>
+                                                        <td className="text-center py-2 px-2">
+                                                          {isEditing ? (
+                                                            <input
+                                                              type="number"
+                                                              min="0"
+                                                              value={displayStats.epic_saves || 0}
+                                                              onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
+                                                            />
+                                                          ) : (
+                                                            <span className="text-black">{displayStats.epic_saves}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
@@ -719,24 +792,14 @@ const GameResultsTable = ({
                                                               min="0"
                                                               value={displayStats.otg || 0}
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'otg', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-pink-400 text-center text-xs rounded border border-gray-600"
+                                                              className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
                                                           ) : (
-                                                            <span className="text-pink-400">{displayStats.otg}</span>
+                                                            <span className="text-black">{displayStats.otg || 0}</span>
                                                           )}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          {isEditing ? (
-                                                            <input
-                                                              type="number"
-                                                              min="0"
-                                                              value={displayStats.points || 0}
-                                                              onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
-                                                              className="w-12 bg-gray-700 text-gray-300 text-center text-xs rounded border border-gray-600 font-bold"
-                                                            />
-                                                          ) : (
-                                                            <span className="text-gray-300 font-bold">{displayStats.points}</span>
-                                                          )}
+                                                          <span className="text-black">1</span>
                                                         </td>
                                                       </tr>
                                                     );
@@ -745,7 +808,7 @@ const GameResultsTable = ({
                                               </table>
                                             </div>
                                           ) : (
-                                            <div className="text-center py-4 text-gray-500 font-mono">
+                                            <div className="text-center py-4 text-gray-800 font-sans">
                                               Failed to load player data
                                             </div>
                                           )}

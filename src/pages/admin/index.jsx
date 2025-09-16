@@ -220,13 +220,18 @@ const Admin = () => {
   const loadGameResults = async () => {
     try {
       setLoadingState('gameResults', true);
-      const [games, players, playerGameStats] = await Promise.all([
+      const [games, players, playerGameStats, teamSeasons] = await Promise.all([
         apiService.getGames(selectedSeason.id),
         apiService.getPlayers(),
-        apiService.getPlayerGameStats(selectedSeason.id)
+        apiService.getPlayerGameStats(selectedSeason.id),
+        apiService.getTeamSeasons(selectedSeason.id)
       ]);
 
       const gameResults = games.map(game => {
+        // Get team names
+        const homeTeam = teamSeasons.find(ts => ts.id === game.home_team_season_id);
+        const awayTeam = teamSeasons.find(ts => ts.id === game.away_team_season_id);
+        
         // Get player stats for this game
         const gamePlayerStats = playerGameStats.filter(stat => stat.game_id === game.id);
         
@@ -247,6 +252,8 @@ const Admin = () => {
 
         return {
           ...game,
+          home_display: homeTeam?.display_name || 'Unknown Team',
+          away_display: awayTeam?.display_name || 'Unknown Team',
           home_team_stats: enrichedHomeStats,
           away_team_stats: enrichedAwayStats,
           total_home_goals: enrichedHomeStats.reduce((sum, stat) => sum + (stat.goals || 0), 0),

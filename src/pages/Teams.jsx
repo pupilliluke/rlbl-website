@@ -78,7 +78,7 @@ export default function Teams() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative overflow-x-hidden">
       {/* Header */}
       <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30 pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
