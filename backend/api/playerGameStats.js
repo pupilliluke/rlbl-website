@@ -7,7 +7,8 @@ const playerGameStatsDao = new PlayerGameStatsDao();
 // GET /player-game-stats - Get all player game stats with names
 router.get('/', async (req, res) => {
   try {
-    const stats = await playerGameStatsDao.findAllWithNames();
+    const { season_id } = req.query;
+    const stats = await playerGameStatsDao.findAllWithNames(season_id);
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch player game stats', details: error.message });

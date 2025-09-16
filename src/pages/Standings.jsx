@@ -96,7 +96,7 @@ export default function Standings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar overflow-x-hidden">
       {/* Header */}
       <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">

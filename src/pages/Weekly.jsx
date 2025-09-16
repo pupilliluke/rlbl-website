@@ -1,89 +1,185 @@
-/*
-// Weekly page content - commented out for later use
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { players } from "../data/players.js";
-import { formatPlayerName } from "../utils/formatters.js";
-import { CalendarIcon, StarIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon, FireIcon, TrophyIcon, ChartBarIcon, BooksIcon, DocumentIcon, VideoIcon } from "../components/Icons";
-
-export default function Weekly() {
-  const [selectedWeek, setSelectedWeek] = useState("current");
-
-  // Calculate 3 Stars of the Week
-  const getThreeStars = () => {
-    // Sort players by different metrics for variety
-    const topScorer = [...players].sort((a, b) => b.goals - a.goals)[0];
-    const topAssist = [...players].sort((a, b) => b.assists - a.assists)[0];
-    const topSaves = [...players].sort((a, b) => b.saves - a.saves)[0];
-    
-    return [
-      { player: topScorer, reason: "Leading Goal Scorer", stat: `${topScorer.goals} Goals` },
-      { player: topAssist, reason: "Top Playmaker", stat: `${topAssist.assists} Assists` },
-      { player: topSaves, reason: "Wall Guardian", stat: `${topSaves.saves} Saves` }
-    ];
-  };
-
-  const threeStars = getThreeStars();
-
-  // Weekly updates content
-  const weeklyContent = {
-    current: {
-      week: "Week 12",
-      date: "January 2025",
-      highlights: [
-        "🔥 Jack continues his scoring rampage with 79 goals this season",
-        "🛡️ Dundee sets the pace in saves with incredible defensive plays",
-        "⚡ Non Chalant dominates the standings with stellar team play",
-        "💥 Demo wars intensify as Dundee leads with 37 demolitions"
-      ],
-      gameOfWeek: {
-        title: "Game of the Week: Non Chalant vs Chicken Jockey",
-        description: "Two powerhouse teams clash in what promises to be the most exciting matchup of the week. Jack's offensive prowess meets Gup's well-rounded game.",
-        prediction: "Expect fireworks and high-scoring action!"
-      },
-      statHighlight: {
-        title: "Stat of the Week",
-        stat: "Mason's 51.6% Shooting Percentage",
-        description: "The most efficient shooter in the league continues to find the back of the net with incredible precision."
-      }
-    },
-    // ... rest of content
-  };
-
-  // Full JSX content here...
-}
-*/
-
+import React, { useState, useEffect } from "react";
 import { CalendarIcon } from "../components/Icons";
+import { apiService } from "../services/apiService";
+import WeeklyGameResults from "../components/WeeklyGameResults";
 
 export default function Weekly() {
+  const [gameResultsData, setGameResultsData] = useState([]);
+  const [seasonsData, setSeasonsData] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Load seasons data on component mount
+  useEffect(() => {
+    loadSeasons();
+  }, []);
+
+  // Load current season's game results when season is selected
+  useEffect(() => {
+    if (selectedSeason) {
+      loadGameResults();
+    }
+  }, [selectedSeason]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadSeasons = async () => {
+    try {
+      const seasons = await apiService.getSeasons();
+      setSeasonsData(seasons);
+
+      // Auto-select the most recent season
+      if (seasons.length > 0) {
+        const currentSeason = seasons.find(s => s.is_current) || seasons[0];
+        setSelectedSeason(currentSeason);
+      }
+    } catch (error) {
+      console.error('Failed to load seasons:', error);
+    }
+  };
+
+  const loadGameResults = async () => {
+    if (!selectedSeason) return;
+
+    try {
+      setLoading(true);
+      const [games, , playerGameStats, teamSeasons] = await Promise.all([
+        apiService.getGames(selectedSeason.id),
+        apiService.getPlayers(),
+        apiService.getPlayerGameStats(selectedSeason.id),
+        apiService.getTeamSeasons(selectedSeason.id)
+      ]);
+
+      const gameResults = games.map(game => {
+        // Get team displays
+        const homeTeamSeason = teamSeasons.find(ts => ts.id === game.home_team_season_id);
+        const awayTeamSeason = teamSeasons.find(ts => ts.id === game.away_team_season_id);
+
+        // Calculate total goals from player stats
+        const homePlayerStats = playerGameStats.filter(stat => stat.team_season_id === game.home_team_season_id && stat.game_id === game.id);
+        const awayPlayerStats = playerGameStats.filter(stat => stat.team_season_id === game.away_team_season_id && stat.game_id === game.id);
+
+        const totalHomeGoals = homePlayerStats.reduce((sum, stat) => sum + (stat.goals || 0), 0);
+        const totalAwayGoals = awayPlayerStats.reduce((sum, stat) => sum + (stat.goals || 0), 0);
+
+        return {
+          ...game,
+          home_display: homeTeamSeason?.display_name || 'Unknown Team',
+          away_display: awayTeamSeason?.display_name || 'Unknown Team',
+          total_home_goals: totalHomeGoals,
+          total_away_goals: totalAwayGoals
+        };
+      });
+
+      setGameResultsData(gameResults);
+    } catch (error) {
+      console.error('Failed to load game results:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white relative page-with-navbar">
-      {/* Header */}
-      <div className="relative z-10 bg-gradient-to-r from-blue-900 via-green-800 to-blue-900 pt-20">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-            <CalendarIcon className="w-10 h-10" />
-            RLBL Weekly
-          </h1>
-          <p className="text-blue-200">Weekly highlights, stats, and player spotlights</p>
+    <div className="min-h-screen bg-slate-800 relative page-with-navbar">
+      {/* Dark Blue Header */}
+      <div className="bg-slate-700 pt-16">
+        <div className="w-full px-6 py-6">
+          {/* Breadcrumb */}
+          <div className="text-sm text-slate-300 mb-2">
+            <span className="hover:underline cursor-pointer">RLBL</span>
+            <span className="mx-2">></span>
+            <span className="font-medium text-slate-100">Scores & Schedules</span>
+          </div>
+
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-1">
+                Scores & Schedules
+              </h1>
+              <p className="text-slate-300 text-base">
+                Rocket League Business League game results and standings
+              </p>
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search teams, players, weeks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-slate-600 border border-slate-500 text-white placeholder-slate-300 pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 w-64"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Season Selector */}
+              {seasonsData.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-slate-300">Season:</span>
+                  <select
+                    value={selectedSeason?.id || ''}
+                    onChange={(e) => {
+                      const season = seasonsData.find(s => s.id === parseInt(e.target.value));
+                      setSelectedSeason(season);
+                    }}
+                    className="bg-slate-600 border border-slate-500 text-white px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  >
+                    {seasonsData.map(season => (
+                      <option key={season.id} value={season.id}>
+                        {season.season_name} {season.is_current ? '(Current)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Coming Soon Content */}
-      <div className="max-w-7xl mx-auto px-6 py-20">
-        <div className="text-center">
-          <div className="bg-[#1f1f2e] rounded-xl p-12 border border-blue-800">
-            <div className="text-6xl mb-6">🚧</div>
-            <h2 className="text-3xl font-bold text-blue-400 mb-4">Coming Soon</h2>
-            <p className="text-gray-300 text-lg mb-6">
-              The Weekly page is currently under construction. We're working hard to bring you weekly highlights, player spotlights, and game analysis.
-            </p>
-            <p className="text-gray-400">
-              Check back soon for the latest weekly updates and featured content!
-            </p>
+      {/* Content Area */}
+      <div className="w-full px-6 py-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-300"></div>
+            <span className="ml-3 text-lg text-slate-300">Loading...</span>
           </div>
-        </div>
+        ) : gameResultsData.length > 0 ? (
+          <WeeklyGameResults
+            gameResultsData={gameResultsData}
+            apiService={apiService}
+            searchQuery={searchQuery}
+          />
+        ) : (
+          <div className="text-center py-16">
+            <div className="bg-white rounded-lg p-8 shadow-sm">
+              <div className="text-4xl mb-4">📊</div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">No Games Found</h2>
+              <p className="text-gray-600 mb-4">
+                No games found for {selectedSeason?.season_name || 'the selected season'}.
+              </p>
+              <p className="text-gray-500 text-sm">
+                Game results will appear here once games are played and stats are recorded.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
