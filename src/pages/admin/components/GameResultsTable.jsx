@@ -1,13 +1,14 @@
 import React from "react";
 
-const GameResultsTable = ({ 
-  gameResultsData, 
+const GameResultsTable = ({
+  gameResultsData,
   collapsedWeeks,
-  collapsedSeries, 
+  collapsedSeries,
   onToggleWeekCollapse,
   onToggleSeriesCollapse,
-  onManageGameStats, 
+  onManageGameStats,
   onAddSeriesGame,
+  onUpdateGameResults,
   apiService
 }) => {
   const [collapsedGames, setCollapsedGames] = React.useState(new Set());
@@ -190,18 +191,69 @@ const GameResultsTable = ({
       console.log('Saving', savePromises.length, 'player stats...');
       const results = await Promise.all(savePromises);
       console.log('Save results:', results);
-      
-      // Reload game data to reflect changes
-      for (const game of seriesGames) {
-        await loadGamePlayerData(game.id);
+
+      // Update local game data with saved stats instead of reloading
+      const updatedGamePlayersData = { ...gamePlayersData };
+      Object.entries(editableStats).forEach(([statKey, stats]) => {
+        const [gameId, playerId] = statKey.split('-');
+        const gameData = updatedGamePlayersData[gameId];
+
+        if (gameData) {
+          // Update both home and away players with new stats
+          gameData.homePlayers = gameData.homePlayers.map(player => {
+            if (player.id === parseInt(playerId)) {
+              return { ...player, stats: { ...player.stats, ...stats } };
+            }
+            return player;
+          });
+
+          gameData.awayPlayers = gameData.awayPlayers.map(player => {
+            if (player.id === parseInt(playerId)) {
+              return { ...player, stats: { ...player.stats, ...stats } };
+            }
+            return player;
+          });
+        }
+      });
+
+      setGamePlayersData(updatedGamePlayersData);
+
+      // Calculate updated game scores and update parent gameResultsData
+      if (onUpdateGameResults) {
+        const updatedGameResults = gameResultsData.map(game => {
+          const gameInSeries = seriesGames.find(g => g.id === game.id);
+          if (!gameInSeries) {
+            return game; // Game not in this series, return unchanged
+          }
+
+          // Calculate total goals for this game from updated player stats
+          const gameData = updatedGamePlayersData[game.id];
+          if (gameData) {
+            const homeGoals = gameData.homePlayers.reduce((sum, player) =>
+              sum + (player.stats.goals || 0), 0
+            );
+            const awayGoals = gameData.awayPlayers.reduce((sum, player) =>
+              sum + (player.stats.goals || 0), 0
+            );
+
+            return {
+              ...game,
+              total_home_goals: homeGoals,
+              total_away_goals: awayGoals,
+              home_team_stats: gameData.homePlayers.map(p => p.stats),
+              away_team_stats: gameData.awayPlayers.map(p => p.stats)
+            };
+          }
+
+          return game;
+        });
+
+        onUpdateGameResults(updatedGameResults);
       }
 
       // Exit edit mode
       setEditingSeriesId(null);
       setEditableStats({});
-      
-      // Optional: Show success message
-      alert('Player stats saved successfully!');
       
     } catch (error) {
       console.error('Failed to save player stats:', error);

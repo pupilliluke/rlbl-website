@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { apiService } from "../../services/apiService";
 
 // Components
@@ -50,6 +50,7 @@ const Admin = () => {
   const [collapsedWeeks, setCollapsedWeeks] = useState(new Set());
   const [collapsedSeries, setCollapsedSeries] = useState(new Set());
   const [hasInitializedCollapse, setHasInitializedCollapse] = useState(false);
+  const isLocalDataUpdateRef = useRef(false);
   
   // Game Edit Modal states
   const [showGameEditModal, setShowGameEditModal] = useState(false);
@@ -59,28 +60,40 @@ const Admin = () => {
   useEffect(() => {
     if (gameResultsData && gameResultsData.length > 0) {
       const allWeeks = [...new Set(gameResultsData.map(game => game.week))];
-      
+
       if (!hasInitializedCollapse) {
         // First load - collapse all weeks
         console.log('Initial load - collapsing all weeks:', allWeeks);
         setCollapsedWeeks(new Set(allWeeks));
         setHasInitializedCollapse(true);
-      } else {
-        // Subsequent loads - preserve existing collapse state, but ensure new weeks are added
+      } else if (!isLocalDataUpdateRef.current) {
+        // Only update collapse state for API-driven loads, not local CRUD operations
         setCollapsedWeeks(prevCollapsed => {
           const newCollapsed = new Set(prevCollapsed);
-          
-          // Add any new weeks that didn't exist before to collapsed state  
+
+          // Only add weeks that are genuinely new
           allWeeks.forEach(week => {
             if (!prevCollapsed.has(week)) {
-              // This is a new week, collapse it by default
               newCollapsed.add(week);
             }
           });
-          
-          console.log('Data reload - preserving collapse state. Previous:', Array.from(prevCollapsed), 'New:', Array.from(newCollapsed));
+
+          // Remove weeks that no longer exist in the data
+          const existingWeeks = new Set(allWeeks);
+          Array.from(prevCollapsed).forEach(week => {
+            if (!existingWeeks.has(week)) {
+              newCollapsed.delete(week);
+            }
+          });
+
+          console.log('API reload - updating collapse state. Previous:', Array.from(prevCollapsed), 'New:', Array.from(newCollapsed));
           return newCollapsed;
         });
+      }
+
+      // Reset the local update flag after processing
+      if (isLocalDataUpdateRef.current) {
+        isLocalDataUpdateRef.current = false;
       }
     }
   }, [gameResultsData, hasInitializedCollapse]);
@@ -347,12 +360,10 @@ const Admin = () => {
       setCurrentData([...currentData, newItem]);
       setFormData(getDefaultFormData(activeTab));
       setShowAddForm(false);
-      
-      // Reload data to ensure consistency
-      switch (activeTab) {
-        case 'standings': await loadStandings(); break;
-        case 'schedule': await loadGames(); break;
-        default: break;
+
+      // Only refresh dropdowns if needed, preserving UI state
+      if (activeTab === 'teams') {
+        await loadTeams(); // Refresh teams dropdown
       }
     } catch (error) {
       console.error(`Failed to add ${activeTab}:`, error);
@@ -384,7 +395,7 @@ const Admin = () => {
     try {
       setLoading(true);
       let updatedItem;
-      
+
       switch (activeTab) {
         case 'players':
           updatedItem = await apiService.updatePlayer(formData.id, formData);
@@ -408,12 +419,18 @@ const Admin = () => {
         default:
           throw new Error(`Update not implemented for ${activeTab}`);
       }
-      
+
+      // Update data in place without triggering full reload
       const currentData = getCurrentData();
       const newData = [...currentData];
       newData[editingItem] = updatedItem;
       setCurrentData(newData);
-      
+
+      // Only refresh dropdowns/selectors if needed, without affecting UI state
+      if (activeTab === 'teams') {
+        await loadTeams(); // Refresh teams dropdown
+      }
+
       setEditingItem(null);
       setFormData({});
     } catch (error) {
@@ -426,14 +443,14 @@ const Admin = () => {
   const handleTableDelete = async (index) => {
     const currentData = getCurrentData();
     const item = currentData[index];
-    
+
     if (!window.confirm(`Are you sure you want to delete this ${activeTab.slice(0, -1)}?`)) {
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       switch (activeTab) {
         case 'players':
           await apiService.deletePlayer(item.id);
@@ -456,9 +473,15 @@ const Admin = () => {
         default:
           throw new Error(`Delete not implemented for ${activeTab}`);
       }
-      
+
+      // Update data in place without page refresh
       const newData = currentData.filter((_, i) => i !== index);
       setCurrentData(newData);
+
+      // Only refresh dropdowns if needed, preserving UI state
+      if (activeTab === 'teams') {
+        await loadTeams(); // Refresh teams dropdown
+      }
     } catch (error) {
       console.error(`Failed to delete ${activeTab}:`, error);
     } finally {
@@ -495,7 +518,11 @@ const Admin = () => {
     try {
       setLoading(true);
       await apiService.deleteGame(game.id);
-      await loadGameResults();
+
+      // Update local data without full reload to preserve UI state
+      isLocalDataUpdateRef.current = true;
+      const updatedGameResults = gameResultsData.filter(g => g.id !== game.id);
+      setGameResultsData(updatedGameResults);
     } catch (error) {
       console.error('Failed to delete game:', error);
       alert('Failed to delete game. Please try again.');
@@ -519,7 +546,7 @@ const Admin = () => {
 
   const handleGameEditDelete = async () => {
     if (!editingGame) return;
-    
+
     if (!window.confirm(`Are you sure you want to delete Game ${editingGame.series_game || 1} between ${editingGame.home_display} and ${editingGame.away_display}? This action cannot be undone.`)) {
       return;
     }
@@ -527,7 +554,12 @@ const Admin = () => {
     try {
       setLoading(true);
       await apiService.deleteGame(editingGame.id);
-      await loadGameResults();
+
+      // Update local data without full reload to preserve UI state
+      isLocalDataUpdateRef.current = true;
+      const updatedGameResults = gameResultsData.filter(g => g.id !== editingGame.id);
+      setGameResultsData(updatedGameResults);
+
       setShowGameEditModal(false);
       setEditingGame(null);
     } catch (error) {
@@ -585,33 +617,20 @@ const Admin = () => {
     try {
       setLoading(true);
       await deleteFunction();
-      
-      // Reload the appropriate data
-      switch (activeTab) {
-        case 'players':
-          await loadAllData();
-          break;
-        case 'teams':
-          await loadAllData();
-          break;
-        case 'schedule':
-        case 'gameResults':
-          await loadGameResults();
-          break;
-        case 'standings':
-          await loadStandings();
-          break;
-        case 'powerRankings':
-          await loadPowerRankings();
-          break;
-        case 'gameStats':
-          await loadStats();
-          break;
+
+      // Update local data without triggering full reload to preserve UI state
+      const currentData = getCurrentData();
+      const updatedData = currentData.filter(item => item.id !== formData.id);
+      setCurrentData(updatedData);
+
+      // Only refresh dropdowns if needed, preserving UI state
+      if (activeTab === 'teams') {
+        await loadTeams(); // Refresh teams dropdown
       }
 
       // Close modal
       handleCancel();
-      
+
     } catch (error) {
       console.error('Failed to delete item:', error);
       alert('Failed to delete item. Please try again.');
@@ -650,12 +669,39 @@ const Admin = () => {
         is_playoffs: game.is_playoffs
       };
 
-      // Create multiple games
+      // Create multiple games and add them to local state
+      const newGames = [];
       for (let i = 0; i < numGames; i++) {
-        await apiService.createSeriesGame(gameData);
+        const newGame = await apiService.createSeriesGame(gameData);
+        newGames.push(newGame);
       }
-      
-      await loadGameResults();
+
+      // Add new games to local state without full reload to preserve UI state
+      if (newGames.length > 0) {
+        // Enhance new games with display names like in loadGameResults
+        const enhancedNewGames = await Promise.all(newGames.map(async (newGame) => {
+          const [players, teamSeasons] = await Promise.all([
+            apiService.getPlayers(),
+            apiService.getTeamSeasons(selectedSeason.id)
+          ]);
+
+          const homeTeam = teamSeasons.find(ts => ts.id === newGame.home_team_season_id);
+          const awayTeam = teamSeasons.find(ts => ts.id === newGame.away_team_season_id);
+
+          return {
+            ...newGame,
+            home_display: homeTeam?.display_name || 'Unknown Team',
+            away_display: awayTeam?.display_name || 'Unknown Team',
+            home_team_stats: [],
+            away_team_stats: [],
+            total_home_goals: 0,
+            total_away_goals: 0
+          };
+        }));
+
+        isLocalDataUpdateRef.current = true;
+        setGameResultsData(prev => [...prev, ...enhancedNewGames]);
+      }
       
     } catch (error) {
       console.error('Failed to add series games:', error);
@@ -684,6 +730,10 @@ const Admin = () => {
           }}
           onManageGameStats={handleManageGameStats}
           onAddSeriesGame={handleAddSeriesGame}
+          onUpdateGameResults={(updatedGames) => {
+            isLocalDataUpdateRef.current = true;
+            setGameResultsData(updatedGames);
+          }}
           apiService={apiService}
         />
       );
