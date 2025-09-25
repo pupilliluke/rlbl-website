@@ -168,6 +168,15 @@ export const VideoIcon = ({ className, color = "#EF4444" }) => (
   </BaseIcon>
 );
 
+// Stream Icon
+export const StreamIcon = ({ className, color = "#9333EA" }) => (
+  <BaseIcon className={className} color={color}>
+    <rect x="2" y="4" width="20" height="14" rx="2" ry="2" stroke={color} strokeWidth="2" fill="none"/>
+    <circle cx="12" cy="11" r="3" fill={color}/>
+    <path d="M8.5 8.5l7 5-7 5z" fill="white"/>
+  </BaseIcon>
+);
+
 // Lightning/Bolt Icon
 export const BoltIcon = ({ className, color = "#F59E0B" }) => (
   <BaseIcon className={className} color={color}>
