@@ -15,6 +15,9 @@ export default function Standings() {
   const [error, setError] = useState(null);
   const [showSymbols, setShowSymbols] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [lpModalOpen, setLpModalOpen] = useState(false);
+  const [selectedTeamLP, setSelectedTeamLP] = useState(null);
+  const [lpBreakdown, setLpBreakdown] = useState([]);
 
   // Fetch available seasons
   useEffect(() => {
@@ -83,6 +86,20 @@ export default function Standings() {
 
     fetchStandings();
   }, [selectedSeason]);
+
+  // Function to fetch league points breakdown for a team
+  const fetchLeaguePointsBreakdown = async (teamSeasonId, teamName) => {
+    try {
+      const breakdown = await apiService.getTeamLeaguePointsBreakdown(selectedSeason, teamSeasonId);
+      // Filter out tie games
+      const filteredBreakdown = breakdown.filter(game => game.game_type !== 'tie');
+      setLpBreakdown(filteredBreakdown);
+      setSelectedTeamLP(teamName);
+      setLpModalOpen(true);
+    } catch (err) {
+      console.error('Failed to fetch league points breakdown:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -204,13 +221,15 @@ export default function Standings() {
                     <tr>
                       <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">#</th>
                       <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Team</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">W</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">L</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">T</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">PF</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">PA</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Diff</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white hidden md:table-cell">Win%</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">W</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">L</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">OTG</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">FF</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PF</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PA</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">Diff</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">LP</th>
+                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white hidden md:table-cell">Win%</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -243,19 +262,28 @@ export default function Standings() {
                               {team.team_name}
                             </button>
                           </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-green-400 font-semibold">{team.wins}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-red-400 font-semibold">{team.losses}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-gray-300">{team.ties}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-blue-400">{team.points_for}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-orange-400">{team.points_against}</td>
-                          <td className={`py-3 md:py-4 px-3 md:px-4 font-semibold ${
-                            team.point_diff > 0 ? 'text-green-400' : 
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-green-400 font-semibold">{team.wins}</td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.losses}</td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{(team.overtime_wins || 0) + (team.overtime_losses || 0)}</td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.forfeits || 0}</td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400">{team.points_for}</td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-orange-400">{team.points_against}</td>
+                          <td className={`py-3 md:py-4 px-3 md:px-4 text-center font-semibold ${
+                            team.point_diff > 0 ? 'text-green-400' :
                             team.point_diff < 0 ? 'text-red-400' : 'text-gray-400'
                           }`}>
                             {team.point_diff > 0 ? '+' : ''}{team.point_diff}
                           </td>
+                          <td className="py-3 md:py-4 px-3 md:px-4 text-center">
+                            <button
+                              onClick={() => fetchLeaguePointsBreakdown(team.id, team.team_name)}
+                              className="text-purple-400 font-bold hover:text-purple-300 hover:underline cursor-pointer transition-colors"
+                            >
+                              {team.league_points || 0}
+                            </button>
+                          </td>
                           <td className="py-3 md:py-4 px-3 md:px-4 hidden md:table-cell">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-center gap-2">
                               <span className="font-semibold text-yellow-400">
                                 {team.win_percentage ? Number(team.win_percentage).toFixed(1) : '0.0'}%
                               </span>
@@ -279,13 +307,15 @@ export default function Standings() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-400 text-sm">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
             <div><strong>W</strong> - Wins</div>
             <div><strong>L</strong> - Losses</div>
-            <div><strong>T</strong> - Ties</div>
+            <div><strong>OTG</strong> - Overtime Games</div>
+            <div><strong>FF</strong> - Forfeits</div>
             <div><strong>PF</strong> - Points For</div>
             <div><strong>PA</strong> - Points Against</div>
             <div><strong>Diff</strong> - Point Differential</div>
+            <div><strong>LP</strong> - League Points</div>
             <div><strong>Win%</strong> - Win Percentage</div>
           </div>
           <p className="mt-4">
@@ -298,6 +328,90 @@ export default function Standings() {
           </p>
         </div>
       </div>
+
+      {/* League Points Breakdown Modal */}
+      {lpModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl border border-gray-600 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-600">
+              <h3 className="text-xl font-bold text-white">
+                League Points Breakdown - {selectedTeamLP}
+              </h3>
+              <button
+                onClick={() => setLpModalOpen(false)}
+                className="text-gray-400 hover:text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {lpBreakdown.length === 0 ? (
+                <p className="text-gray-400 text-center">No games found for this team.</p>
+              ) : (
+                <div className="space-y-4">
+                  {lpBreakdown.map((game, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-700/50 rounded-lg p-4 border border-gray-600"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-white font-semibold">
+                          vs {game.opponent_name}
+                        </div>
+                        <div className="text-sm text-gray-400">
+                          Week {game.week_number || 'TBD'}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-300">
+                          Score: {game.team_score} - {game.opponent_score}
+                          {game.game_type === 'forfeit' && ' (Forfeit)'}
+                          {game.game_type.includes('overtime') && ' (OT)'}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-400">
+                            {game.game_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}:
+                          </span>
+                          <span className="bg-purple-600 text-white px-2 py-1 rounded font-bold">
+                            {game.points} pts
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Total */}
+                  <div className="bg-gray-700 rounded-lg p-4 border-2 border-purple-500">
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-bold text-lg">Total League Points</span>
+                      <span className="bg-purple-600 text-white px-3 py-2 rounded font-bold text-lg">
+                        {lpBreakdown.reduce((sum, game) => sum + game.points, 0)} pts
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-gray-600 bg-gray-700/30">
+              <div className="text-xs text-gray-400 text-center">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <span>Regulation Win: 4pts</span>
+                  <span>OT Win: 3pts</span>
+                  <span>OT Loss: 2pts</span>
+                  <span>Regulation Loss: 1pt</span>
+                  <span>Forfeit: 0pts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

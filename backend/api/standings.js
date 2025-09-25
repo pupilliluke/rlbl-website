@@ -4,6 +4,49 @@ const StandingsDao = require('../dao/StandingsDao');
 
 const standingsDao = new StandingsDao();
 
+// POST /standings/auto-generate/:seasonId - Auto-generate standings from game results
+router.post('/auto-generate/:seasonId', async (req, res) => {
+  try {
+    const seasonId = parseInt(req.params.seasonId);
+
+    if (!seasonId) {
+      return res.status(400).json({ error: 'Valid season_id is required' });
+    }
+
+    const generatedStandings = await standingsDao.autoGenerateStandings(seasonId);
+    res.json({
+      message: `Successfully auto-generated standings for season ${seasonId}`,
+      standings: generatedStandings,
+      count: generatedStandings.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to auto-generate standings',
+      details: error.message
+    });
+  }
+});
+
+// GET /standings/league-points-breakdown/:seasonId/:teamSeasonId - Get league points breakdown for a team
+router.get('/league-points-breakdown/:seasonId/:teamSeasonId', async (req, res) => {
+  try {
+    const seasonId = parseInt(req.params.seasonId);
+    const teamSeasonId = parseInt(req.params.teamSeasonId);
+
+    if (!seasonId || !teamSeasonId) {
+      return res.status(400).json({ error: 'Valid season_id and team_season_id are required' });
+    }
+
+    const breakdown = await standingsDao.getLeaguePointsBreakdown(seasonId, teamSeasonId);
+    res.json(breakdown);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to fetch league points breakdown',
+      details: error.message
+    });
+  }
+});
+
 // GET /standings - Get all standings with optional season filtering
 router.get('/', async (req, res) => {
   try {

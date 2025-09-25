@@ -46,12 +46,15 @@ const GameResultsTable = ({
         apiService.getPlayerGameStatsByGame(gameId).catch(() => []) // Handle no stats gracefully
       ]);
 
-      // Get players for each team
-      const homePlayers = allPlayers.filter(player => 
-        homeRoster.some(roster => roster.player_id === player.id)
+      // Get players for each team (deduplicated)
+      const homePlayerIds = [...new Set(homeRoster.map(roster => roster.player_id))];
+      const awayPlayerIds = [...new Set(awayRoster.map(roster => roster.player_id))];
+
+      const homePlayers = allPlayers.filter(player =>
+        homePlayerIds.includes(player.id)
       );
-      const awayPlayers = allPlayers.filter(player => 
-        awayRoster.some(roster => roster.player_id === player.id)
+      const awayPlayers = allPlayers.filter(player =>
+        awayPlayerIds.includes(player.id)
       );
 
       // Merge player info with their game stats
@@ -514,12 +517,22 @@ const GameResultsTable = ({
                                         {(() => {
                                           const homeGoals = game.total_home_goals || 0;
                                           const awayGoals = game.total_away_goals || 0;
-                                          if (homeGoals > awayGoals) {
+                                          // Check for forfeits first
+                                          if (game.home_team_forfeit) {
+                                            return `Forfeit (${game.home_display})`;
+                                          } else if (game.away_team_forfeit) {
+                                            return `Forfeit (${game.away_display})`;
+                                          } else if (homeGoals > awayGoals) {
                                             return `${game.home_display} W (${homeGoals}-${awayGoals})`;
                                           } else if (awayGoals > homeGoals) {
                                             return `${game.away_display} W (${awayGoals}-${homeGoals})`;
                                           } else {
-                                            return `TIE (${homeGoals}-${awayGoals})`;
+                                            // 0-0 means unplayed, any other tie score is a legitimate tie
+                                            if (homeGoals === 0 && awayGoals === 0) {
+                                              return "Unplayed";
+                                            } else {
+                                              return `TIE (${homeGoals}-${awayGoals})`;
+                                            }
                                           }
                                         })()}
                                       </span>
@@ -557,8 +570,81 @@ const GameResultsTable = ({
                                               <span className="ml-3 text-gray-800 font-sans">Loading player stats...</span>
                                             </div>
                                           ) : gamePlayerData ? (
-                                            <div className="overflow-x-auto bg-white rounded-lg border border-gray-300">
-                                              <table className="w-full text-xs font-sans bg-white">
+                                            <div className="bg-white rounded-lg border border-gray-300">
+                                              {/* Game Status Controls */}
+                                              {editingSeriesId === seriesId && (
+                                                <div className="p-3 border-b border-gray-300 bg-gray-50">
+                                                  <div className="space-y-3">
+                                                    <h4 className="text-sm font-bold text-gray-800">Forfeit Detection</h4>
+
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                      {/* Home Team Forfeit */}
+                                                      <label className="flex items-center gap-2 text-sm text-gray-800">
+                                                        <input
+                                                          type="checkbox"
+                                                          checked={game.home_team_forfeit || false}
+                                                          onChange={async (e) => {
+                                                            const isChecked = e.target.checked;
+                                                            try {
+                                                              await apiService.updateGame(game.id, {
+                                                                home_team_forfeit: isChecked
+                                                              });
+                                                              // Update the local state properly using the callback
+                                                              const updatedGames = gameResultsData.map(g =>
+                                                                g.id === game.id
+                                                                  ? { ...g, home_team_forfeit: isChecked }
+                                                                  : g
+                                                              );
+                                                              onUpdateGameResults(updatedGames);
+                                                            } catch (error) {
+                                                              console.error('Failed to update forfeit status:', error);
+                                                              // Revert checkbox to its previous state
+                                                              e.target.checked = game.home_team_forfeit || false;
+                                                            }
+                                                          }}
+                                                          className="rounded border-gray-400"
+                                                        />
+                                                        <span className="font-semibold">{game.home_display}</span> forfeited
+                                                      </label>
+
+                                                      {/* Away Team Forfeit */}
+                                                      <label className="flex items-center gap-2 text-sm text-gray-800">
+                                                        <input
+                                                          type="checkbox"
+                                                          checked={game.away_team_forfeit || false}
+                                                          onChange={async (e) => {
+                                                            const isChecked = e.target.checked;
+                                                            try {
+                                                              await apiService.updateGame(game.id, {
+                                                                away_team_forfeit: isChecked
+                                                              });
+                                                              // Update the local state properly using the callback
+                                                              const updatedGames = gameResultsData.map(g =>
+                                                                g.id === game.id
+                                                                  ? { ...g, away_team_forfeit: isChecked }
+                                                                  : g
+                                                              );
+                                                              onUpdateGameResults(updatedGames);
+                                                            } catch (error) {
+                                                              console.error('Failed to update forfeit status:', error);
+                                                              // Revert checkbox to its previous state
+                                                              e.target.checked = game.away_team_forfeit || false;
+                                                            }
+                                                          }}
+                                                          className="rounded border-gray-400"
+                                                        />
+                                                        <span className="font-semibold">{game.away_display}</span> forfeited
+                                                      </label>
+                                                    </div>
+
+                                                    <p className="text-xs text-gray-600">
+                                                      Check if a team forfeited. Forfeiting team gets 0 points, opponent gets 4 points (when score diff > 5).
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              )}
+                                              <div className="overflow-x-auto">
+                                                <table className="w-full text-xs font-sans bg-white">
                                                 <thead>
                                                   <tr className="border-b border-gray-300 bg-gray-100">
                                                     <th className="text-left py-2 px-3 text-black font-bold">TEAM</th>
@@ -583,7 +669,7 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
                                                     
                                                     return (
-                                                      <tr key={`home-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                      <tr key={`home-${seriesId}-${game.id}-${player.id}-${idx}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
                                                           {idx === 0 ? `🏠 ${game.home_display}` : ''}
                                                         </td>
@@ -726,7 +812,7 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
                                                     
                                                     return (
-                                                      <tr key={`away-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                      <tr key={`away-${seriesId}-${game.id}-${player.id}-${idx}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
                                                           {idx === 0 ? `✈️ ${game.away_display}` : ''}
                                                         </td>
@@ -857,7 +943,8 @@ const GameResultsTable = ({
                                                     );
                                                   })}
                                                 </tbody>
-                                              </table>
+                                                </table>
+                                              </div>
                                             </div>
                                           ) : (
                                             <div className="text-center py-4 text-gray-800 font-sans">

@@ -95,12 +95,15 @@ router.post('/', async (req, res) => {
 // PUT /games/:id - Update game
 router.put('/:id', async (req, res) => {
   try {
-    const { game_date, week, is_playoffs } = req.body;
-    
+    const { game_date, week, is_playoffs, home_team_forfeit, away_team_forfeit, incomplete } = req.body;
+
     const updateData = {};
     if (game_date !== undefined) updateData.game_date = game_date;
     if (week !== undefined) updateData.week = week;
     if (is_playoffs !== undefined) updateData.is_playoffs = is_playoffs;
+    if (home_team_forfeit !== undefined) updateData.home_team_forfeit = home_team_forfeit;
+    if (away_team_forfeit !== undefined) updateData.away_team_forfeit = away_team_forfeit;
+    if (incomplete !== undefined) updateData.incomplete = incomplete;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });

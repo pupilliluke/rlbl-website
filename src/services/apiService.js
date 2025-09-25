@@ -9,9 +9,20 @@ const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:5000/api';
 
 // Generic API call function
-const apiCall = async (endpoint) => {
+const apiCall = async (endpoint, method = 'GET', body = null) => {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const config = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    if (body && method !== 'GET') {
+      config.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -42,6 +53,16 @@ export const apiService = {
   getStandings: (seasonId) => {
     const endpoint = seasonId ? `/standings?season_id=${encodeURIComponent(seasonId)}` : '/standings';
     return apiCall(endpoint);
+  },
+
+  // Auto-generate standings from game results
+  autoGenerateStandings: (seasonId) => {
+    return apiCall(`/standings/auto-generate/${seasonId}`, 'POST');
+  },
+
+  // Get league points breakdown for a team
+  getTeamLeaguePointsBreakdown: (seasonId, teamSeasonId) => {
+    return apiCall(`/standings/league-points-breakdown/${seasonId}/${teamSeasonId}`);
   },
 
   // Seasons
