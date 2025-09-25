@@ -76,6 +76,7 @@ class StandingsDao extends BaseDao {
           t.logo_url,
           COALESCE(ts.primary_color, t.color) as color,
           ts.secondary_color,
+          ts.conference,
           COALESCE(s.wins, 0) as wins,
           COALESCE(s.losses, 0) as losses,
           COALESCE(s.points_for, 0) as points_for,

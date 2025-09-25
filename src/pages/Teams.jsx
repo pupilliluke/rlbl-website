@@ -6,11 +6,20 @@ const slugify = (str) =>
   str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 export default function Teams() {
+  // Function to get conference for a team (database-driven)
+  const getTeamConference = (team) => {
+    // Use database conference if available
+    if (team.conference) {
+      return team.conference;
+    }
+    return null;
+  };
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("current");
+  const [selectedConference, setSelectedConference] = useState("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,8 +37,8 @@ export default function Teams() {
         } else if (selectedSeason === 'season2_playoffs') {
           teamsData = await apiService.getTeamSeasonData(2);
         } else {
-          // For current/career, use teams endpoint (now returns team_seasons structure)
-          teamsData = await apiService.getTeams(selectedSeason);
+          // For current/career, use teams endpoint with conference filtering
+          teamsData = await apiService.getTeams(selectedSeason, selectedConference);
         }
         
         playersData = await apiService.getPlayers();
@@ -54,16 +63,41 @@ export default function Teams() {
     };
 
     fetchData();
-  }, [selectedSeason]);
+  }, [selectedSeason, selectedConference]);
 
   // Group players by team - handle both team_seasons and teams data structures
   const getPlayersForTeam = (teamName) => {
     return players.filter(player => {
       // Handle different team name fields from different endpoints
-      return player.team_name === teamName || 
+      return player.team_name === teamName ||
              (player.original_team_name && player.original_team_name === teamName) ||
              (player.current_team_name && player.current_team_name === teamName);
     });
+  };
+
+  // Filter teams by conference
+  const filteredTeams = teams.filter(team => {
+    if (selectedConference === "all") return true;
+    return getTeamConference(team) === selectedConference;
+  });
+
+  // Group teams by conference for display
+  const groupedByConference = () => {
+    if (selectedSeason === 'current' && selectedConference === "all") {
+      const grouped = { 'West': [], 'East': [], 'Other': [] };
+
+      teams.forEach(team => {
+        const conference = getTeamConference(team);
+        if (conference) {
+          grouped[conference].push(team);
+        } else {
+          grouped['Other'].push(team);
+        }
+      });
+
+      return grouped;
+    }
+    return null;
   };
 
   if (loading) {
@@ -91,19 +125,37 @@ export default function Teams() {
               </p>
             </div>
             
-            {/* Season Dropdown */}
-            <div className="flex flex-col items-start md:items-end">
-              <label className="text-xs text-gray-300 mb-1">Season</label>
-              <select
-                value={selectedSeason}
-                onChange={(e) => setSelectedSeason(e.target.value)}
-                className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
-              >
-                <option value="current" className="text-black bg-white">Season 3 - Fall 2025</option>
-                <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
-                <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
-                <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
-              </select>
+            {/* Season and Conference Dropdowns */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+              <div className="flex flex-col items-start md:items-end">
+                <label className="text-xs text-gray-300 mb-1">Season</label>
+                <select
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(e.target.value)}
+                  className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
+                >
+                  <option value="current" className="text-black bg-white">Season 3</option>
+                  <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
+                  <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
+                  <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
+                </select>
+              </div>
+
+              {/* Conference Filter - Only show for Season 3 */}
+              {selectedSeason === 'current' && (
+                <div className="flex flex-col items-start md:items-end">
+                  <label className="text-xs text-gray-300 mb-1">Conference</label>
+                  <select
+                    value={selectedConference}
+                    onChange={(e) => setSelectedConference(e.target.value)}
+                    className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[150px]"
+                  >
+                    <option value="all" className="text-black bg-white">All Conferences</option>
+                    <option value="West" className="text-black bg-white">🛡️ West</option>
+                    <option value="East" className="text-black bg-white">🛡️ East</option>
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -112,7 +164,8 @@ export default function Teams() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="mb-12">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
-            {selectedSeason === 'current' ? 'Season 3 Teams - Fall 2025' :
+            {selectedSeason === 'current' && selectedConference !== 'all' ? `Season 3 - ${selectedConference} Conference` :
+             selectedSeason === 'current' ? 'Season 3 Teams' :
              selectedSeason === 'season1' ? 'Season 1 Teams' :
              selectedSeason === 'season2' ? 'Season 2 Teams' :
              selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
@@ -132,100 +185,401 @@ export default function Teams() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-              {teams.map((team) => {
-                // Handle different field names from team_seasons vs teams endpoint
-                const teamName = team.display_name || team.team_name || team.original_team_name;
-                const teamPrimaryColor = team.color || '#808080';
-                const teamSecondaryColor = team.secondary_color;
-                const teamRanking = team.ranking;
-                const teamId = team.team_season_id || team.team_id || team.id;
-                
-                const teamPlayers = getPlayersForTeam(teamName);
-                
-                return (
-                  <Link to={`/teams/${slugify(teamName)}`} key={teamId}>
-                    <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
-                      {/* Team Color Strip - Dual Colors if Available */}
-                      <div className="flex mb-4 rounded-lg overflow-hidden h-3">
-                        <div
-                          className={teamSecondaryColor ? "flex-1" : "w-full"}
-                          style={{ backgroundColor: teamPrimaryColor }}
-                        />
-                        {teamSecondaryColor && (
-                          <div
-                            className="flex-1"
-                            style={{ backgroundColor: teamSecondaryColor }}
-                          />
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-center mb-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-white">
-                            {teamName}
-                          </h3>
-                          {team.season_name && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              {team.season_name}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex space-x-2 items-center">
-                          <div className="flex space-x-1">
-                            <div
-                              className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                              style={{ backgroundColor: teamPrimaryColor }}
-                            />
-                            {teamSecondaryColor && (
-                              <div
-                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                                style={{ backgroundColor: teamSecondaryColor }}
-                              />
-                            )}
+            <>
+              {/* Circular Stadium Layout */}
+              {(() => {
+                const grouped = groupedByConference();
+                if (grouped && selectedConference === 'all') {
+                  // Combined circular layout for all conferences
+                  return renderCircularLayout(filteredTeams, selectedConference);
+                } else if (grouped) {
+                  // Conference-specific circular layouts
+                  return (
+                    <div className="space-y-16">
+                      {Object.entries(grouped).map(([conferenceName, conferenceTeams]) => {
+                        if (conferenceTeams.length === 0) return null;
+                        return (
+                          <div key={conferenceName}>
+                            <div className="flex items-center gap-3 mb-8 justify-center">
+                              <div className="text-3xl">🛡️</div>
+                              <h3 className="text-3xl font-bold text-white">{conferenceName} Conference</h3>
+                            </div>
+                            {renderCircularLayout(conferenceTeams, conferenceName)}
                           </div>
-                        </div>
-                      </div>
-                      
-                      {teamPlayers.length > 0 && (
-                        <div className="mt-4">
-                          <p className="text-sm text-gray-300 mb-3 font-medium">
-                            Players:
-                          </p>
-                          <div className="grid grid-cols-1 gap-2">
-                            {teamPlayers.map((player) => (
-                              <div
-                                key={player.id}
-                                className="text-base text-white bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50"
-                              >
-                                {player.player_name}
-                                <span className="text-gray-400 text-sm ml-2">
-                                  ({player.gamertag})
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {(team.logo_url || team.alt_logo_url) && (
-                        <div className="mt-4 text-center">
-                          <img 
-                            src={team.alt_logo_url || team.logo_url} 
-                            alt={`${teamName} logo`}
-                            className="h-12 w-12 mx-auto rounded-full border-2 border-gray-600"
-                            onError={(e) => e.target.style.display = 'none'}
-                          />
-                        </div>
-                      )}
+                        );
+                      })}
                     </div>
-                  </Link>
-                );
-              })}
-            </div>
+                  );
+                }
+                // Circular layout for other cases
+                return renderCircularLayout(filteredTeams, null);
+              })()}
+            </>
           )}
         </div>
       </div>
     </div>
   );
+
+  // Circular Stadium Layout Function
+  function renderCircularLayout(teamsData, conference) {
+    if (!teamsData || teamsData.length === 0) {
+      return (
+        <div className="text-center text-gray-400 py-16">
+          <p>No teams found for this selection.</p>
+        </div>
+      );
+    }
+
+    const teamCount = teamsData.length;
+    const containerSize = Math.min(window.innerWidth * 0.8, 800); // Responsive size
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
+
+    // Determine ring configuration
+    let rings = [];
+    if (teamCount <= 7) {
+      // Single ring or center + ring configuration
+      if (teamCount === 7) {
+        rings = [{ teams: teamsData, radius: containerSize * 0.35 }];
+      } else {
+        rings = [{ teams: teamsData, radius: containerSize * 0.32 }];
+      }
+    } else if (teamCount <= 14) {
+      // Two concentric rings
+      const outerTeams = teamsData.slice(0, Math.ceil(teamCount / 2));
+      const innerTeams = teamsData.slice(Math.ceil(teamCount / 2));
+      rings = [
+        { teams: outerTeams, radius: containerSize * 0.38 },
+        { teams: innerTeams, radius: containerSize * 0.22 }
+      ];
+    } else {
+      // Three rings for larger team counts
+      const outerCount = Math.ceil(teamCount / 3);
+      const middleCount = Math.ceil((teamCount - outerCount) / 2);
+      rings = [
+        { teams: teamsData.slice(0, outerCount), radius: containerSize * 0.4 },
+        { teams: teamsData.slice(outerCount, outerCount + middleCount), radius: containerSize * 0.26 },
+        { teams: teamsData.slice(outerCount + middleCount), radius: containerSize * 0.12 }
+      ];
+    }
+
+    return (
+      <div className="relative flex justify-center items-center py-8">
+        <svg
+          width={containerSize}
+          height={containerSize}
+          className="drop-shadow-2xl"
+          style={{ filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.3))' }}
+        >
+          {/* Background orbital rings */}
+          {rings.map((ring, ringIndex) => (
+            <circle
+              key={`ring-${ringIndex}`}
+              cx={centerX}
+              cy={centerY}
+              r={ring.radius}
+              fill="none"
+              stroke="rgba(59, 130, 246, 0.1)"
+              strokeWidth="1"
+              strokeDasharray="4 8"
+              className="animate-pulse"
+            />
+          ))}
+
+          {/* Center badge */}
+          {renderCenterBadge(centerX, centerY, conference)}
+
+          {/* Team nodes */}
+          {rings.map((ring, ringIndex) =>
+            ring.teams.map((team, teamIndex) => {
+              const angle = (2 * Math.PI * teamIndex) / ring.teams.length;
+              const x = centerX + ring.radius * Math.cos(angle - Math.PI / 2);
+              const y = centerY + ring.radius * Math.sin(angle - Math.PI / 2);
+              return renderTeamNode(team, x, y, angle, teamIndex + ringIndex * 10);
+            })
+          )}
+        </svg>
+      </div>
+    );
+  }
+
+  // Center Badge Component
+  function renderCenterBadge(centerX, centerY, conference) {
+    const badgeSize = 80;
+    return (
+      <g>
+        {/* Outer glow circle */}
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r={badgeSize / 2 + 4}
+          fill="rgba(59, 130, 246, 0.2)"
+          className="animate-pulse"
+        />
+        {/* Main badge circle */}
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r={badgeSize / 2}
+          fill="rgba(17, 24, 39, 0.9)"
+          stroke="rgb(59, 130, 246)"
+          strokeWidth="2"
+          className="drop-shadow-lg"
+        />
+        {/* Badge text */}
+        <text
+          x={centerX}
+          y={centerY - 8}
+          textAnchor="middle"
+          fill="white"
+          fontSize="12"
+          fontWeight="bold"
+          className="select-none"
+        >
+          {selectedSeason === 'current' ? 'S3' :
+           selectedSeason === 'season2' ? 'S2' :
+           selectedSeason === 'season1' ? 'S1' : 'RL'}
+        </text>
+        <text
+          x={centerX}
+          y={centerY + 8}
+          textAnchor="middle"
+          fill="rgb(156, 163, 175)"
+          fontSize="10"
+          className="select-none"
+        >
+          {conference === 'all' ? 'ALL' : conference || 'RLBL'}
+        </text>
+      </g>
+    );
+  }
+
+  // Team Node Component
+  function renderTeamNode(team, x, y, angle, index) {
+    const teamName = team.display_name || team.team_name || team.original_team_name;
+    const teamPrimaryColor = team.color || '#3B82F6';
+    const teamSecondaryColor = team.secondary_color || teamPrimaryColor;
+    const teamConference = getTeamConference(team);
+    const teamPlayers = getPlayersForTeam(teamName);
+    const teamId = team.team_season_id || team.team_id || team.id;
+
+    // Calculate team strength (player count as percentage)
+    const maxPlayers = 5; // Typical RL team size
+    const teamStrength = Math.min((teamPlayers.length / maxPlayers) * 100, 100);
+    const nodeSize = 50;
+    const strokeDasharray = `${teamStrength * 2.51} 251`; // Circumference ≈ 2πr where r=40
+
+    // Keep text upright
+    const shouldFlip = angle > Math.PI / 2 && angle < (3 * Math.PI) / 2;
+    const labelAngle = shouldFlip ? angle + Math.PI : angle;
+    const textAnchor = shouldFlip ? 'end' : 'start';
+
+    return (
+      <g key={`team-${teamId}-${index}`} className="group cursor-pointer">
+        {/* Node shadow */}
+        <circle
+          cx={x + 2}
+          cy={y + 2}
+          r={nodeSize / 2}
+          fill="rgba(0, 0, 0, 0.3)"
+        />
+
+        {/* Strength arc background */}
+        <circle
+          cx={x}
+          cy={y}
+          r={nodeSize / 2 + 6}
+          fill="none"
+          stroke="rgba(75, 85, 99, 0.3)"
+          strokeWidth="3"
+        />
+
+        {/* Strength arc */}
+        <circle
+          cx={x}
+          cy={y}
+          r={nodeSize / 2 + 6}
+          fill="none"
+          stroke={teamPrimaryColor}
+          strokeWidth="3"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset="62.75"
+          strokeLinecap="round"
+          className="transition-all duration-500 group-hover:stroke-width-4"
+          style={{
+            filter: `drop-shadow(0 0 8px ${teamPrimaryColor}40)`,
+            transform: 'rotate(-90deg)',
+            transformOrigin: `${x}px ${y}px`
+          }}
+        />
+
+        {/* Main team node */}
+        <circle
+          cx={x}
+          cy={y}
+          r={nodeSize / 2}
+          fill={`linear-gradient(45deg, ${teamPrimaryColor}, ${teamSecondaryColor})`}
+          stroke="white"
+          strokeWidth="2"
+          className="transition-all duration-300 group-hover:r-28 group-hover:drop-shadow-xl"
+          style={{
+            filter: `drop-shadow(0 4px 8px ${teamPrimaryColor}30)`
+          }}
+        />
+
+        {/* Team initials/logo */}
+        <text
+          x={x}
+          y={y + 4}
+          textAnchor="middle"
+          fill="white"
+          fontSize="14"
+          fontWeight="bold"
+          className="select-none transition-all duration-300 group-hover:text-base"
+          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+        >
+          {teamName.split(' ').map(word => word[0]).join('').substring(0, 3).toUpperCase()}
+        </text>
+
+        {/* Conference indicator dots */}
+        {teamConference && (
+          <circle
+            cx={x + nodeSize / 2 - 6}
+            cy={y - nodeSize / 2 + 6}
+            r="3"
+            fill={teamConference === 'East' ? '#EF4444' : '#10B981'}
+            className="drop-shadow-sm"
+          />
+        )}
+
+        {/* Team label */}
+        <text
+          x={x + (nodeSize / 2 + 20) * Math.cos(labelAngle)}
+          y={y + (nodeSize / 2 + 20) * Math.sin(labelAngle) + 4}
+          textAnchor={textAnchor}
+          fill="white"
+          fontSize="12"
+          fontWeight="600"
+          className="select-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{
+            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+            transform: shouldFlip ? `rotate(${labelAngle * 180 / Math.PI}deg)` : `rotate(${labelAngle * 180 / Math.PI}deg)`,
+            transformOrigin: `${x + (nodeSize / 2 + 20) * Math.cos(labelAngle)}px ${y + (nodeSize / 2 + 20) * Math.sin(labelAngle)}px`
+          }}
+        >
+          {teamName}
+        </text>
+
+        {/* Click handler */}
+        <circle
+          cx={x}
+          cy={y}
+          r={nodeSize / 2 + 10}
+          fill="transparent"
+          className="cursor-pointer"
+          onClick={() => window.location.href = `/teams/${slugify(teamName)}`}
+        />
+      </g>
+    );
+  }
+
+  // Team card renderer function (fallback for non-circular layouts)
+  function renderTeamCard(team) {
+    // Handle different field names from team_seasons vs teams endpoint
+    const teamName = team.display_name || team.team_name || team.original_team_name;
+    const teamPrimaryColor = team.color || '#808080';
+    const teamSecondaryColor = team.secondary_color;
+    const teamRanking = team.ranking;
+    const teamId = team.team_season_id || team.team_id || team.id;
+    const teamConference = getTeamConference(team);
+
+    const teamPlayers = getPlayersForTeam(teamName);
+
+    return (
+      <Link to={`/teams/${slugify(teamName)}`} key={teamId}>
+        <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
+          {/* Team Color Strip - Dual Colors if Available */}
+          <div className="flex mb-4 rounded-lg overflow-hidden h-3">
+            <div
+              className={teamSecondaryColor ? "flex-1" : "w-full"}
+              style={{ backgroundColor: teamPrimaryColor }}
+            />
+            {teamSecondaryColor && (
+              <div
+                className="flex-1"
+                style={{ backgroundColor: teamSecondaryColor }}
+              />
+            )}
+          </div>
+
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-bold text-white">
+                  {teamName}
+                </h3>
+                {teamConference && (
+                  <span className="bg-blue-600/20 text-blue-400 px-2 py-1 rounded-full text-xs font-semibold border border-blue-500/30">
+                    🛡️ {teamConference}
+                  </span>
+                )}
+              </div>
+              {team.season_name && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {team.season_name}
+                </p>
+              )}
+            </div>
+            <div className="flex space-x-2 items-center">
+              <div className="flex space-x-1">
+                <div
+                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                  style={{ backgroundColor: teamPrimaryColor }}
+                />
+                {teamSecondaryColor && (
+                  <div
+                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                    style={{ backgroundColor: teamSecondaryColor }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          {teamPlayers.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-300 mb-3 font-medium">
+                Players:
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                {teamPlayers.map((player) => (
+                  <div
+                    key={player.id}
+                    className="text-base text-white bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50"
+                  >
+                    {player.player_name}
+                    <span className="text-gray-400 text-sm ml-2">
+                      ({player.gamertag})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(team.logo_url || team.alt_logo_url) && (
+            <div className="mt-4 text-center">
+              <img
+                src={team.alt_logo_url || team.logo_url}
+                alt={`${teamName} logo`}
+                className="h-12 w-12 mx-auto rounded-full border-2 border-gray-600"
+                onError={(e) => e.target.style.display = 'none'}
+              />
+            </div>
+          )}
+        </div>
+      </Link>
+    );
+  }
 }

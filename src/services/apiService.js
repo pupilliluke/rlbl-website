@@ -1,12 +1,12 @@
 // API Service for Rocket League app - Using backend server
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : 'http://localhost:5001/api';
 
 // Use same base URL for admin functions
-const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/api' 
-  : 'http://localhost:5000/api';
+const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? '/api'
+  : 'http://localhost:5001/api';
 
 // Generic API call function
 const apiCall = async (endpoint, method = 'GET', body = null) => {
@@ -41,8 +41,22 @@ export const apiService = {
   checkHealth: () => apiCall('/health'),
 
   // Teams - Always use team_seasons structure for consistency
-  getTeams: (season) => {
-    const endpoint = season ? `/teams?season=${encodeURIComponent(season)}` : '/teams';
+  getTeams: (season, conference) => {
+    let endpoint = '/teams';
+    const params = [];
+
+    if (season) {
+      params.push(`season=${encodeURIComponent(season)}`);
+    }
+
+    if (conference && conference !== 'all') {
+      params.push(`conference=${encodeURIComponent(conference)}`);
+    }
+
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+
     return apiCall(endpoint);
   },
 
@@ -502,7 +516,106 @@ export const apiService = {
   },
 
   // Test endpoint
-  runTest: () => apiCall('/test')
+  runTest: () => apiCall('/test'),
+
+  // Stream Settings API
+  getStreamSetting: async (key) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stream-settings/value/${key}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.success ? data.data.value : null;
+    } catch (error) {
+      console.error(`Failed to get stream setting ${key}:`, error);
+      return null;
+    }
+  },
+
+  setStreamSetting: async (key, value, description = null) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/stream-settings/${key}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ value, description }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to set stream setting ${key}:`, error);
+      throw error;
+    }
+  },
+
+  // Stream Chat API
+  getChatMessages: async (limit = 50, offset = 0) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stream-chat/messages?limit=${limit}&offset=${offset}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.success ? data.data : { messages: [], totalCount: 0 };
+    } catch (error) {
+      console.error('Failed to get chat messages:', error);
+      return { messages: [], totalCount: 0 };
+    }
+  },
+
+  sendChatMessage: async (message, userColor) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stream-chat/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message, userColor }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to send chat message:', error);
+      throw error;
+    }
+  },
+
+  deleteChatMessage: async (messageId) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/stream-chat/messages/${messageId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete chat message ${messageId}:`, error);
+      throw error;
+    }
+  },
+
+  deleteAllChatMessages: async () => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/stream-chat/all`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to delete all chat messages:', error);
+      throw error;
+    }
+  }
 };
 
 // No fallback data - only use real database data

@@ -4,38 +4,42 @@ const TeamsDao = require('../dao/TeamsDao');
 
 const teamsDao = new TeamsDao();
 
-// GET /teams - Get all teams with optional season filtering
+// GET /teams - Get all teams with optional season and conference filtering
 router.get('/', async (req, res) => {
   try {
     // Handle different season parameter formats from the frontend
     const seasonParam = req.query.season || req.query.season_id;
-    
+    const conferenceParam = req.query.conference;
+
+    let teams = [];
+
     if (seasonParam && !isNaN(parseInt(seasonParam))) {
       // Return teams for specific season (team_seasons structure)
       const seasonId = parseInt(seasonParam);
-      const teams = await teamsDao.getTeamsBySeason(seasonId);
-      res.json(teams);
+      teams = await teamsDao.getTeamsBySeason(seasonId);
     } else if (seasonParam === 'current') {
       // Return teams for current/active season (season 3 is currently active)
-      const teams = await teamsDao.getTeamsBySeason(3);
-      res.json(teams);
+      teams = await teamsDao.getTeamsBySeason(3);
     } else if (seasonParam === 'career') {
       // Return all teams from all seasons (career stats should include everyone)
-      const teams = await teamsDao.getAllTeamsFromAllSeasons();
-      res.json(teams);
+      teams = await teamsDao.getAllTeamsFromAllSeasons();
     } else if (seasonParam === 'season1') {
       // Return teams for season 1
-      const teams = await teamsDao.getTeamsBySeason(1);
-      res.json(teams);
+      teams = await teamsDao.getTeamsBySeason(1);
     } else if (seasonParam === 'season2') {
       // Return teams for season 2
-      const teams = await teamsDao.getTeamsBySeason(2);
-      res.json(teams);
+      teams = await teamsDao.getTeamsBySeason(2);
     } else {
       // Return all base teams (original behavior)
-      const teams = await teamsDao.findAll();
-      res.json(teams);
+      teams = await teamsDao.findAll();
     }
+
+    // Apply conference filtering if requested
+    if (conferenceParam && conferenceParam !== 'all') {
+      teams = teams.filter(team => team.conference === conferenceParam);
+    }
+
+    res.json(teams);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch teams', details: error.message });
   }
