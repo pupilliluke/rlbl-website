@@ -663,15 +663,17 @@ const GameResultsTable = ({
                                                 </thead>
                                                 <tbody>
                                                   {/* Home Team Players */}
-                                                  {gamePlayerData.homePlayers.map((player, idx) => {
+                                                  {gamePlayerData.homePlayers && Array.from(new Set(gamePlayerData.homePlayers.map(p => p.id)))
+                                                    .map(playerId => gamePlayerData.homePlayers.find(p => p.id === playerId))
+                                                    .map((player, rowIndex) => {
                                                     const isEditing = editingSeriesId === seriesId;
                                                     const currentStats = isEditing ? getCurrentStats(game.id, player.id) : {};
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
-                                                    
+
                                                     return (
-                                                      <tr key={`home-${seriesId}-${game.id}-${player.id}-${idx}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                      <tr key={`admin-home-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {idx === 0 ? `🏠 ${game.home_display}` : ''}
+                                                          {rowIndex === 0 ? `🏠 ${game.home_display}` : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold">
                                                           {player.display_name || player.player_name}
@@ -806,15 +808,17 @@ const GameResultsTable = ({
                                                   </tr>
                                                   
                                                   {/* Away Team Players */}
-                                                  {gamePlayerData.awayPlayers.map((player, idx) => {
+                                                  {gamePlayerData.awayPlayers && Array.from(new Set(gamePlayerData.awayPlayers.map(p => p.id)))
+                                                    .map(playerId => gamePlayerData.awayPlayers.find(p => p.id === playerId))
+                                                    .map((player, rowIndex) => {
                                                     const isEditing = editingSeriesId === seriesId;
                                                     const currentStats = isEditing ? getCurrentStats(game.id, player.id) : {};
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
-                                                    
+
                                                     return (
-                                                      <tr key={`away-${seriesId}-${game.id}-${player.id}-${idx}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                      <tr key={`admin-away-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {idx === 0 ? `✈️ ${game.away_display}` : ''}
+                                                          {rowIndex === 0 ? `✈️ ${game.away_display}` : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold">
                                                           {player.display_name || player.player_name}

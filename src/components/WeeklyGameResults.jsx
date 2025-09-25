@@ -138,43 +138,61 @@ const WeeklyGameResults = ({
       const game = gameResultsData.find(g => g.id === gameId);
       if (!game) return;
 
-      const [allPlayers, homeRoster, awayRoster, gameStats] = await Promise.all([
+      // Fetch all required data
+      const [playersResponse, homeRosterResponse, awayRosterResponse, statsResponse] = await Promise.all([
         apiService.getPlayers(),
         apiService.getRosterMembershipsByTeamSeason(game.home_team_season_id),
         apiService.getRosterMembershipsByTeamSeason(game.away_team_season_id),
-        apiService.getPlayerGameStatsByGame(gameId).catch(() => []) // Handle no stats gracefully
+        apiService.getPlayerGameStatsByGame(gameId).catch(() => [])
       ]);
 
-      // Get players for each team
-      const homePlayers = allPlayers.filter(player =>
-        homeRoster.some(roster => roster.player_id === player.id)
-      );
-      const awayPlayers = allPlayers.filter(player =>
-        awayRoster.some(roster => roster.player_id === player.id)
-      );
+      // Create clean, unique player lists for each team
+      const homeTeamPlayers = [];
+      const awayTeamPlayers = [];
 
-      // Merge player info with their game stats
-      const homePlayersWithStats = homePlayers.map(player => ({
-        ...player,
-        stats: gameStats.find(stat => stat.player_id === player.id) || {
-          goals: 0, assists: 0, saves: 0, shots: 0,
-          epic_saves: 0, demos: 0, otg: 0, points: 0, mvps: 0
-        }
-      }));
+      // Process home team - use Map to ensure uniqueness by player ID
+      const homePlayerMap = new Map();
+      homeRosterResponse.forEach(roster => {
+        const player = playersResponse.find(p => p.id === roster.player_id);
+        if (player && !homePlayerMap.has(player.id)) {
+          const playerStats = statsResponse.find(stat => stat.player_id === player.id) || {
+            goals: 0, assists: 0, saves: 0, shots: 0,
+            epic_saves: 0, demos: 0, otg: 0, points: 0, mvps: 0
+          };
 
-      const awayPlayersWithStats = awayPlayers.map(player => ({
-        ...player,
-        stats: gameStats.find(stat => stat.player_id === player.id) || {
-          goals: 0, assists: 0, saves: 0, shots: 0,
-          epic_saves: 0, demos: 0, otg: 0, points: 0, mvps: 0
+          homePlayerMap.set(player.id, {
+            ...player,
+            stats: playerStats
+          });
         }
-      }));
+      });
+
+      // Process away team - use Map to ensure uniqueness by player ID
+      const awayPlayerMap = new Map();
+      awayRosterResponse.forEach(roster => {
+        const player = playersResponse.find(p => p.id === roster.player_id);
+        if (player && !awayPlayerMap.has(player.id)) {
+          const playerStats = statsResponse.find(stat => stat.player_id === player.id) || {
+            goals: 0, assists: 0, saves: 0, shots: 0,
+            epic_saves: 0, demos: 0, otg: 0, points: 0, mvps: 0
+          };
+
+          awayPlayerMap.set(player.id, {
+            ...player,
+            stats: playerStats
+          });
+        }
+      });
+
+      // Convert maps to arrays
+      const finalHomePlayers = Array.from(homePlayerMap.values());
+      const finalAwayPlayers = Array.from(awayPlayerMap.values());
 
       setGamePlayersData(prev => ({
         ...prev,
         [gameId]: {
-          homePlayers: homePlayersWithStats,
-          awayPlayers: awayPlayersWithStats,
+          homePlayers: finalHomePlayers,
+          awayPlayers: finalAwayPlayers,
           game: game
         }
       }));
@@ -482,40 +500,42 @@ const WeeklyGameResults = ({
                                                   </thead>
                                                   <tbody>
                                                     {/* Home Team Players */}
-                                                    {gamePlayerData.homePlayers.map((player, idx) => (
-                                                      <tr key={`home-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                    {gamePlayerData.homePlayers && Array.from(new Set(gamePlayerData.homePlayers.map(p => p.id)))
+                                                      .map(playerId => gamePlayerData.homePlayers.find(p => p.id === playerId))
+                                                      .map((player, rowIndex) => (
+                                                      <tr key={`home-team-${game.id}-player-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {idx === 0 ? `🏠 ${game.home_display}` : ''}
+                                                          {rowIndex === 0 ? `🏠 ${game.home_display}` : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {player.display_name || player.player_name}
+                                                          {player.display_name || player.player_name || 'Unknown Player'}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black font-bold">{player.stats.points}</span>
+                                                          <span className="text-black font-bold">{player.stats?.points || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.goals}</span>
+                                                          <span className="text-black">{player.stats?.goals || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.assists}</span>
+                                                          <span className="text-black">{player.stats?.assists || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.saves}</span>
+                                                          <span className="text-black">{player.stats?.saves || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.shots}</span>
+                                                          <span className="text-black">{player.stats?.shots || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.mvps || 0}</span>
+                                                          <span className="text-black">{player.stats?.mvps || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.demos}</span>
+                                                          <span className="text-black">{player.stats?.demos || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.epic_saves}</span>
+                                                          <span className="text-black">{player.stats?.epic_saves || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.otg || 0}</span>
+                                                          <span className="text-black">{player.stats?.otg || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
                                                           <span className="text-black">1</span>
@@ -529,40 +549,42 @@ const WeeklyGameResults = ({
                                                     </tr>
 
                                                     {/* Away Team Players */}
-                                                    {gamePlayerData.awayPlayers.map((player, idx) => (
-                                                      <tr key={`away-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
+                                                    {gamePlayerData.awayPlayers && Array.from(new Set(gamePlayerData.awayPlayers.map(p => p.id)))
+                                                      .map(playerId => gamePlayerData.awayPlayers.find(p => p.id === playerId))
+                                                      .map((player, rowIndex) => (
+                                                      <tr key={`away-team-${game.id}-player-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {idx === 0 ? `✈️ ${game.away_display}` : ''}
+                                                          {rowIndex === 0 ? `✈️ ${game.away_display}` : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold">
-                                                          {player.display_name || player.player_name}
+                                                          {player.display_name || player.player_name || 'Unknown Player'}
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black font-bold">{player.stats.points}</span>
+                                                          <span className="text-black font-bold">{player.stats?.points || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.goals}</span>
+                                                          <span className="text-black">{player.stats?.goals || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.assists}</span>
+                                                          <span className="text-black">{player.stats?.assists || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.saves}</span>
+                                                          <span className="text-black">{player.stats?.saves || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.shots}</span>
+                                                          <span className="text-black">{player.stats?.shots || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.mvps || 0}</span>
+                                                          <span className="text-black">{player.stats?.mvps || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.demos}</span>
+                                                          <span className="text-black">{player.stats?.demos || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.epic_saves}</span>
+                                                          <span className="text-black">{player.stats?.epic_saves || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
-                                                          <span className="text-black">{player.stats.otg || 0}</span>
+                                                          <span className="text-black">{player.stats?.otg || 0}</span>
                                                         </td>
                                                         <td className="text-center py-2 px-2">
                                                           <span className="text-black">1</span>
