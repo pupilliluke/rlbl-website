@@ -28,7 +28,14 @@
       "Bash(rm:*)",
       "Bash(NODE_ENV=production node server.js)",
       "Bash(set NODE_ENV=production)",
-      "Bash(set PORT=3000)"
+      "Bash(set PORT=3000)",
+      "Bash(psql:*)",
+      "Bash(/bashes)",
+      "Bash(findstr:*)",
+      "Bash(set PORT=3001)",
+      "Bash(set NODE_ENV=development)",
+      "Bash(set PORT=5000)",
+      "Bash(set PORT=5001)"
     ],
     "deny": [],
     "ask": []

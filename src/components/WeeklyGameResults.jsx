@@ -392,7 +392,21 @@ const WeeklyGameResults = ({
                                           {(() => {
                                             const homeGoals = game.total_home_goals || 0;
                                             const awayGoals = game.total_away_goals || 0;
-                                            if (homeGoals > awayGoals) {
+
+                                            // Check for forfeits first
+                                            if (game.home_team_forfeit) {
+                                              return (
+                                                <div>
+                                                  <span className="text-red-600">Forfeit ({game.home_display})</span>
+                                                </div>
+                                              );
+                                            } else if (game.away_team_forfeit) {
+                                              return (
+                                                <div>
+                                                  <span className="text-red-600">Forfeit ({game.away_display})</span>
+                                                </div>
+                                              );
+                                            } else if (homeGoals > awayGoals) {
                                               return (
                                                 <div>
                                                   <span className="text-green-600">{game.home_display}</span>
@@ -407,12 +421,21 @@ const WeeklyGameResults = ({
                                                 </div>
                                               );
                                             } else {
-                                              return (
-                                                <div>
-                                                  <span className="text-yellow-600">TIE</span>
-                                                  <span className="text-gray-600 ml-1">({homeGoals}-{awayGoals})</span>
-                                                </div>
-                                              );
+                                              // 0-0 means unplayed, any other tie score is a legitimate tie
+                                              if (homeGoals === 0 && awayGoals === 0) {
+                                                return (
+                                                  <div>
+                                                    <span className="text-gray-500">Unplayed</span>
+                                                  </div>
+                                                );
+                                              } else {
+                                                return (
+                                                  <div>
+                                                    <span className="text-yellow-600">TIE</span>
+                                                    <span className="text-gray-600 ml-1">({homeGoals}-{awayGoals})</span>
+                                                  </div>
+                                                );
+                                              }
                                             }
                                           })()}
                                         </span>

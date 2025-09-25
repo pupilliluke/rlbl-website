@@ -32,9 +32,13 @@ class BaseDao {
     const keys = Object.keys(data);
     const values = Object.values(data);
     const setClause = keys.map((key, index) => `${key} = $${index + 2}`).join(', ');
-    
+
+    // Check if table has updated_at column (only add if it exists)
+    const hasUpdatedAt = this.tableName !== 'games'; // Games table doesn't have updated_at
+    const updateClause = hasUpdatedAt ? `${setClause}, updated_at = CURRENT_TIMESTAMP` : setClause;
+
     const result = await query(
-      `UPDATE ${this.tableName} SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`,
+      `UPDATE ${this.tableName} SET ${updateClause} WHERE id = $1 RETURNING *`,
       [id, ...values]
     );
     return result.rows[0];

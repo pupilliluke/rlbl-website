@@ -5,6 +5,7 @@ import { apiService } from "../../services/apiService";
 import AdminAuth from "./components/AdminAuth";
 import DataTable from "./components/DataTable";
 import GameResultsTable from "./components/GameResultsTable";
+import StandingsTable from "./components/StandingsTable";
 import TeamsRostersTable from "./components/TeamsRostersTable";
 import EditFormModal from "./modals/EditFormModal";
 import GameEditModal from "./modals/GameEditModal";
@@ -181,6 +182,9 @@ const Admin = () => {
     try {
       setLoadingState('standings', true);
       const standings = await apiService.getStandings(selectedSeason.id);
+
+      // For now, treat all teams as 'overall' since conference grouping may not be implemented
+      // TODO: Add conference field to teams/team_seasons for proper grouping
       const categorizedStandings = {
         homer: standings.filter(team => team.conference === 'homer'),
         garfield: standings.filter(team => team.conference === 'garfield'),
@@ -293,7 +297,7 @@ const Admin = () => {
     switch (activeTab) {
       case 'players': return playersData;
       case 'teams': return teamsData;
-      case 'standings': return standingsData[selectedConference] || [];
+      case 'standings': return standingsData.overall || [];
       case 'schedule': return scheduleData;
       case 'gameStats': return gameStatsData;
       case 'gameResults': return gameResultsData;
@@ -311,7 +315,7 @@ const Admin = () => {
         setTeamsData(newData);
         break;
       case 'standings':
-        setStandingsData(prev => ({ ...prev, [selectedConference]: newData }));
+        setStandingsData(prev => ({ ...prev, overall: newData }));
         break;
       case 'schedule':
         setScheduleData(newData);
@@ -639,6 +643,32 @@ const Admin = () => {
     }
   };
 
+  const handleAutoGenerateStandings = async () => {
+    if (!selectedSeason) {
+      alert('Please select a season first.');
+      return;
+    }
+
+    if (!window.confirm(`Auto-generate standings for ${selectedSeason.season_name || selectedSeason.name}? This will overwrite existing standings data.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await apiService.autoGenerateStandings(selectedSeason.id);
+
+      // Reload standings data to reflect changes
+      await loadStandings();
+
+      alert(`Successfully auto-generated standings! Updated ${result.count} teams with the new point system (4-reg win, 3-OT win, 2-OT loss, 1-reg loss, 0-forfeit).`);
+    } catch (error) {
+      console.error('Failed to auto-generate standings:', error);
+      alert('Failed to auto-generate standings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddSeriesGame = async (game) => {
     const numGamesInput = prompt(`How many games would you like to add to the series between ${game.home_display} and ${game.away_display} in Week ${game.week}?`, '1');
     
@@ -747,7 +777,21 @@ const Admin = () => {
         />
       );
     }
-    
+    if (activeTab === 'standings') {
+      // Use overall standings data only
+      const currentStandingsData = standingsData.overall || standingsData;
+      const flatStandingsData = Array.isArray(currentStandingsData) ? currentStandingsData : [];
+
+      return (
+        <StandingsTable
+          standingsData={flatStandingsData}
+          loading={loadingStates.standings}
+          onEdit={handleEdit}
+          onDelete={handleTableDelete}
+        />
+      );
+    }
+
     return (
       <div className="space-y-6">
         <DataTable
@@ -854,9 +898,8 @@ const Admin = () => {
                   }`}
                 >
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-base sm:text-lg">{icon}</span>
+                    <span className="text-lg sm:text-lg">{icon}</span>
                     <span className="hidden sm:inline">{label.split(' ').slice(1).join(' ')}</span>
-                    <span className="sm:hidden">{label.split(' ')[1] || label}</span>
                   </div>
                 </button>
               ))}
@@ -865,26 +908,6 @@ const Admin = () => {
 
           {/* Tab Content */}
           <div className="bg-gray-800/90 border-l border-r border-b border-gray-600 rounded-b-2xl p-6">
-            {/* Conference Selector for Standings */}
-            {activeTab === 'standings' && (
-              <div className="mb-6 flex justify-center">
-                <div className="bg-gray-700 rounded-lg p-1 flex">
-                  {['homer', 'garfield', 'overall'].map((conf) => (
-                    <button
-                      key={conf}
-                      onClick={() => setSelectedConference(conf)}
-                      className={`px-4 py-2 rounded font-bold transition-all duration-300 ${
-                        selectedConference === conf
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300 hover:text-white'
-                      }`}
-                    >
-                      {conf.charAt(0).toUpperCase() + conf.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Add New Button (except for game results and teams rosters) */}
             {activeTab !== 'gameResults' && activeTab !== 'teamsRosters' && (
@@ -892,16 +915,29 @@ const Admin = () => {
                 <h2 className="text-2xl font-bold text-white capitalize">
                   Manage {activeTab}
                 </h2>
-                <button
-                  onClick={() => {
-                    setShowAddForm(true);
-                    setFormData(getDefaultFormData(activeTab));
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center gap-2"
-                >
-                  <span className="text-lg">➕</span>
-                  Add New
-                </button>
+                <div className="flex gap-3">
+                  {/* Auto-Generate Standings Button */}
+                  {activeTab === 'standings' && (
+                    <button
+                      onClick={handleAutoGenerateStandings}
+                      disabled={loading || !selectedSeason}
+                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center gap-2"
+                    >
+                      <span className="text-lg">⚡</span>
+                      Auto-Generate
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setShowAddForm(true);
+                      setFormData(getDefaultFormData(activeTab));
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center gap-2"
+                  >
+                    <span className="text-lg">➕</span>
+                    Add New
+                  </button>
+                </div>
               </div>
             )}
 
