@@ -26,8 +26,9 @@ class TeamsDao extends BaseDao {
   async getTeamsWithPlayerCount(seasonId = null) {
     const { query } = require('../../lib/database');
     let sql = `
-      SELECT 
+      SELECT
         t.*,
+        t.conference,
         COUNT(rm.player_id) as player_count
       FROM teams t
       LEFT JOIN team_seasons ts ON t.id = ts.team_id
@@ -83,7 +84,7 @@ class TeamsDao extends BaseDao {
   async getTeamsBySeason(seasonId) {
     const { query } = require('../../lib/database');
     const result = await query(
-      `SELECT 
+      `SELECT
          ts.id as team_season_id,
          t.id as team_id,
          t.team_name as original_team_name,
@@ -93,6 +94,7 @@ class TeamsDao extends BaseDao {
          COALESCE(ts.alt_logo_url, t.logo_url) as alt_logo_url,
          t.color as color,
          COALESCE(ts.secondary_color, t.secondary_color) as secondary_color,
+         ts.conference as conference,
          ts.ranking,
          ts.season_id,
          s.season_name

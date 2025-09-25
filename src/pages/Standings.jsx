@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService, fallbackData } from "../services/apiService";
-import { ChartBarIcon, TrophyIcon, GoldMedalIcon, SilverMedalIcon, BronzeMedalIcon, ChevronDownIcon } from "../components/Icons";
+import { ChartBarIcon, TrophyIcon, ChevronDownIcon } from "../components/Icons";
 import { createTeamSlug } from "../utils/slugify.js";
 
 export default function Standings() {
@@ -13,11 +13,21 @@ export default function Standings() {
   const [loading, setLoading] = useState(true);
   const [seasonsLoading, setSeasonsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showSymbols, setShowSymbols] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [lpModalOpen, setLpModalOpen] = useState(false);
   const [selectedTeamLP, setSelectedTeamLP] = useState(null);
   const [lpBreakdown, setLpBreakdown] = useState([]);
+  const [conferenceFilter, setConferenceFilter] = useState('all'); // 'all', 'East', 'West'
+  const [viewMode, setViewMode] = useState('combined'); // 'combined', 'grouped'
+
+  // Function to get conference for a team (database-driven)
+  const getTeamConference = (team, seasonId) => {
+    // Use database conference if available
+    if (team.conference) {
+      return team.conference;
+    }
+    return null;
+  };
 
   // Fetch available seasons
   useEffect(() => {
@@ -87,6 +97,46 @@ export default function Standings() {
     fetchStandings();
   }, [selectedSeason]);
 
+  // Get filtered standings based on conference selection
+  const getFilteredStandings = () => {
+    if (!standings.length) return [];
+
+    if (selectedSeason === 3 && conferenceFilter !== 'all') {
+      return standings.filter(team => {
+        const conference = getTeamConference(team, selectedSeason);
+        return conference === conferenceFilter;
+      });
+    }
+
+    return standings;
+  };
+
+  // Group standings by conference for Season 3
+  const groupedStandings = () => {
+    if (selectedSeason === 3 && standings.length > 0) {
+      const grouped = { 'West': [], 'East': [], 'Other': [] };
+
+      standings.forEach((team, index) => {
+        const conference = getTeamConference(team, selectedSeason);
+        const teamWithRank = { ...team, overallRank: index + 1 };
+
+        if (conference) {
+          grouped[conference].push(teamWithRank);
+        } else {
+          grouped['Other'].push(teamWithRank);
+        }
+      });
+
+      // Sort each conference by league points (descending)
+      Object.keys(grouped).forEach(conf => {
+        grouped[conf].sort((a, b) => (b.league_points || 0) - (a.league_points || 0));
+      });
+
+      return grouped;
+    }
+    return null;
+  };
+
   // Function to fetch league points breakdown for a team
   const fetchLeaguePointsBreakdown = async (teamSeasonId, teamName) => {
     try {
@@ -100,6 +150,101 @@ export default function Standings() {
       console.error('Failed to fetch league points breakdown:', err);
     }
   };
+
+  // Render standings table
+  const renderStandingsTable = (teamsData, startRank = 1, showConferenceRank = false) => (
+    <div className="bg-gray-800/90 shadow-2xl overflow-hidden border border-gray-600/50 rounded-xl">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-sm md:text-base">
+          <thead className="bg-gray-900/90 border-b border-gray-600/50">
+            <tr>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">#</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Team</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">W</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">L</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">OTG</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">FF</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PF</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PA</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">Diff</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">LP</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white hidden md:table-cell">Win%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {teamsData.map((team, index) => {
+              const rank = showConferenceRank ? index + 1 : (team.overallRank || startRank + index);
+
+              const baseStyle = "transition duration-200 border-b border-gray-600/50 hover:bg-gray-700/50";
+              const styles = {
+                1: "bg-gradient-to-r from-yellow-900/30 to-yellow-800/30",
+                2: "bg-gradient-to-r from-gray-800/30 to-gray-700/30",
+                3: "bg-gradient-to-r from-amber-900/30 to-amber-800/30",
+              };
+
+              const rowClass = showConferenceRank && styles[rank] ? styles[rank] : "";
+
+              return (
+                <tr key={team.id} className={`${rowClass} ${baseStyle}`}>
+                  <td className="py-3 md:py-4 px-3 md:px-4 font-bold">
+                    <span className="mr-2">{rank}</span>
+                    {showConferenceRank && team.overallRank && (
+                      <span className="text-xs text-gray-400">({team.overallRank})</span>
+                    )}
+                  </td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 font-semibold">
+                    <button
+                      onClick={() => navigate(`/teams/${createTeamSlug(team.team_name)}`)}
+                      className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors cursor-pointer w-full text-left"
+                    >
+                      <div
+                        className="w-4 h-4 rounded-full border border-gray-400"
+                        style={{ backgroundColor: team.color }}
+                      />
+                      {team.team_name}
+                    </button>
+                  </td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-green-400 font-semibold">{team.wins}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.losses}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{(team.overtime_wins || 0) + (team.overtime_losses || 0)}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.forfeits || 0}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400">{team.points_for}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-orange-400">{team.points_against}</td>
+                  <td className={`py-3 md:py-4 px-3 md:px-4 text-center font-semibold ${
+                    team.point_diff > 0 ? 'text-green-400' :
+                    team.point_diff < 0 ? 'text-red-400' : 'text-gray-400'
+                  }`}>
+                    {team.point_diff > 0 ? '+' : ''}{team.point_diff}
+                  </td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center">
+                    <button
+                      onClick={() => fetchLeaguePointsBreakdown(team.id, team.team_name)}
+                      className="text-purple-400 font-bold hover:text-purple-300 hover:underline cursor-pointer transition-colors"
+                    >
+                      {team.league_points || 0}
+                    </button>
+                  </td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 hidden md:table-cell">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-semibold text-yellow-400">
+                        {team.win_percentage ? Number(team.win_percentage).toFixed(2) : '0.00'}%
+                      </span>
+                      <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
+                          style={{ width: `${team.win_percentage || 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -160,11 +305,11 @@ export default function Standings() {
                 className="inline-flex items-center justify-between px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg border border-gray-600 transition-colors min-w-[140px] disabled:opacity-50"
               >
                 <span className="text-sm font-medium">
-                  {seasonsLoading ? 'Loading...' : 
+                  {seasonsLoading ? 'Loading...' :
                    seasons.find(s => s.id === selectedSeason)?.season_name || 'Select Season'}
                 </span>
-                <ChevronDownIcon 
-                  className={`w-4 h-4 ml-2 transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} 
+                <ChevronDownIcon
+                  className={`w-4 h-4 ml-2 transform transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
@@ -178,8 +323,8 @@ export default function Standings() {
                         setDropdownOpen(false);
                       }}
                       className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                        selectedSeason === season.id 
-                          ? 'bg-blue-600 text-white' 
+                        selectedSeason === season.id
+                          ? 'bg-blue-600 text-white'
                           : 'text-gray-300'
                       }`}
                     >
@@ -191,13 +336,51 @@ export default function Standings() {
 
               {/* Backdrop to close dropdown */}
               {dropdownOpen && (
-                <div 
-                  className="fixed inset-0 z-40" 
+                <div
+                  className="fixed inset-0 z-40"
                   onClick={() => setDropdownOpen(false)}
                 />
               )}
             </div>
 
+            {/* Conference Filter - Only show for Season 3 */}
+            {selectedSeason === 3 && (
+              <select
+                value={conferenceFilter}
+                onChange={(e) => setConferenceFilter(e.target.value)}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg border border-gray-600 transition-colors text-sm"
+              >
+                <option value="all">All Conferences</option>
+                <option value="East">East Conference</option>
+                <option value="West">West Conference</option>
+              </select>
+            )}
+
+            {/* View Mode Toggle - Only show for Season 3 when showing all conferences */}
+            {selectedSeason === 3 && conferenceFilter === 'all' && (
+              <div className="flex items-center bg-gray-700 rounded-lg border border-gray-600 p-1">
+                <button
+                  onClick={() => setViewMode('combined')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    viewMode === 'combined'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  Combined
+                </button>
+                <button
+                  onClick={() => setViewMode('grouped')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    viewMode === 'grouped'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:text-white'
+                  }`}
+                >
+                  By Conference
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -208,100 +391,75 @@ export default function Standings() {
             <TrophyIcon className="w-7 h-7" />
             Current Standings
           </h2>
-          
+
           {standings.length === 0 ? (
             <div className="text-center text-gray-400">
               <p>No standings data available. Make sure the API server is running.</p>
             </div>
           ) : (
-            <div className="bg-gray-800/90 shadow-2xl overflow-hidden border border-gray-600/50 rounded-xl">
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm md:text-base">
-                  <thead className="bg-gray-900/90 border-b border-gray-600/50">
-                    <tr>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">#</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Team</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">W</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">L</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">OTG</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">FF</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PF</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PA</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">Diff</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">LP</th>
-                      <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white hidden md:table-cell">Win%</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {standings.map((team, index) => {
-                      const rank = index + 1;
-
-                      const baseStyle = "transition duration-200 border-b border-gray-600/50 hover:bg-gray-700/50";
-                      const styles = {
-                        1: "bg-gradient-to-r from-yellow-900/30 to-yellow-800/30",
-                        2: "bg-gradient-to-r from-gray-800/30 to-gray-700/30",
-                        3: "bg-gradient-to-r from-amber-900/30 to-amber-800/30",
-                      };
-
-                      const rowClass = styles[rank] || "";
-
-                      return (
-                        <tr key={team.id} className={`${rowClass} ${baseStyle}`}>
-                          <td className="py-3 md:py-4 px-3 md:px-4 font-bold">
-                            <span className="mr-2">{rank}</span>
-                          </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 font-semibold">
-                            <button
-                              onClick={() => navigate(`/teams/${createTeamSlug(team.team_name)}`)}
-                              className="flex items-center gap-3 text-white hover:text-blue-400 transition-colors cursor-pointer w-full text-left"
-                            >
-                              <div 
-                                className="w-4 h-4 rounded-full border border-gray-400"
-                                style={{ backgroundColor: team.color }}
-                              />
-                              {team.team_name}
-                            </button>
-                          </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-green-400 font-semibold">{team.wins}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.losses}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{(team.overtime_wins || 0) + (team.overtime_losses || 0)}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.forfeits || 0}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400">{team.points_for}</td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center text-orange-400">{team.points_against}</td>
-                          <td className={`py-3 md:py-4 px-3 md:px-4 text-center font-semibold ${
-                            team.point_diff > 0 ? 'text-green-400' :
-                            team.point_diff < 0 ? 'text-red-400' : 'text-gray-400'
-                          }`}>
-                            {team.point_diff > 0 ? '+' : ''}{team.point_diff}
-                          </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 text-center">
-                            <button
-                              onClick={() => fetchLeaguePointsBreakdown(team.id, team.team_name)}
-                              className="text-purple-400 font-bold hover:text-purple-300 hover:underline cursor-pointer transition-colors"
-                            >
-                              {team.league_points || 0}
-                            </button>
-                          </td>
-                          <td className="py-3 md:py-4 px-3 md:px-4 hidden md:table-cell">
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="font-semibold text-yellow-400">
-                                {team.win_percentage ? Number(team.win_percentage).toFixed(1) : '0.0'}%
-                              </span>
-                              <div className="w-16 h-2 bg-gray-700 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-500"
-                                  style={{ width: `${team.win_percentage || 0}%` }}
-                                />
+            <>
+              {selectedSeason === 3 ? (
+                // Season 3 with conference handling
+                <>
+                  {conferenceFilter !== 'all' ? (
+                    // Show filtered conference
+                    <div>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="text-2xl">🛡️</div>
+                        <h3 className="text-xl font-bold text-white">{conferenceFilter} Conference</h3>
+                      </div>
+                      {renderStandingsTable(getFilteredStandings())}
+                    </div>
+                  ) : viewMode === 'grouped' ? (
+                    // Conference-grouped view
+                    <div className="space-y-8">
+                      {(() => {
+                        const grouped = groupedStandings();
+                        return (
+                          <>
+                            {/* West Conference */}
+                            {grouped.West.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                  <div className="text-2xl">🛡️</div>
+                                  <h3 className="text-xl font-bold text-white">West Conference</h3>
+                                </div>
+                                {renderStandingsTable(grouped.West, 1, true)}
                               </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                            )}
+
+                            {/* East Conference */}
+                            {grouped.East.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-3 mb-4">
+                                  <div className="text-2xl">🛡️</div>
+                                  <h3 className="text-xl font-bold text-white">East Conference</h3>
+                                </div>
+                                {renderStandingsTable(grouped.East, 1, true)}
+                              </div>
+                            )}
+
+                            {/* Other teams (not assigned to conference) */}
+                            {grouped.Other.length > 0 && (
+                              <div>
+                                <h3 className="text-xl font-bold text-white mb-4">Other Teams</h3>
+                                {renderStandingsTable(grouped.Other, 1, false)}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    // Combined view - all teams in one table
+                    renderStandingsTable(standings)
+                  )}
+                </>
+              ) : (
+                // Regular standings for other seasons
+                renderStandingsTable(standings)
+              )}
+            </>
           )}
         </section>
 
