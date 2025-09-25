@@ -12,6 +12,7 @@ import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import TeamStats from "./pages/TeamStats";
 import PlayerStats from "./pages/PlayerStats";
+import Stream from "./pages/Stream";
 
 import "./index.css";
 import "./styles/animations.css";
@@ -35,6 +36,7 @@ function App() {
           <Route path="/admin" element={<><Admin /><Footer /></>} />
           <Route path="/teams/:teamSlug" element={<><TeamStats /><Footer /></>} />
           <Route path="/players/:playerSlug" element={<><PlayerStats /><Footer /></>} />
+          <Route path="/stream" element={<><Stream /><Footer /></>} />
         </Routes>
       </div>
     </Router>

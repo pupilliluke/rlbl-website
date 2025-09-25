@@ -27,7 +27,16 @@ const Admin = () => {
   const [powerRankingsData, setPowerRankingsData] = useState([]);
   const [seasonsData, setSeasonsData] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState(null);
-  
+  const [streamLink, setStreamLink] = useState('');
+
+  // Load stored stream link on mount
+  useEffect(() => {
+    const storedLink = localStorage.getItem('streamLink');
+    if (storedLink) {
+      setStreamLink(storedLink);
+    }
+  }, []);
+
   // Loading states
   const [loading, setLoading] = useState(false);
   const [loadingStates, setLoadingStates] = useState({
@@ -792,6 +801,80 @@ const Admin = () => {
       );
     }
 
+    if (activeTab === 'stream') {
+      const handleStreamSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          setLoading(true);
+          // Store the stream link (we'll implement backend storage later)
+          localStorage.setItem('streamLink', streamLink);
+          console.log('Stream link saved:', streamLink);
+
+          // Show success message
+          alert('Stream link saved successfully!');
+        } catch (error) {
+          console.error('Failed to save stream link:', error);
+          alert('Failed to save stream link');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+
+      return (
+        <div className="space-y-6">
+          <div className="bg-gray-700/50 rounded-xl border border-gray-600 p-6">
+            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              📺 Stream Configuration
+            </h3>
+            <form onSubmit={handleStreamSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Twitch Stream URL
+                </label>
+                <input
+                  type="url"
+                  value={streamLink}
+                  onChange={(e) => setStreamLink(e.target.value)}
+                  placeholder="https://www.twitch.tv/your-channel-name"
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Enter the Twitch channel URL that will be displayed on the public stream page
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={loading || !streamLink.trim()}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                >
+                  {loading ? 'Saving...' : 'Save Stream Link'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStreamLink('')}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </form>
+
+            {streamLink && (
+              <div className="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-600">
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Preview:</h4>
+                <p className="text-blue-400 break-all">{streamLink}</p>
+                <p className="text-xs text-gray-400 mt-2">
+                  This link will be used on the public stream page at <span className="text-blue-400">/stream</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <DataTable
@@ -886,7 +969,8 @@ const Admin = () => {
                 { key: 'standings', label: '📊 Standings', icon: '📊' },
                 { key: 'schedule', label: '📅 Schedule', icon: '📅' },
                 { key: 'gameStats', label: '📈 Game Stats', icon: '📈' },
-                { key: 'powerRankings', label: '👑 Weekly', icon: '👑' }
+                { key: 'powerRankings', label: '👑 Weekly', icon: '👑' },
+                { key: 'stream', label: '📺 Stream', icon: '📺' }
               ].map(({ key, label, icon }) => (
                 <button
                   key={key}
@@ -909,8 +993,8 @@ const Admin = () => {
           {/* Tab Content */}
           <div className="bg-gray-800/90 border-l border-r border-b border-gray-600 rounded-b-2xl p-6">
 
-            {/* Add New Button (except for game results and teams rosters) */}
-            {activeTab !== 'gameResults' && activeTab !== 'teamsRosters' && (
+            {/* Add New Button (except for game results, teams rosters, and stream) */}
+            {activeTab !== 'gameResults' && activeTab !== 'teamsRosters' && activeTab !== 'stream' && (
               <div className="mb-6 flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-white capitalize">
                   Manage {activeTab}

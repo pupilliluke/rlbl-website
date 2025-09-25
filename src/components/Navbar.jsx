@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { 
-  DashboardIcon, 
-  TrophyIcon, 
-  SoccerIcon, 
-  ChartUpIcon, 
-  ChartBarIcon, 
-  CalendarIcon, 
-  BuildingIcon 
+import {
+  DashboardIcon,
+  TrophyIcon,
+  SoccerIcon,
+  ChartUpIcon,
+  ChartBarIcon,
+  CalendarIcon,
+  BuildingIcon,
+  StreamIcon
 } from "./Icons";
 
 function Navbar() {
@@ -58,6 +59,7 @@ function Navbar() {
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (
               <Link
@@ -143,6 +145,7 @@ function Navbar() {
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (
               <Link
