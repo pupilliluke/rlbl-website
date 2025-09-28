@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { apiService } from '../services/apiService';
 
 const Stream = () => {
   const [streamLink, setStreamLink] = useState('');
@@ -8,16 +9,31 @@ const Stream = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const streamContainerRef = useRef(null);
   const chatEndRef = useRef(null);
+  const chatPollingRef = useRef(null);
 
   useEffect(() => {
-    // Load the stream link from localStorage (set by admin)
-    const storedLink = localStorage.getItem('streamLink');
-    if (storedLink) {
-      setStreamLink(storedLink);
-    }
-    setIsLoading(false);
+    const initializeStream = async () => {
+      try {
+        // Load stream settings from database
+        const streamUrl = await apiService.getStreamSetting('stream_link');
+        if (streamUrl) {
+          setStreamLink(streamUrl);
+        }
+
+        // Load initial chat messages
+        await loadChatMessages();
+      } catch (error) {
+        console.error('Error loading stream data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeStream();
 
     // Check if mobile device
     const checkMobile = () => {
@@ -32,9 +48,15 @@ const Stream = () => {
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
 
+    // Start polling for new chat messages every 3 seconds
+    chatPollingRef.current = setInterval(loadChatMessages, 3000);
+
     return () => {
       window.removeEventListener('resize', checkMobile);
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      if (chatPollingRef.current) {
+        clearInterval(chatPollingRef.current);
+      }
     };
   }, []);
 
@@ -91,20 +113,66 @@ const Stream = () => {
     };
   };
 
-  const sendMessage = (e) => {
+  const loadChatMessages = async () => {
+    if (chatLoading) return; // Prevent multiple concurrent requests
+
+    try {
+      setChatLoading(true);
+      const chatData = await apiService.getChatMessages(50, 0);
+
+      // Transform database messages to match frontend format
+      const formattedMessages = chatData.messages.map(msg => ({
+        id: msg.id,
+        text: msg.message_text,
+        timestamp: new Date(msg.created_at),
+        user: {
+          color: msg.user_color,
+          colorClass: `bg-${msg.user_color}-500`
+        }
+      }));
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const sendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || sendingMessage) return;
 
+    const messageText = newMessage.trim();
     const user = generateAnonymousUser();
-    const message = {
-      id: Date.now() + Math.random(),
-      text: newMessage.trim(),
-      timestamp: new Date(),
-      user: user
-    };
 
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    try {
+      setSendingMessage(true);
+
+      // Send message to database
+      const response = await apiService.sendChatMessage(messageText, user.color);
+
+      if (response.success) {
+        // Clear input
+        setNewMessage('');
+
+        // Immediately reload messages to show the new one
+        await loadChatMessages();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      // Show error to user
+      if (error.message.includes('Too many messages')) {
+        alert('You are sending messages too quickly. Please wait a moment before sending another message.');
+      } else if (error.message.includes('exceed 500 characters')) {
+        alert('Message is too long. Please keep it under 500 characters.');
+      } else {
+        alert('Failed to send message. Please try again.');
+      }
+    } finally {
+      setSendingMessage(false);
+    }
   };
 
   const formatTime = (date) => {
@@ -155,7 +223,7 @@ const Stream = () => {
   }
 
   return (
-    <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'container mx-auto px-4 py-8'}`}>
+    <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'container mx-auto px-4 pt-24 pb-8'}`}>
       {!isFullscreen && (
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
@@ -311,16 +379,20 @@ const Stream = () => {
                     />
                     <button
                       type="submit"
-                      disabled={!newMessage.trim()}
+                      disabled={!newMessage.trim() || sendingMessage}
                       className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors disabled:cursor-not-allowed"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
+                      {sendingMessage ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      )}
                     </button>
                   </form>
                   <p className="text-xs text-gray-500 mt-2 text-center">
-                    Messages are anonymous • Max 500 characters
+                    Messages are anonymous • Max 500 characters • Real-time chat
                   </p>
                 </div>
               </div>

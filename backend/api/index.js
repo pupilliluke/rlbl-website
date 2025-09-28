@@ -14,6 +14,8 @@ const powerRankingsRouter = require('./powerRankings');
 const bracketsRouter = require('./brackets');
 const usersRouter = require('./users');
 const statsRouter = require('./stats');
+const streamSettingsRouter = require('./streamSettings');
+const streamChatRouter = require('./streamChat');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -32,7 +34,7 @@ router.get('/', (req, res) => {
     description: 'RESTful API for Rocket League league management system',
     endpoints: {
       teams: '/api/teams',
-      players: '/api/players', 
+      players: '/api/players',
       seasons: '/api/seasons',
       teamSeasons: '/api/team-seasons',
       rosterMemberships: '/api/roster-memberships',
@@ -42,7 +44,9 @@ router.get('/', (req, res) => {
       powerRankings: '/api/power-rankings',
       brackets: '/api/brackets',
       users: '/api/users',
-      stats: '/api/stats'
+      stats: '/api/stats',
+      streamSettings: '/api/stream-settings',
+      streamChat: '/api/stream-chat'
     },
     health: '/api/health'
   });
@@ -62,6 +66,8 @@ router.use('/power-rankings', powerRankingsRouter);
 router.use('/brackets', bracketsRouter);
 router.use('/users', usersRouter);
 router.use('/stats', statsRouter);
+router.use('/stream-settings', streamSettingsRouter);
+router.use('/stream-chat', streamChatRouter);
 
 // 404 handler for undefined API routes
 router.use('*', (req, res) => {
@@ -80,7 +86,9 @@ router.use('*', (req, res) => {
       powerRankings: '/api/power-rankings',
       brackets: '/api/brackets',
       users: '/api/users',
-      stats: '/api/stats'
+      stats: '/api/stats',
+      streamSettings: '/api/stream-settings',
+      streamChat: '/api/stream-chat'
     }
   });
 });
