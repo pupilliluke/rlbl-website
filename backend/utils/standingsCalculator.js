@@ -167,10 +167,11 @@ class StandingsCalculator {
         const finalHomeScore = homeGoalsFromStats || homeScore;
         const finalAwayScore = awayGoalsFromStats || awayScore;
 
-        // Skip unplayed games (0-0 scores with no forfeits)
+        // Skip unplayed games (0-0 scores with no forfeits AND no player stats)
+        const hasPlayerStats = homeTeamStats.length > 0 || awayTeamStats.length > 0;
         if (finalHomeScore === 0 && finalAwayScore === 0 &&
-            !game.home_team_forfeit && !game.away_team_forfeit) {
-          return; // Skip this game - 0-0 with no forfeits means unplayed
+            !game.home_team_forfeit && !game.away_team_forfeit && !hasPlayerStats) {
+          return; // Skip this game - 0-0 with no forfeits and no player stats means unplayed
         }
 
         // Update game object with calculated scores
