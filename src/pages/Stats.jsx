@@ -4,6 +4,15 @@ import { formatPlayerName } from "../utils/formatters.js";
 import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
 
 const Stats = () => {
+  // Function to get conference for a team/player (database-driven)
+  const getItemConference = (item) => {
+    // Use database conference if available
+    if (item.conference) {
+      return item.conference;
+    }
+    return null;
+  };
+
   const [sortBy, setSortBy] = useState("total_points");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filter, setFilter] = useState("");
@@ -14,6 +23,7 @@ const Stats = () => {
   const [loading, setLoading] = useState(true);
   const [, setError] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("career");
+  const [selectedConference, setSelectedConference] = useState("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,7 +77,9 @@ const Stats = () => {
         gpg: (parseInt(player.total_goals) || 0) / gamesPlayed,
         apg: (parseInt(player.total_assists) || 0) / gamesPlayed,
         svpg: (parseInt(player.total_saves) || 0) / gamesPlayed,
-        shPercent: parseInt(player.total_shots) > 0 ? ((parseInt(player.total_goals) || 0) / parseInt(player.total_shots)) * 100 : 0
+        shPercent: parseInt(player.total_shots) > 0 ? ((parseInt(player.total_goals) || 0) / parseInt(player.total_shots)) * 100 : 0,
+        epicSavePercent: parseInt(player.total_saves) > 0 ? ((parseInt(player.total_epic_saves) || 0) / parseInt(player.total_saves)) * 100 : 0,
+        demoPerGame: (parseInt(player.total_demos) || 0) / gamesPlayed
       };
     });
   }, [stats]);
@@ -177,11 +189,16 @@ const Stats = () => {
     
     return filteredTeams.map(team => ({
       ...team,
+      // Team averages per game (total team stats divided by games played)
       avgPPG: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
       avgGPG: team.totalGames > 0 ? (team.totalGoals / team.totalGames) : 0,
       avgAPG: team.totalGames > 0 ? (team.totalAssists / team.totalGames) : 0,
       avgSVPG: team.totalGames > 0 ? (team.totalSaves / team.totalGames) : 0,
-      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0
+      avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0,
+      avgEpicSavePercent: team.totalSaves > 0 ? ((team.totalEpicSaves / team.totalSaves) * 100) : 0,
+      avgDemoPerGame: team.totalGames > 0 ? (team.totalDemos / team.totalGames) : 0,
+      // Display total games as team games (not divided by players)
+      displayGames: team.totalGames > 0 ? Math.round(team.totalGames / team.players) : 0
     }));
   }, [teams, processedStats, selectedSeason]);
 
@@ -191,7 +208,15 @@ const Stats = () => {
     return data
       .filter(item => {
         const name = viewType === "players" ? item.player_name : item.team;
-        return name.toLowerCase().includes(filter.toLowerCase());
+        const nameMatch = name.toLowerCase().includes(filter.toLowerCase());
+
+        // Conference filter
+        if (selectedConference !== "all" && selectedSeason === 'current') {
+          const itemConference = getItemConference(item);
+          return nameMatch && itemConference === selectedConference;
+        }
+
+        return nameMatch;
       })
       .sort((a, b) => {
         let aValue = a[sortBy];
@@ -209,7 +234,7 @@ const Stats = () => {
         }
       })
       .slice(0, showCount);
-  }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount]);
+  }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount, selectedConference, selectedSeason]);
 
   // Generate premium statistics data
   const premiumStatistics = useMemo(() => {
@@ -256,12 +281,12 @@ const Stats = () => {
   };
 
   const StatHeader = ({ column, label, className = "" }) => (
-    <th 
-      className={`px-4 py-5 text-left font-bold text-white cursor-pointer hover:bg-white/5 transition-all duration-300 hover:shadow-luxury border-r border-white/5 last:border-r-0 ${className}`}
+    <th
+      className={`px-2 py-5 text-center font-bold text-white cursor-pointer hover:bg-white/5 transition-all duration-300 hover:shadow-luxury border-r border-white/5 last:border-r-0 ${className}`}
       onClick={() => handleSort(column)}
     >
-      <div className="flex items-center gap-2 group">
-        <span className="group-hover:holographic transition-all duration-300">{label}</span>
+      <div className="flex items-center justify-center gap-1 group">
+        <span className="group-hover:holographic transition-all duration-300 text-xs">{label}</span>
         <span className="text-xs opacity-50 group-hover:opacity-100 transition-opacity">
           {getSortIcon(column)}
         </span>
@@ -388,12 +413,25 @@ const Stats = () => {
                 onChange={(e) => setSelectedSeason(e.target.value)}
                 className="px-6 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
               >
-                <option value="current" className="text-black bg-white">Season 3 - Summer 25 (Not Started)</option>
+                <option value="current" className="text-black bg-white">Season 3 (Current)</option>
                 <option value="career" className="text-black bg-white">Career Stats (All-Time)</option>
                 <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
                 <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
                 <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
               </select>
+
+              {/* Conference Filter - Only show for Season 3 */}
+              {selectedSeason === 'current' && (
+                <select
+                  value={selectedConference}
+                  onChange={(e) => setSelectedConference(e.target.value)}
+                  className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
+                >
+                  <option value="all" className="text-black bg-white">All Conferences</option>
+                  <option value="West" className="text-black bg-white">🛡️ West</option>
+                  <option value="East" className="text-black bg-white">🛡️ East</option>
+                </select>
+              )}
 
               {/* Premium Results Count */}
               <select
@@ -424,59 +462,9 @@ const Stats = () => {
           </div>
         </div>
 
-        {/* High-Contrast Empty State for Season 3 */}
-        {selectedSeason === "current" && (
-          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
-            <div className="relative mb-8">
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
-              <div className="relative">
-                <h3 className="text-4xl font-black text-white mb-4">Season 3 - Summer 25</h3>
-                <div className="h-px w-32 mx-auto bg-gradient-to-r from-transparent via-blue-400 to-transparent mb-6" />
-              </div>
-            </div>
-            
-            <p className="text-xl text-gray-300 mb-8 font-light">
-              Advanced statistics platform is preparing for launch
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
-                <div className="text-3xl mb-3">🤖</div>
-                <h4 className="text-lg font-bold text-blue-400 mb-3">AI-Powered Insights</h4>
-                <ul className="text-sm text-white space-y-2 text-left">
-                  <li>• Real-time performance analysis</li>
-                  <li>• Predictive modeling</li>
-                  <li>• Advanced metrics dashboard</li>
-                </ul>
-              </div>
-              
-              <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
-                <div className="text-3xl mb-3">📊</div>
-                <h4 className="text-lg font-bold text-green-400 mb-3">Executive Reporting</h4>
-                <ul className="text-sm text-white space-y-2 text-left">
-                  <li>• Interactive visualizations</li>
-                  <li>• Custom KPI tracking</li>
-                  <li>• Automated insights</li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Status indicators */}
-            <div className="mt-8 flex justify-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-600">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-yellow-400 font-medium">Initializing</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/90 border border-gray-600">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-400 font-medium">Systems Ready</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Error State */}
-        {!loading && processedStats.length === 0 && selectedSeason !== "current" && (
+        {!loading && processedStats.length === 0 && (
           <div className="bg-gray-800/90 border border-gray-600 rounded-3xl p-12 shadow-executive text-center animate-luxury-fade-in">
             <div className="relative mb-8">
               <div className="absolute -inset-4 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 rounded-full blur-2xl opacity-20 animate-liquid-morph" />
@@ -515,42 +503,39 @@ const Stats = () => {
         )}
 
         {/* High-Contrast Data Table */}
-        {processedStats.length > 0 && selectedSeason !== "current" && (
-          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl overflow-hidden shadow-executive">
+        {processedStats.length > 0 && (
+          <div className="bg-gray-800/90 border border-gray-600 rounded-3xl overflow-hidden shadow-executive w-full">
             <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 px-6 py-4 border-b border-gray-600">
               <h3 className="text-xl font-bold text-white">Performance Data Matrix</h3>
               <p className="text-sm text-gray-300 mt-1">Real-time player statistics and metrics</p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
                 <tr>
-                  <th className="px-4 py-5 text-left font-bold text-white w-12 border-r border-white/5">#</th>
-                  <StatHeader 
-                    column={viewType === "players" ? "player_name" : "team"} 
-                    label={viewType === "players" ? "Player" : "Team"} 
-                    className="min-w-[150px]"
+                  <th className="px-2 py-5 text-center font-bold text-white w-12 border-r border-white/5">#</th>
+                  <StatHeader
+                    column={viewType === "players" ? "player_name" : "team"}
+                    label={viewType === "players" ? "Player" : "Team"}
+                    className="w-1/6"
                   />
-                  {viewType === "players" && (
-                    <StatHeader column="team_name" label="Team" className="min-w-[120px]" />
-                  )}
-                  {viewType === "teams" && (
-                    <StatHeader column="players" label="Players" />
-                  )}
-                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="GP" />
-                  <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="PTS" />
-                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" />
-                  <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="G" />
-                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" />
-                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="A" />
-                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" />
-                  <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="SV" />
-                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" />
-                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="SH" />
-                  <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" />
-                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" />
-                  <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="DEM" />
-                  <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="ES" />
+                  <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="Points" className="w-16" />
+                  <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="Goals" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="Assists" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="Shots" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="OTG" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="Saves" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="Epic Saves" className="w-16" />
+                  <StatHeader column={viewType === "players" ? "epicSavePercent" : "avgEpicSavePercent"} label="Epic Save %" className="w-16" />
+                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="Demos" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "demoPerGame" : "avgDemoPerGame"} label="Demo/Game" className="w-16" />
+                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" className="w-12" />
+                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="Games Played" className="w-16" />
                 </tr>
               </thead>
               <tbody>
@@ -559,64 +544,67 @@ const Stats = () => {
                     key={index} 
                     className="border-b border-gray-600 hover:bg-gray-700/50 transition-all duration-300 hover:shadow-luxury group"
                   >
-                    <td className="px-4 py-4 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
+                    <td className="px-1 py-3 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
                       <div className="flex items-center justify-center">
-                        {index + 1 <= 3 ? 
-                          <span className="text-lg">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> : 
-                          <span className="group-hover:text-blue-400 transition-all duration-300">{index + 1}</span>
+                        {index + 1 <= 3 ?
+                          <span className="text-sm">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> :
+                          <span className="group-hover:text-blue-400 transition-all duration-300 text-xs">{index + 1}</span>
                         }
                       </div>
                     </td>
-                    <td className="px-3 py-3 font-semibold text-white">
+                    <td className="px-2 py-3 font-semibold text-white text-left text-sm truncate">
                       {viewType === "players" ? formatPlayerName(item.player_name, item.gamertag) : item.team}
                     </td>
-                    {viewType === "players" && (
-                      <td className="px-3 py-3 text-blue-300 text-sm">{item.team_name}</td>
-                    )}
-                    {viewType === "teams" && (
-                      <td className="px-3 py-3 text-center">{item.players}</td>
-                    )}
-                    <td className="px-3 py-3 text-center">
-                      {viewType === "players" ? item.games_played : Math.round(item.totalGames / item.players)}
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-yellow-400">
+                    <td className="px-1 py-3 text-center font-bold text-yellow-400 text-sm">
                       {viewType === "players" ? item.total_points.toLocaleString() : item.totalPoints.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.ppg : item.avgPPG || 0).toFixed(1)}
-                    </td>
-                    <td className="px-3 py-3 text-center font-semibold text-green-400">
+                    <td className="px-1 py-3 text-center font-semibold text-green-400 text-sm">
                       {viewType === "players" ? item.total_goals : item.totalGoals}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.gpg : item.avgGPG || 0).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-3 text-center font-semibold text-blue-400">
+                    <td className="px-1 py-3 text-center font-semibold text-blue-400 text-sm">
                       {viewType === "players" ? item.total_assists : item.totalAssists}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.apg : item.avgAPG || 0).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-3 text-center font-semibold text-purple-400">
-                      {viewType === "players" ? item.total_saves : item.totalSaves}
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.svpg : item.avgSVPG || 0).toFixed(2)}
-                    </td>
-                    <td className="px-3 py-3 text-center">
+                    <td className="px-1 py-3 text-center text-sm">
                       {viewType === "players" ? item.total_shots : item.totalShots}
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
-                    </td>
-                    <td className="px-3 py-3 text-center font-bold text-orange-400">
+                    <td className="px-1 py-3 text-center font-bold text-orange-400 text-sm">
                       {viewType === "players" ? item.total_mvps : item.totalMVPs}
                     </td>
-                    <td className="px-3 py-3 text-center text-red-400">
+                    <td className="px-1 py-3 text-center text-sm">
+                      0
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
+                    </td>
+                    <td className="px-1 py-3 text-center font-semibold text-purple-400 text-sm">
+                      {viewType === "players" ? item.total_saves : item.totalSaves}
+                    </td>
+                    <td className="px-1 py-3 text-center text-cyan-400 text-sm">
+                      {viewType === "players" ? item.total_epic_saves : item.totalEpicSaves}
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.epicSavePercent : item.avgEpicSavePercent || 0).toFixed(1)}%
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.svpg : item.avgSVPG || 0).toFixed(2)}
+                    </td>
+                    <td className="px-1 py-3 text-center text-red-400 text-sm">
                       {viewType === "players" ? item.total_demos : item.totalDemos}
                     </td>
-                    <td className="px-3 py-3 text-center text-cyan-400">
-                      {viewType === "players" ? item.total_epic_saves : item.totalEpicSaves}
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.demoPerGame : item.avgDemoPerGame || 0).toFixed(2)}
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.ppg : item.avgPPG || 0).toFixed(1)}
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.gpg : item.avgGPG || 0).toFixed(2)}
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.apg : item.avgAPG || 0).toFixed(2)}
+                    </td>
+                    <td className="px-1 py-3 text-center text-sm">
+                      {viewType === "players" ? item.games_played : item.displayGames}
                     </td>
                   </tr>
                 ))}
@@ -627,18 +615,19 @@ const Stats = () => {
         )}
 
         {/* Footer Info */}
-        {processedStats.length > 0 && selectedSeason !== "current" && (
+        {processedStats.length > 0 && (
           <div className="mt-6 text-center text-white text-sm">
             <p>Showing {sortedData.length} {viewType} • Updated through Week {new Date().getWeek || 12}</p>
-          <div className="flex justify-center gap-6 mt-2 text-xs text-gray-300">
-            <span>GP = Games Played</span>
+          <div className="flex justify-center gap-4 mt-2 text-xs text-gray-300 flex-wrap">
+            <span>MVP = Most Valuable Player</span>
+            <span>OTG = Overtime Goals</span>
+            <span>SH% = Shooting Percentage</span>
+            <span>Epic Save % = Epic Save Percentage</span>
+            <span>SVPG = Saves Per Game</span>
+            <span>Demo/Game = Demos Per Game</span>
             <span>PPG = Points Per Game</span>
             <span>GPG = Goals Per Game</span>
             <span>APG = Assists Per Game</span>
-            <span>SVPG = Saves Per Game</span>
-            <span>SH% = Shooting %</span>
-            <span>DEM = Demolitions</span>
-            <span>ES = Epic Saves</span>
           </div>
           </div>
         )}

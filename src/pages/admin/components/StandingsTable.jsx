@@ -4,9 +4,18 @@ const StandingsTable = ({
   standingsData,
   loading,
   selectedConference,
+  seasonId,
   onEdit,
   onDelete
 }) => {
+  // Function to get conference for a team (database-driven)
+  const getTeamConference = (team, season) => {
+    // Use database conference if available
+    if (team.conference) {
+      return team.conference;
+    }
+    return null;
+  };
   if (!standingsData || standingsData.length === 0) {
     return (
       <div className="bg-gray-800/90 border border-gray-600 rounded-2xl p-12 text-center">
@@ -17,11 +26,52 @@ const StandingsTable = ({
     );
   }
 
+  // Group standings by conference for Season 3
+  const groupedStandings = () => {
+    if (seasonId === 3 && standingsData && standingsData.length > 0) {
+      const grouped = { 'West': [], 'East': [], 'Other': [] };
+
+      standingsData.forEach((team, index) => {
+        const conference = getTeamConference(team, seasonId);
+        const teamWithRank = { ...team, overallRank: index + 1 };
+
+        if (conference) {
+          grouped[conference].push(teamWithRank);
+        } else {
+          grouped['Other'].push(teamWithRank);
+        }
+      });
+
+      // Sort each conference by league points (descending)
+      Object.keys(grouped).forEach(conf => {
+        grouped[conf].sort((a, b) => {
+          if (b.league_points !== a.league_points) return b.league_points - a.league_points;
+          if (b.wins !== a.wins) return b.wins - a.wins;
+          return b.point_diff - a.point_diff;
+        });
+      });
+
+      return grouped;
+    }
+    return null;
+  };
+
   // Filter standings by conference if needed
-  const filteredStandings = standingsData; // Conference filtering would go here if needed
+  let displayStandings = standingsData;
+
+  if (selectedConference && selectedConference !== 'All') {
+    const grouped = groupedStandings();
+    if (grouped && grouped[selectedConference]) {
+      displayStandings = grouped[selectedConference];
+    } else {
+      displayStandings = standingsData.filter(team =>
+        getTeamConference(team, seasonId) === selectedConference
+      );
+    }
+  }
 
   // Sort by league_points DESC, then wins DESC, then point_diff DESC
-  const sortedStandings = [...filteredStandings].sort((a, b) => {
+  const sortedStandings = [...displayStandings].sort((a, b) => {
     if (b.league_points !== a.league_points) return b.league_points - a.league_points;
     if (b.wins !== a.wins) return b.wins - a.wins;
     return b.point_diff - a.point_diff;
@@ -61,6 +111,9 @@ const StandingsTable = ({
                 {/* Rank */}
                 <td className="py-4 px-6 text-white font-bold text-lg">
                   {index + 1}
+                  {selectedConference && selectedConference !== 'All' && team.overallRank && (
+                    <span className="text-xs text-gray-400 ml-2">({team.overallRank})</span>
+                  )}
                 </td>
 
                 {/* Team Name */}

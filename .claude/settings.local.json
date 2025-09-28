@@ -35,7 +35,12 @@
       "Bash(set PORT=3001)",
       "Bash(set NODE_ENV=development)",
       "Bash(set PORT=5000)",
-      "Bash(set PORT=5001)"
+      "Bash(set PORT=5001)",
+      "Bash(PORT=5001 node server.js)",
+      "Bash(PORT=3458 npm start)",
+      "Read(//c/**)",
+      "Bash(PORT=5001 node backend/api/index.js)",
+      "Bash(PORT=5001 node backend/server.js)"
     ],
     "deny": [],
     "ask": []

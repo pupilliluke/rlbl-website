@@ -65,162 +65,6 @@ export default function Teams() {
     fetchData();
   }, [selectedSeason, selectedConference]);
 
-  // Group players by team - handle both team_seasons and teams data structures
-  const getPlayersForTeam = (teamName) => {
-    return players.filter(player => {
-      // Handle different team name fields from different endpoints
-      return player.team_name === teamName ||
-             (player.original_team_name && player.original_team_name === teamName) ||
-             (player.current_team_name && player.current_team_name === teamName);
-    });
-  };
-
-  // Filter teams by conference
-  const filteredTeams = teams.filter(team => {
-    if (selectedConference === "all") return true;
-    return getTeamConference(team) === selectedConference;
-  });
-
-  // Group teams by conference for display
-  const groupedByConference = () => {
-    if (selectedSeason === 'current' && selectedConference === "all") {
-      const grouped = { 'West': [], 'East': [], 'Other': [] };
-
-      teams.forEach(team => {
-        const conference = getTeamConference(team);
-        if (conference) {
-          grouped[conference].push(team);
-        } else {
-          grouped['Other'].push(team);
-        }
-      });
-
-      return grouped;
-    }
-    return null;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
-          <p className="text-blue-200">Loading teams...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative overflow-x-hidden">
-      {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30 pt-20">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">⚽ RLBL Teams</h1>
-              <p className="text-blue-200 text-sm md:text-base">
-                Team rosters and player lineups by season
-                {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
-              </p>
-            </div>
-            
-            {/* Season and Conference Dropdowns */}
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
-              <div className="flex flex-col items-start md:items-end">
-                <label className="text-xs text-gray-300 mb-1">Season</label>
-                <select
-                  value={selectedSeason}
-                  onChange={(e) => setSelectedSeason(e.target.value)}
-                  className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
-                >
-                  <option value="current" className="text-black bg-white">Season 3</option>
-                  <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
-                  <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
-                  <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
-                </select>
-              </div>
-
-              {/* Conference Filter - Only show for Season 3 */}
-              {selectedSeason === 'current' && (
-                <div className="flex flex-col items-start md:items-end">
-                  <label className="text-xs text-gray-300 mb-1">Conference</label>
-                  <select
-                    value={selectedConference}
-                    onChange={(e) => setSelectedConference(e.target.value)}
-                    className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[150px]"
-                  >
-                    <option value="all" className="text-black bg-white">All Conferences</option>
-                    <option value="West" className="text-black bg-white">🛡️ West</option>
-                    <option value="East" className="text-black bg-white">🛡️ East</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
-            {selectedSeason === 'current' && selectedConference !== 'all' ? `Season 3 - ${selectedConference} Conference` :
-             selectedSeason === 'current' ? 'Season 3 Teams' :
-             selectedSeason === 'season1' ? 'Season 1 Teams' :
-             selectedSeason === 'season2' ? 'Season 2 Teams' :
-             selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
-             'Teams'}
-          </h2>
-          
-          {teams.length === 0 ? (
-            <div className="text-center text-gray-400">
-              {selectedSeason === 'current' ? (
-                <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-600">
-                  <div className="text-4xl mb-4"></div>
-                  <p className="text-xl text-white mb-2">Season 3 - Summer 25</p>
-                  <p>No teams registered yet. Season hasn't started!</p>
-                </div>
-              ) : (
-                <p>No teams found for this season. Make sure the API server is running.</p>
-              )}
-            </div>
-          ) : (
-            <>
-              {/* Circular Stadium Layout */}
-              {(() => {
-                const grouped = groupedByConference();
-                if (grouped && selectedConference === 'all') {
-                  // Combined circular layout for all conferences
-                  return renderCircularLayout(filteredTeams, selectedConference);
-                } else if (grouped) {
-                  // Conference-specific circular layouts
-                  return (
-                    <div className="space-y-16">
-                      {Object.entries(grouped).map(([conferenceName, conferenceTeams]) => {
-                        if (conferenceTeams.length === 0) return null;
-                        return (
-                          <div key={conferenceName}>
-                            <div className="flex items-center gap-3 mb-8 justify-center">
-                              <div className="text-3xl">🛡️</div>
-                              <h3 className="text-3xl font-bold text-white">{conferenceName} Conference</h3>
-                            </div>
-                            {renderCircularLayout(conferenceTeams, conferenceName)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-                // Circular layout for other cases
-                return renderCircularLayout(filteredTeams, null);
-              })()}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
   // Circular Stadium Layout Function
   function renderCircularLayout(teamsData, conference) {
     if (!teamsData || teamsData.length === 0) {
@@ -459,9 +303,9 @@ export default function Teams() {
           y={y + (nodeSize / 2 + 20) * Math.sin(labelAngle) + 4}
           textAnchor={textAnchor}
           fill="white"
-          fontSize="12"
+          fontSize="11"
           fontWeight="600"
-          className="select-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          className="select-none transition-all duration-300 group-hover:text-sm group-hover:font-bold"
           style={{
             textShadow: '0 2px 4px rgba(0,0,0,0.8)',
             transform: shouldFlip ? `rotate(${labelAngle * 180 / Math.PI}deg)` : `rotate(${labelAngle * 180 / Math.PI}deg)`,
@@ -484,102 +328,159 @@ export default function Teams() {
     );
   }
 
-  // Team card renderer function (fallback for non-circular layouts)
-  function renderTeamCard(team) {
-    // Handle different field names from team_seasons vs teams endpoint
-    const teamName = team.display_name || team.team_name || team.original_team_name;
-    const teamPrimaryColor = team.color || '#808080';
-    const teamSecondaryColor = team.secondary_color;
-    const teamRanking = team.ranking;
-    const teamId = team.team_season_id || team.team_id || team.id;
-    const teamConference = getTeamConference(team);
+  // Group players by team - handle both team_seasons and teams data structures
+  const getPlayersForTeam = (teamName) => {
+    return players.filter(player => {
+      // Handle different team name fields from different endpoints
+      return player.team_name === teamName ||
+             (player.original_team_name && player.original_team_name === teamName) ||
+             (player.current_team_name && player.current_team_name === teamName);
+    });
+  };
 
-    const teamPlayers = getPlayersForTeam(teamName);
+  // Filter teams by conference
+  const filteredTeams = teams.filter(team => {
+    if (selectedConference === "all") return true;
+    return getTeamConference(team) === selectedConference;
+  });
 
+  // Group teams by conference for display
+  const groupedByConference = () => {
+    if (selectedSeason === 'current' && selectedConference === "all") {
+      const grouped = { 'West': [], 'East': [], 'Other': [] };
+
+      teams.forEach(team => {
+        const conference = getTeamConference(team);
+        if (conference) {
+          grouped[conference].push(team);
+        } else {
+          grouped['Other'].push(team);
+        }
+      });
+
+      return grouped;
+    }
+    return null;
+  };
+
+  if (loading) {
     return (
-      <Link to={`/teams/${slugify(teamName)}`} key={teamId}>
-        <div className="bg-gray-800/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-gray-600 transition duration-300 hover:scale-[1.02] cursor-pointer hover:border-gray-500 hover:shadow-2xl">
-          {/* Team Color Strip - Dual Colors if Available */}
-          <div className="flex mb-4 rounded-lg overflow-hidden h-3">
-            <div
-              className={teamSecondaryColor ? "flex-1" : "w-full"}
-              style={{ backgroundColor: teamPrimaryColor }}
-            />
-            {teamSecondaryColor && (
-              <div
-                className="flex-1"
-                style={{ backgroundColor: teamSecondaryColor }}
-              />
-            )}
-          </div>
-
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-xl font-bold text-white">
-                  {teamName}
-                </h3>
-                {teamConference && (
-                  <span className="bg-blue-600/20 text-blue-400 px-2 py-1 rounded-full text-xs font-semibold border border-blue-500/30">
-                    🛡️ {teamConference}
-                  </span>
-                )}
-              </div>
-              {team.season_name && (
-                <p className="text-xs text-gray-400 mt-1">
-                  {team.season_name}
-                </p>
-              )}
-            </div>
-            <div className="flex space-x-2 items-center">
-              <div className="flex space-x-1">
-                <div
-                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: teamPrimaryColor }}
-                />
-                {teamSecondaryColor && (
-                  <div
-                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                    style={{ backgroundColor: teamSecondaryColor }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-
-          {teamPlayers.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm text-gray-300 mb-3 font-medium">
-                Players:
-              </p>
-              <div className="grid grid-cols-1 gap-2">
-                {teamPlayers.map((player) => (
-                  <div
-                    key={player.id}
-                    className="text-base text-white bg-gray-700/50 px-3 py-2 rounded-lg border border-gray-600/50"
-                  >
-                    {player.player_name}
-                    <span className="text-gray-400 text-sm ml-2">
-                      ({player.gamertag})
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {(team.logo_url || team.alt_logo_url) && (
-            <div className="mt-4 text-center">
-              <img
-                src={team.alt_logo_url || team.logo_url}
-                alt={`${teamName} logo`}
-                className="h-12 w-12 mx-auto rounded-full border-2 border-gray-600"
-                onError={(e) => e.target.style.display = 'none'}
-              />
-            </div>
-          )}
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+          <p className="text-blue-200">Loading teams...</p>
         </div>
-      </Link>
+      </div>
     );
   }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar relative overflow-x-hidden">
+      {/* Header */}
+      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl border-b border-blue-500/30 pt-20">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">⚽ RLBL Teams</h1>
+              <p className="text-blue-200 text-sm md:text-base">
+                Team rosters and player lineups by season
+                {error && <span className="text-red-400 ml-2">(Using cached data)</span>}
+              </p>
+            </div>
+            
+            {/* Season and Conference Dropdowns */}
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+              <div className="flex flex-col items-start md:items-end">
+                <label className="text-xs text-gray-300 mb-1">Season</label>
+                <select
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(e.target.value)}
+                  className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
+                >
+                  <option value="current" className="text-black bg-white">Season 3</option>
+                  <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
+                  <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
+                  <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
+                </select>
+              </div>
+
+              {/* Conference Filter - Only show for Season 3 */}
+              {selectedSeason === 'current' && (
+                <div className="flex flex-col items-start md:items-end">
+                  <label className="text-xs text-gray-300 mb-1">Conference</label>
+                  <select
+                    value={selectedConference}
+                    onChange={(e) => setSelectedConference(e.target.value)}
+                    className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[150px]"
+                  >
+                    <option value="all" className="text-black bg-white">All Conferences</option>
+                    <option value="West" className="text-black bg-white">🛡️ West</option>
+                    <option value="East" className="text-black bg-white">🛡️ East</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
+            {selectedSeason === 'current' && selectedConference !== 'all' ? `Season 3 - ${selectedConference} Conference` :
+             selectedSeason === 'current' ? 'Season 3 Teams' :
+             selectedSeason === 'season1' ? 'Season 1 Teams' :
+             selectedSeason === 'season2' ? 'Season 2 Teams' :
+             selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
+             'Teams'}
+          </h2>
+          
+          {teams.length === 0 ? (
+            <div className="text-center text-gray-400">
+              {selectedSeason === 'current' ? (
+                <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-600">
+                  <div className="text-4xl mb-4"></div>
+                  <p className="text-xl text-white mb-2">Season 3 - Summer 25</p>
+                  <p>No teams registered yet. Season hasn't started!</p>
+                </div>
+              ) : (
+                <p>No teams found for this season. Make sure the API server is running.</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Circular Stadium Layout */}
+              {(() => {
+                const grouped = groupedByConference();
+                if (grouped && selectedConference === 'all') {
+                  // Combined circular layout for all conferences
+                  return renderCircularLayout(filteredTeams, selectedConference);
+                } else if (grouped) {
+                  // Conference-specific circular layouts
+                  return (
+                    <div className="space-y-16">
+                      {Object.entries(grouped).map(([conferenceName, conferenceTeams]) => {
+                        if (conferenceTeams.length === 0) return null;
+                        return (
+                          <div key={conferenceName}>
+                            <div className="flex items-center gap-3 mb-8 justify-center">
+                              <div className="text-3xl">🛡️</div>
+                              <h3 className="text-3xl font-bold text-white">{conferenceName} Conference</h3>
+                            </div>
+                            {renderCircularLayout(conferenceTeams, conferenceName)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+                // Circular layout for other cases
+                return renderCircularLayout(filteredTeams, null);
+              })()}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

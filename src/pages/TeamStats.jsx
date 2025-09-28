@@ -370,25 +370,25 @@ export default function TeamStats() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-2">
-                  {teamPlayers.reduce((sum, player) => sum + (player.total_points || 0), 0).toLocaleString()}
+                  {teamPlayers.reduce((sum, player) => sum + (parseInt(player.total_points) || 0), 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-400">Total Points</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-green-400 mb-2">
-                  {teamPlayers.reduce((sum, player) => sum + (player.total_goals || 0), 0)}
+                  {teamPlayers.reduce((sum, player) => sum + (parseInt(player.total_goals) || 0), 0)}
                 </div>
                 <div className="text-sm text-gray-400">Total Goals</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-2">
-                  {teamPlayers.reduce((sum, player) => sum + (player.total_assists || 0), 0)}
+                  {teamPlayers.reduce((sum, player) => sum + (parseInt(player.total_assists) || 0), 0)}
                 </div>
                 <div className="text-sm text-gray-400">Total Assists</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl md:text-3xl font-bold text-purple-400 mb-2">
-                  {teamPlayers.reduce((sum, player) => sum + (player.total_saves || 0), 0)}
+                  {teamPlayers.reduce((sum, player) => sum + (parseInt(player.total_saves) || 0), 0)}
                 </div>
                 <div className="text-sm text-gray-400">Total Saves</div>
               </div>
