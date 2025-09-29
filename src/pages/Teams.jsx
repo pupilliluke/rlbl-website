@@ -76,7 +76,8 @@ export default function Teams() {
     }
 
     const teamCount = teamsData.length;
-    const containerSize = Math.min(window.innerWidth * 0.8, 800); // Responsive size
+    const isMobile = window.innerWidth < 768;
+    const containerSize = Math.min(window.innerWidth * (isMobile ? 0.95 : 0.8), isMobile ? 400 : 800); // More responsive
     const centerX = containerSize / 2;
     const centerY = containerSize / 2;
 
@@ -150,7 +151,8 @@ export default function Teams() {
 
   // Center Badge Component
   function renderCenterBadge(centerX, centerY, conference) {
-    const badgeSize = 180; // Increased from 80 to 180
+    const isMobile = window.innerWidth < 768;
+    const badgeSize = isMobile ? 100 : 180; // Smaller on mobile
     return (
       <g>
         {/* Outer glow circles for dramatic effect */}
@@ -206,7 +208,7 @@ export default function Teams() {
           y={centerY - 15}
           textAnchor="middle"
           fill="white"
-          fontSize="42"
+          fontSize={isMobile ? "28" : "42"}
           fontWeight="bold"
           className="select-none"
           style={{
@@ -225,7 +227,7 @@ export default function Teams() {
           y={centerY + 25}
           textAnchor="middle"
           fill="rgb(156, 163, 175)"
-          fontSize="16"
+          fontSize={isMobile ? "12" : "16"}
           fontWeight="600"
           className="select-none"
           style={{
@@ -267,7 +269,8 @@ export default function Teams() {
     // Calculate team strength (player count as percentage)
     const maxPlayers = 5; // Typical RL team size
     const teamStrength = Math.min((teamPlayers.length / maxPlayers) * 100, 100);
-    const nodeSize = 80; // Increased from 50 to 80
+    const isMobile = window.innerWidth < 768;
+    const nodeSize = isMobile ? 50 : 80; // Smaller on mobile
     const strokeDasharray = `${teamStrength * 4.02} 402`; // Circumference ≈ 2πr where r=64
 
     // Keep text upright
@@ -346,7 +349,7 @@ export default function Teams() {
           y={y + 6}
           textAnchor="middle"
           fill="white"
-          fontSize="18"
+          fontSize={isMobile ? "14" : "18"}
           fontWeight="bold"
           className="select-none transition-all duration-300 group-hover:text-xl"
           style={{
@@ -396,7 +399,7 @@ export default function Teams() {
                 y={charY}
                 textAnchor="middle"
                 fill="white"
-                fontSize="12"
+                fontSize={isMobile ? "10" : "12"}
                 fontWeight="600"
                 className="select-none transition-all duration-300 group-hover:text-sm group-hover:font-bold"
                 style={{
