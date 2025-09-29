@@ -10,6 +10,7 @@ const Schedule = () => {
   const [collapsedWeeks, setCollapsedWeeks] = useState(new Set()); // Track collapsed weeks
   const [gameStats, setGameStats] = useState({}); // Track game stats by game ID
   const [expandedGames, setExpandedGames] = useState(new Set()); // Track which games show stats
+  const [gamesWithStats, setGamesWithStats] = useState(new Set()); // Track which games have player stats
 
   useEffect(() => {
     fetchGames();
@@ -19,11 +20,26 @@ const Schedule = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch games for the selected season
       const gamesData = await apiService.getGames(selectedSeason);
       setGames(gamesData);
-      
+
+      // Check which games have player stats to determine completion
+      const gamesWithStatsSet = new Set();
+      for (const game of gamesData) {
+        try {
+          const stats = await apiService.getPlayerGameStatsByGame(game.id);
+          if (stats && stats.length > 0) {
+            gamesWithStatsSet.add(game.id);
+          }
+        } catch (statsError) {
+          // If we can't fetch stats, assume game doesn't have stats
+          console.log(`No stats available for game ${game.id}`);
+        }
+      }
+      setGamesWithStats(gamesWithStatsSet);
+
     } catch (err) {
       console.error('Error fetching games:', err);
       setError('Failed to load schedule. Please try again later.');
@@ -45,8 +61,28 @@ const Schedule = () => {
     return weekGroups;
   };
 
-  const isGameCompleted = (homeScore, awayScore) => {
-    return homeScore !== null && awayScore !== null && (homeScore !== 0 || awayScore !== 0);
+  const isGameCompleted = (gameId) => {
+    return gamesWithStats.has(gameId);
+  };
+
+  const getGameScore = (game) => {
+    // If the game has player stats, calculate the score from stats
+    if (gamesWithStats.has(game.id) && gameStats[game.id]) {
+      const stats = gameStats[game.id];
+      const homeScore = stats
+        .filter(stat => stat.team_season_id === game.home_team_season_id)
+        .reduce((sum, stat) => sum + (stat.goals || 0), 0);
+      const awayScore = stats
+        .filter(stat => stat.team_season_id === game.away_team_season_id)
+        .reduce((sum, stat) => sum + (stat.goals || 0), 0);
+      return { home: homeScore, away: awayScore };
+    }
+
+    // Fallback to game table scores if available
+    return {
+      home: game.home_score || 0,
+      away: game.away_score || 0
+    };
   };
 
   const toggleWeekCollapse = (weekNum) => {
@@ -153,7 +189,7 @@ const Schedule = () => {
           <div className="space-y-8">
             {weeks.map((weekNum) => {
               const isCollapsed = collapsedWeeks.has(weekNum);
-              const completedGames = weekGroups[weekNum].filter(game => isGameCompleted(game.home_score, game.away_score)).length;
+              const completedGames = weekGroups[weekNum].filter(game => isGameCompleted(game.id)).length;
               
               return (
                 <div 
@@ -213,10 +249,17 @@ const Schedule = () => {
                     <div className="p-8">
                       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {weekGroups[weekNum].map((game) => {
-                          const completed = isGameCompleted(game.home_score, game.away_score);
+                          const completed = isGameCompleted(game.id);
                           const homeColor = game.home_team_color || '#041E42';
                           const awayColor = game.away_team_color || '#041E42';
-                          
+
+                          // Fetch stats for completed games if we don't have them
+                          if (completed && !gameStats[game.id]) {
+                            fetchGameStats(game.id);
+                          }
+
+                          const scores = getGameScore(game);
+
                           return (
                             <div 
                               key={game.id} 
@@ -284,7 +327,7 @@ const Schedule = () => {
                                     </div>
                                     
                                     {/* Score with enhanced typography */}
-                                    <div 
+                                    <div
                                       className="text-4xl font-black text-emerald-300 tracking-wider"
                                       style={{
                                         fontFamily: 'JetBrains Mono, monospace',
@@ -292,7 +335,7 @@ const Schedule = () => {
                                         filter: 'drop-shadow(0 0 5px rgba(16, 185, 129, 0.2))'
                                       }}
                                     >
-                                      {game.home_score} - {game.away_score}
+                                      {scores.home} - {scores.away}
                                     </div>
                                   </div>
                                 </div>
