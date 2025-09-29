@@ -298,11 +298,11 @@ const WeeklyGameResults = ({
                       <thead>
                         <tr className="border-b border-gray-200 bg-gray-50">
                           <th className="text-left py-3 px-6 text-gray-700 font-semibold text-xs uppercase tracking-wider">Matchup</th>
-                          <th className="text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider">Game</th>
-                          <th className="text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider">Date</th>
+                          <th className="hidden md:table-cell text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider">Game</th>
+                          <th className="hidden md:table-cell text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider">Date</th>
                           <th className="text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider">Result</th>
-                          <th className="text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider"></th>
-                          <th className="text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider"></th>
+                          <th className="hidden md:table-cell text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider"></th>
+                          <th className="hidden md:table-cell text-center py-3 px-4 text-gray-700 font-semibold text-xs uppercase tracking-wider"></th>
                         </tr>
                       </thead>
                       <tbody>
@@ -345,10 +345,10 @@ const WeeklyGameResults = ({
                                     </span>
                                   </div>
                                 </td>
-                                <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
                                   SERIES
                                 </td>
-                                <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
                                   --
                                 </td>
                                 <td className="text-center py-3 px-4">
@@ -356,10 +356,10 @@ const WeeklyGameResults = ({
                                     {homeWins}-{awayWins}
                                   </span>
                                 </td>
-                                <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
 
                                 </td>
-                                <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
 
                                 </td>
                               </tr>
@@ -395,12 +395,12 @@ const WeeklyGameResults = ({
                                       </td>
 
                                       {/* Game Number */}
-                                      <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                      <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
                                         G{game.series_game || (gameIndex + 1)}
                                       </td>
 
                                       {/* Date */}
-                                      <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                      <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
                                         {game.game_date ? new Date(game.game_date).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : '--'}
                                       </td>
 
@@ -460,11 +460,11 @@ const WeeklyGameResults = ({
                                       </td>
 
                                       {/* Empty columns */}
-                                      <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                      <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
 
                                       </td>
 
-                                      <td className="text-center py-3 px-4 text-gray-600 text-sm">
+                                      <td className="hidden md:table-cell text-center py-3 px-4 text-gray-600 text-sm">
 
                                       </td>
                                     </tr>

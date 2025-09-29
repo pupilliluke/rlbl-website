@@ -207,7 +207,9 @@ const Stats = () => {
     const data = viewType === "players" ? processedStats : teamStats;
     return data
       .filter(item => {
-        const name = viewType === "players" ? item.player_name : item.team;
+        const name = viewType === "players"
+          ? (item.player_name || item.name || item.display_name || 'Unknown Player')
+          : item.team;
         const nameMatch = name.toLowerCase().includes(filter.toLowerCase());
 
         // Conference filter
@@ -248,7 +250,10 @@ const Stats = () => {
     };
     
     return {
-      topPlayers: topPlayers.map(p => ({ label: p.player_name, value: p.total_points })),
+      topPlayers: topPlayers.map(p => ({
+        label: p.player_name || p.name || p.display_name || 'Unknown Player',
+        value: p.total_points
+      })),
       totalPlayers: processedStats.length,
       avgStats
     };
@@ -315,7 +320,7 @@ const Stats = () => {
                 <div className="text-xs text-white">Season</div>
               </div>
               <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-blue-400">⚽</div>
+                <div className="text-2xl font-bold text-blue-400">RL</div>
                 <div className="text-xs text-white">League</div>
               </div>
             </div>
@@ -336,28 +341,28 @@ const Stats = () => {
                 value={premiumStatistics.totalPlayers}
                 subtitle="Registered Players"
                 trend={12}
-                icon="👥"
+                icon=""
               />
               <MetricCard
                 title="Avg Performance"
                 value={Math.round(premiumStatistics.avgStats.points)}
                 subtitle="Points per player"
                 trend={8}
-                icon="📊"
+                icon=""
               />
               <MetricCard
                 title="Total Goals"
                 value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
                 subtitle="Season aggregate"
                 trend={-3}
-                icon="⚽"
+                icon=""
               />
               <MetricCard
                 title="Engagement"
                 value="94.2%"
                 subtitle="Player activity"
                 trend={5}
-                icon="🎯"
+                icon=""
               />
             </div>
 
@@ -393,7 +398,7 @@ const Stats = () => {
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  🏃‍♂️ Players
+                  Players
                 </button>
                 <button
                   onClick={() => setViewType("teams")}
@@ -403,7 +408,7 @@ const Stats = () => {
                       : "text-white hover:text-blue-300 hover:bg-gray-600"
                   }`}
                 >
-                  🏆 Teams
+                  Teams
                 </button>
               </div>
 
@@ -428,8 +433,8 @@ const Stats = () => {
                   className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
                 >
                   <option value="all" className="text-black bg-white">All Conferences</option>
-                  <option value="West" className="text-black bg-white">🛡️ West</option>
-                  <option value="East" className="text-black bg-white">🛡️ East</option>
+                  <option value="West" className="text-black bg-white">West</option>
+                  <option value="East" className="text-black bg-white">East</option>
                 </select>
               )}
 
@@ -450,7 +455,7 @@ const Stats = () => {
             <div className="relative">
               <input
                 type="text"
-                placeholder={`🔍 Search ${viewType}...`}
+                placeholder={`Search ${viewType}...`}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 className="px-6 py-3 pl-12 rounded-xl bg-gray-700/80 border border-gray-500 text-sm min-w-[250px] text-white placeholder-gray-300 focus:border-blue-400/50 focus:shadow-luxury transition-all duration-300"
@@ -480,7 +485,7 @@ const Stats = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
               <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
-                <div className="text-3xl mb-3">🔄</div>
+                <div className="text-3xl mb-3">DB</div>
                 <h4 className="text-lg font-bold text-blue-400 mb-3">Database Connection</h4>
                 <ul className="text-sm text-white space-y-2 text-left">
                   <li>• Check backend server status</li>
@@ -490,7 +495,7 @@ const Stats = () => {
               </div>
               
               <div className="bg-gray-700/80 border border-gray-500 rounded-2xl p-6">
-                <div className="text-3xl mb-3">📊</div>
+                <div className="text-3xl mb-3">DATA</div>
                 <h4 className="text-lg font-bold text-red-400 mb-3">Data Status</h4>
                 <ul className="text-sm text-white space-y-2 text-left">
                   <li>• No fallback data available</li>
@@ -547,13 +552,18 @@ const Stats = () => {
                     <td className="px-1 py-3 text-white font-mono text-sm border-r border-gray-600 group-hover:text-blue-400 transition-colors">
                       <div className="flex items-center justify-center">
                         {index + 1 <= 3 ?
-                          <span className="text-sm">{index + 1 === 1 ? '🥇' : index + 1 === 2 ? '🥈' : '🥉'}</span> :
+                          <span className="text-sm">{index + 1 === 1 ? '1st' : index + 1 === 2 ? '2nd' : '3rd'}</span> :
                           <span className="group-hover:text-blue-400 transition-all duration-300 text-xs">{index + 1}</span>
                         }
                       </div>
                     </td>
                     <td className="px-2 py-3 font-semibold text-white text-left text-sm truncate">
-                      {viewType === "players" ? formatPlayerName(item.player_name, item.gamertag) : item.team}
+                      {viewType === "players" ? (
+                        formatPlayerName(
+                          item.player_name || item.name || item.display_name || 'Unknown Player',
+                          item.gamertag
+                        )
+                      ) : item.team}
                     </td>
                     <td className="px-1 py-3 text-center font-bold text-yellow-400 text-sm">
                       {viewType === "players" ? item.total_points.toLocaleString() : item.totalPoints.toLocaleString()}

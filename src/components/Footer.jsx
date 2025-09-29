@@ -13,8 +13,8 @@ export default function Footer() {
 
         {/* Row 2: Contact Info */}
         <div>
-          <h4 className="text-xl font-bold text-orange-400 mb-2">📬 Contact</h4>
-          <ul className=" flex flex-row gap-12 text-center justify-center">
+          <h4 className="text-xl font-bold text-orange-400 mb-2">Contact</h4>
+          <ul className="flex flex-col sm:flex-row gap-2 sm:gap-12 text-center justify-center">
             <li>Email: <a href="mailto:commissioner@rlbl.gg" className="text-blue-400 hover:underline">commissioner@rlbl.gg</a></li>
             <li>Support: <a href="mailto:support@rlbl.gg" className="text-blue-400 hover:underline">support@rlbl.gg</a></li>
             <li>Discord: <a href="https://discord.gg/t8WPe4YM" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Join the server</a></li>

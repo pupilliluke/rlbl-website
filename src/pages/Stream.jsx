@@ -400,19 +400,24 @@ const Stream = () => {
           )}
         </div>
 
-        {/* Stream Info (only when not fullscreen) */}
+        {/* Stream Info (only when not fullscreen) - Positioned to not interfere with player */}
         {!isFullscreen && streamLink && (
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-400">
-              Stream source: <a
-                href={streamLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
-              >
-                {streamLink}
-              </a>
-            </p>
+          <div className="mt-8 text-center">
+            <details className="text-sm text-gray-400 max-w-md mx-auto">
+              <summary className="cursor-pointer hover:text-gray-300 transition-colors">
+                Stream Info
+              </summary>
+              <p className="mt-2 p-2 bg-gray-800/50 rounded border border-gray-600">
+                Source: <a
+                  href={streamLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline break-all"
+                >
+                  {streamLink}
+                </a>
+              </p>
+            </details>
           </div>
         )}
       </div>

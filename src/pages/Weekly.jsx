@@ -90,7 +90,7 @@ export default function Weekly() {
             <span className="font-medium text-slate-100">Weekly Scores</span>
           </div>
 
-          <div className="flex items-start justify-between mb-6">
+          <div className="flex flex-col lg:flex-row items-start justify-between gap-4 mb-6">
             <div>
               <h1 className="text-3xl font-bold text-white mb-1">
                 Weekly Scores
@@ -100,7 +100,7 @@ export default function Weekly() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               {/* Search Bar */}
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -113,7 +113,7 @@ export default function Weekly() {
                   placeholder="Search teams, players, weeks..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-slate-600 border border-slate-500 text-white placeholder-slate-300 pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 w-64"
+                  className="bg-slate-600 border border-slate-500 text-white placeholder-slate-300 pl-10 pr-4 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 w-full max-w-64"
                 />
                 {searchQuery && (
                   <button
