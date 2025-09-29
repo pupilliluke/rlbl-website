@@ -150,51 +150,107 @@ export default function Teams() {
 
   // Center Badge Component
   function renderCenterBadge(centerX, centerY, conference) {
-    const badgeSize = 80;
+    const badgeSize = 180; // Increased from 80 to 180
     return (
       <g>
-        {/* Outer glow circle */}
+        {/* Outer glow circles for dramatic effect */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={badgeSize / 2 + 4}
-          fill="rgba(59, 130, 246, 0.2)"
+          r={badgeSize / 2 + 20}
+          fill="rgba(59, 130, 246, 0.1)"
           className="animate-pulse"
         />
-        {/* Main badge circle */}
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r={badgeSize / 2 + 12}
+          fill="rgba(59, 130, 246, 0.2)"
+          className="animate-pulse"
+          style={{ animationDelay: '0.5s' }}
+        />
+        <circle
+          cx={centerX}
+          cy={centerY}
+          r={badgeSize / 2 + 6}
+          fill="rgba(59, 130, 246, 0.3)"
+          className="animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
+
+        {/* Main badge circle with gradient */}
+        <defs>
+          <radialGradient id="centerBadgeGradient" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="rgba(59, 130, 246, 0.8)" />
+            <stop offset="50%" stopColor="rgba(17, 24, 39, 0.95)" />
+            <stop offset="100%" stopColor="rgba(0, 0, 0, 0.9)" />
+          </radialGradient>
+        </defs>
+
         <circle
           cx={centerX}
           cy={centerY}
           r={badgeSize / 2}
-          fill="rgba(17, 24, 39, 0.9)"
+          fill="url(#centerBadgeGradient)"
           stroke="rgb(59, 130, 246)"
-          strokeWidth="2"
-          className="drop-shadow-lg"
+          strokeWidth="4"
+          className="drop-shadow-2xl"
+          style={{
+            filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.6))'
+          }}
         />
-        {/* Badge text */}
+
+        {/* Large season text */}
         <text
           x={centerX}
-          y={centerY - 8}
+          y={centerY - 15}
           textAnchor="middle"
           fill="white"
-          fontSize="12"
+          fontSize="42"
           fontWeight="bold"
           className="select-none"
+          style={{
+            textShadow: '0 4px 8px rgba(0,0,0,0.8), 0 0 16px rgba(59, 130, 246, 0.6)',
+            fontFamily: 'Arial, sans-serif'
+          }}
         >
           {selectedSeason === 'current' ? 'S3' :
            selectedSeason === 'season2' ? 'S2' :
            selectedSeason === 'season1' ? 'S1' : 'RL'}
         </text>
+
+        {/* Conference/subtitle text */}
         <text
           x={centerX}
-          y={centerY + 8}
+          y={centerY + 25}
           textAnchor="middle"
           fill="rgb(156, 163, 175)"
-          fontSize="10"
+          fontSize="16"
+          fontWeight="600"
           className="select-none"
+          style={{
+            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+          }}
         >
-          {conference === 'all' ? 'ALL' : conference || 'RLBL'}
+          {conference === 'all' ? 'ALL TEAMS' : conference || 'RLBL'}
         </text>
+
+        {/* Optional decorative elements */}
+        <circle
+          cx={centerX - badgeSize / 2 + 15}
+          cy={centerY}
+          r="3"
+          fill="rgba(59, 130, 246, 0.8)"
+          className="animate-pulse"
+        />
+        <circle
+          cx={centerX + badgeSize / 2 - 15}
+          cy={centerY}
+          r="3"
+          fill="rgba(59, 130, 246, 0.8)"
+          className="animate-pulse"
+          style={{ animationDelay: '0.5s' }}
+        />
       </g>
     );
   }
@@ -211,8 +267,8 @@ export default function Teams() {
     // Calculate team strength (player count as percentage)
     const maxPlayers = 5; // Typical RL team size
     const teamStrength = Math.min((teamPlayers.length / maxPlayers) * 100, 100);
-    const nodeSize = 50;
-    const strokeDasharray = `${teamStrength * 2.51} 251`; // Circumference ≈ 2πr where r=40
+    const nodeSize = 80; // Increased from 50 to 80
+    const strokeDasharray = `${teamStrength * 4.02} 402`; // Circumference ≈ 2πr where r=64
 
     // Keep text upright
     const shouldFlip = angle > Math.PI / 2 && angle < (3 * Math.PI) / 2;
@@ -258,30 +314,45 @@ export default function Teams() {
           }}
         />
 
+        {/* Define gradient for this team */}
+        <defs>
+          <linearGradient id={`teamGradient-${teamId}-${index}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={teamPrimaryColor} />
+            <stop offset="100%" stopColor={teamSecondaryColor} />
+          </linearGradient>
+          <radialGradient id={`teamRadial-${teamId}-${index}`} cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stopColor={teamSecondaryColor} stopOpacity="0.8" />
+            <stop offset="100%" stopColor={teamPrimaryColor} />
+          </radialGradient>
+        </defs>
+
         {/* Main team node */}
         <circle
           cx={x}
           cy={y}
           r={nodeSize / 2}
-          fill={`linear-gradient(45deg, ${teamPrimaryColor}, ${teamSecondaryColor})`}
+          fill={`url(#teamRadial-${teamId}-${index})`}
           stroke="white"
-          strokeWidth="2"
-          className="transition-all duration-300 group-hover:r-28 group-hover:drop-shadow-xl"
+          strokeWidth="3"
+          className="transition-all duration-300 group-hover:stroke-width-4 group-hover:drop-shadow-xl"
           style={{
-            filter: `drop-shadow(0 4px 8px ${teamPrimaryColor}30)`
+            filter: `drop-shadow(0 6px 12px ${teamPrimaryColor}40)`
           }}
         />
 
         {/* Team initials/logo */}
         <text
           x={x}
-          y={y + 4}
+          y={y + 6}
           textAnchor="middle"
           fill="white"
-          fontSize="14"
+          fontSize="18"
           fontWeight="bold"
-          className="select-none transition-all duration-300 group-hover:text-base"
-          style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+          className="select-none transition-all duration-300 group-hover:text-xl"
+          style={{
+            textShadow: '0 2px 6px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)',
+            fontFamily: 'Arial, sans-serif'
+          }}
         >
           {teamName.split(' ').map(word => word[0]).join('').substring(0, 3).toUpperCase()}
         </text>
@@ -289,37 +360,60 @@ export default function Teams() {
         {/* Conference indicator dots */}
         {teamConference && (
           <circle
-            cx={x + nodeSize / 2 - 6}
-            cy={y - nodeSize / 2 + 6}
-            r="3"
+            cx={x + nodeSize / 2 - 8}
+            cy={y - nodeSize / 2 + 8}
+            r="4"
             fill={teamConference === 'East' ? '#EF4444' : '#10B981'}
+            stroke="white"
+            strokeWidth="1"
             className="drop-shadow-sm"
           />
         )}
 
-        {/* Team label */}
-        <text
-          x={x + (nodeSize / 2 + 20) * Math.cos(labelAngle)}
-          y={y + (nodeSize / 2 + 20) * Math.sin(labelAngle) + 4}
-          textAnchor={textAnchor}
-          fill="white"
-          fontSize="11"
-          fontWeight="600"
-          className="select-none transition-all duration-300 group-hover:text-sm group-hover:font-bold"
-          style={{
-            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-            transform: shouldFlip ? `rotate(${labelAngle * 180 / Math.PI}deg)` : `rotate(${labelAngle * 180 / Math.PI}deg)`,
-            transformOrigin: `${x + (nodeSize / 2 + 20) * Math.cos(labelAngle)}px ${y + (nodeSize / 2 + 20) * Math.sin(labelAngle)}px`
-          }}
-        >
-          {teamName}
-        </text>
+        {/* Team label wrapped around circle */}
+        {(() => {
+          const labelRadius = nodeSize / 2 + 25;
+          const circumference = 2 * Math.PI * labelRadius;
+          const textLength = teamName.length;
+          const charSpacing = Math.min(circumference / textLength / 2, 12); // Limit spacing to prevent too spread out text
+
+          // Calculate starting angle to center the text
+          const totalTextAngle = (textLength * charSpacing) / labelRadius;
+          const startAngle = labelAngle - totalTextAngle / 2;
+
+          return teamName.split('').map((char, charIndex) => {
+            const charAngle = startAngle + (charIndex * charSpacing) / labelRadius;
+            const charX = x + labelRadius * Math.cos(charAngle);
+            const charY = y + labelRadius * Math.sin(charAngle);
+            const rotationAngle = (charAngle + Math.PI / 2) * 180 / Math.PI;
+
+            return (
+              <text
+                key={`char-${charIndex}`}
+                x={charX}
+                y={charY}
+                textAnchor="middle"
+                fill="white"
+                fontSize="12"
+                fontWeight="600"
+                className="select-none transition-all duration-300 group-hover:text-sm group-hover:font-bold"
+                style={{
+                  textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7)',
+                  transform: `rotate(${rotationAngle}deg)`,
+                  transformOrigin: `${charX}px ${charY}px`
+                }}
+              >
+                {char}
+              </text>
+            );
+          });
+        })()}
 
         {/* Click handler */}
         <circle
           cx={x}
           cy={y}
-          r={nodeSize / 2 + 10}
+          r={nodeSize / 2 + 15}
           fill="transparent"
           className="cursor-pointer"
           onClick={() => window.location.href = `/teams/${slugify(teamName)}`}
