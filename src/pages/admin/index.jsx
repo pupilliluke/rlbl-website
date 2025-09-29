@@ -782,6 +782,7 @@ const Admin = () => {
             setGameResultsData(updatedGames);
           }}
           apiService={apiService}
+          selectedSeason={selectedSeason}
         />
       );
     }
@@ -1006,11 +1007,17 @@ const Admin = () => {
                   }}
                   className="bg-transparent text-white border-none focus:outline-none"
                 >
-                  {seasonsData.map(season => (
-                    <option key={season.id} value={season.id} className="bg-gray-800">
-                      {season.season_name || season.name}
-                    </option>
-                  ))}
+                  {seasonsData
+                    .filter((season, index, array) => {
+                      // Keep only the first occurrence of each season name
+                      const seasonName = season.season_name || season.name;
+                      return array.findIndex(s => (s.season_name || s.name) === seasonName) === index;
+                    })
+                    .map(season => (
+                      <option key={season.id} value={season.id} className="bg-gray-800">
+                        {season.season_name || season.name}
+                      </option>
+                    ))}
                 </select>
               </div>
             )}

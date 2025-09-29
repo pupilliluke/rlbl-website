@@ -15,7 +15,6 @@ const AdminAuth = ({ onAuthenticated }) => {
 
   const handleAuth = () => {
     console.log('Entered password:', password);
-    console.log('Expected password:', process.env.REACT_APP_ADMIN_PASSWORD);
     const isCorrect = password === process.env.REACT_APP_ADMIN_PASSWORD;
     if (isCorrect) {
       onAuthenticated(true);
@@ -34,7 +33,7 @@ const AdminAuth = ({ onAuthenticated }) => {
   return (
     <div className="min-h-screen pt-20 flex items-center justify-center bg-gradient-to-b from-[#0f0f1a] via-[#1a1a2e] to-black text-white">
       <div className={`bg-[#1f1f2e] p-8 rounded-xl shadow-xl max-w-md w-full transition-transform duration-300 ${error ? 'animate-shake' : ''}`}>
-        <h2 className="text-2xl font-bold text-center text-orange-400 mb-4">🔐 Admin Access</h2>
+        <h2 className="text-2xl font-bold text-center text-orange-400 mb-4">Admin Access</h2>
         <input
           type="password"
           placeholder="Enter admin password"

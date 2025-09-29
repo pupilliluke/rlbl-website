@@ -1,5 +1,123 @@
 import React from "react";
 
+const MatchupForm = ({ teams, week, onSubmit, onCancel, loading }) => {
+  const [formData, setFormData] = React.useState({
+    homeTeamSeasonId: '',
+    awayTeamSeasonId: '',
+    week: week || '',
+    gameDate: '',
+    isPlayoffs: false
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.homeTeamSeasonId || !formData.awayTeamSeasonId || !formData.week) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    if (formData.homeTeamSeasonId === formData.awayTeamSeasonId) {
+      alert('Home and away teams cannot be the same');
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Home Team *
+        </label>
+        <select
+          value={formData.homeTeamSeasonId}
+          onChange={(e) => setFormData({...formData, homeTeamSeasonId: e.target.value})}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+          required
+        >
+          <option value="">Select Home Team</option>
+          {teams.map(team => (
+            <option key={team.id} value={team.id}>{team.display_name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Away Team *
+        </label>
+        <select
+          value={formData.awayTeamSeasonId}
+          onChange={(e) => setFormData({...formData, awayTeamSeasonId: e.target.value})}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+          required
+        >
+          <option value="">Select Away Team</option>
+          {teams.map(team => (
+            <option key={team.id} value={team.id}>{team.display_name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Week *
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="20"
+          value={formData.week}
+          onChange={(e) => setFormData({...formData, week: e.target.value})}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+          required
+          disabled={true}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Game Date
+        </label>
+        <input
+          type="date"
+          value={formData.gameDate}
+          onChange={(e) => setFormData({...formData, gameDate: e.target.value})}
+          className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white"
+        />
+      </div>
+
+      <div>
+        <label className="flex items-center text-sm font-medium text-gray-300">
+          <input
+            type="checkbox"
+            checked={formData.isPlayoffs}
+            onChange={(e) => setFormData({...formData, isPlayoffs: e.target.checked})}
+            className="mr-2"
+          />
+          Playoffs Game
+        </label>
+      </div>
+
+      <div className="flex gap-3 pt-4">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-4 py-2 rounded font-medium transition-colors"
+        >
+          {loading ? 'Saving...' : 'Create Matchup'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium transition-colors"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
+
 const GameResultsTable = ({
   gameResultsData,
   collapsedWeeks,
@@ -9,7 +127,8 @@ const GameResultsTable = ({
   onManageGameStats,
   onAddSeriesGame,
   onUpdateGameResults,
-  apiService
+  apiService,
+  selectedSeason
 }) => {
   const [collapsedGames, setCollapsedGames] = React.useState(new Set());
   const [gamePlayersData, setGamePlayersData] = React.useState({});
@@ -17,6 +136,102 @@ const GameResultsTable = ({
   const [editingSeriesId, setEditingSeriesId] = React.useState(null);
   const [editableStats, setEditableStats] = React.useState({});
   const [savingSeriesId, setSavingSeriesId] = React.useState(null);
+  const [showCreateMatchupModal, setShowCreateMatchupModal] = React.useState(false);
+  const [createMatchupWeek, setCreateMatchupWeek] = React.useState(null);
+  const [teams, setTeams] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  // Load teams data for matchup creation/editing
+  React.useEffect(() => {
+    const loadTeams = async () => {
+      if (selectedSeason && apiService) {
+        try {
+          const teamsData = await apiService.getTeamSeasons(selectedSeason.id);
+          setTeams(teamsData);
+        } catch (error) {
+          console.error('Failed to load teams:', error);
+        }
+      }
+    };
+    loadTeams();
+  }, [selectedSeason, apiService]);
+
+  const handleCreateMatchup = (weekNumber) => {
+    setCreateMatchupWeek(weekNumber);
+    setShowCreateMatchupModal(true);
+  };
+
+  const handleDeleteMatchup = async (seriesGames) => {
+    const firstGame = seriesGames[0];
+    const matchupName = `${firstGame.home_display} vs ${firstGame.away_display}`;
+
+    if (!window.confirm(`Are you sure you want to delete the entire matchup "${matchupName}" in Week ${firstGame.week}? This will delete all ${seriesGames.length} game(s) in this series. This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Delete all games in the series
+      await Promise.all(seriesGames.map(game => apiService.deleteGame(game.id)));
+
+      // Update local data
+      const updatedGameResults = gameResultsData.filter(game =>
+        !seriesGames.some(seriesGame => seriesGame.id === game.id)
+      );
+      onUpdateGameResults(updatedGameResults);
+
+    } catch (error) {
+      console.error('Failed to delete matchup:', error);
+      alert('Failed to delete matchup. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateMatchupSubmit = async (formData) => {
+    try {
+      setLoading(true);
+
+      const gameData = {
+        season_id: selectedSeason.id,
+        home_team_season_id: parseInt(formData.homeTeamSeasonId),
+        away_team_season_id: parseInt(formData.awayTeamSeasonId),
+        week: createMatchupWeek,
+        game_date: formData.gameDate || new Date().toISOString().split('T')[0],
+        is_playoffs: formData.isPlayoffs || false
+      };
+
+      const newGame = await apiService.createGame(gameData);
+
+      // Enhance the new game with display names
+      const homeTeam = teams.find(t => t.id === parseInt(formData.homeTeamSeasonId));
+      const awayTeam = teams.find(t => t.id === parseInt(formData.awayTeamSeasonId));
+
+      const enhancedGame = {
+        ...newGame,
+        home_display: homeTeam?.display_name || 'Unknown Team',
+        away_display: awayTeam?.display_name || 'Unknown Team',
+        home_team_stats: [],
+        away_team_stats: [],
+        total_home_goals: 0,
+        total_away_goals: 0
+      };
+
+      // Update local data
+      const updatedGameResults = [...gameResultsData, enhancedGame];
+      onUpdateGameResults(updatedGameResults);
+
+      setShowCreateMatchupModal(false);
+      setCreateMatchupWeek(null);
+
+    } catch (error) {
+      console.error('Failed to create matchup:', error);
+      alert('Failed to create matchup. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleGameCollapse = async (gameId) => {
     const newCollapsed = new Set(collapsedGames);
@@ -322,8 +537,80 @@ const GameResultsTable = ({
   // Sort weeks in ascending order
   const sortedWeeks = Object.keys(gamesByWeek).sort((a, b) => parseInt(a) - parseInt(b));
 
+  const handleGenerateNewWeek = async () => {
+    const nextWeek = sortedWeeks.length > 0 ? Math.max(...sortedWeeks.map(w => parseInt(w))) + 1 : 1;
+
+    if (window.confirm(`Generate a new week (Week ${nextWeek}) with empty matchup slots? You can then add specific matchups using the "New Matchup" button.`)) {
+      try {
+        setLoading(true);
+
+        // Create a placeholder game to make the week visible
+        // We'll create one dummy game that can be deleted later, just to establish the week
+        if (teams.length >= 2) {
+          const gameData = {
+            season_id: selectedSeason.id,
+            home_team_season_id: teams[0].id,
+            away_team_season_id: teams[1].id,
+            week: nextWeek,
+            game_date: new Date().toISOString().split('T')[0],
+            is_playoffs: false
+          };
+
+          const newGame = await apiService.createGame(gameData);
+
+          // Enhance the new game with display names
+          const enhancedGame = {
+            ...newGame,
+            home_display: teams[0]?.display_name || 'Team 1',
+            away_display: teams[1]?.display_name || 'Team 2',
+            home_team_stats: [],
+            away_team_stats: [],
+            total_home_goals: 0,
+            total_away_goals: 0
+          };
+
+          // Update local data
+          const updatedGameResults = [...gameResultsData, enhancedGame];
+          onUpdateGameResults(updatedGameResults);
+
+          alert(`Week ${nextWeek} has been created! You can now add specific matchups using the "New Matchup" button, or delete the placeholder game if not needed.`);
+        } else {
+          alert('Need at least 2 teams to generate a week. Please add teams first.');
+        }
+
+      } catch (error) {
+        console.error('Failed to generate new week:', error);
+        alert('Failed to generate new week. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {/* Generate New Week Button */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-white">Game Results</h2>
+        <button
+          onClick={handleGenerateNewWeek}
+          disabled={loading}
+          className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 text-sm font-sans border border-purple-500 transition-colors rounded flex items-center gap-2"
+          title="Generate New Week"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
+              Generating...
+            </>
+          ) : (
+            <>
+              Generate New Week
+            </>
+          )}
+        </button>
+      </div>
+
       {sortedWeeks.map(week => {
         const weekNumber = parseInt(week);
         const isCollapsed = collapsedWeeks.has(weekNumber);
@@ -333,12 +620,12 @@ const GameResultsTable = ({
         return (
           <div key={week} className="bg-slate-900 border border-slate-700 rounded-lg shadow-lg">
             {/* Week Header - Collapsible */}
-            <button
-              onClick={() => onToggleWeekCollapse(weekNumber)}
-              className="w-full bg-slate-800 px-4 py-3 border-b border-slate-600 hover:bg-slate-700 transition-colors text-left rounded-t-lg"
-            >
+            <div className="bg-slate-800 px-4 py-3 border-b border-slate-600 rounded-t-lg">
               <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onToggleWeekCollapse(weekNumber)}
+                  className="flex items-center gap-3 hover:bg-slate-700 transition-colors p-2 rounded"
+                >
                   <span className="text-lg font-sans text-slate-200">
                     {isCollapsed ? '►' : '▼'}
                   </span>
@@ -350,12 +637,21 @@ const GameResultsTable = ({
                       {Object.keys(weekSeries).length} series | {totalGames} games
                     </p>
                   </div>
-                </div>
-                <div className="text-xs text-slate-200 font-sans">
-                  {isCollapsed ? '[+]' : '[-]'}
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCreateMatchup(weekNumber);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-xs font-sans border border-green-500 transition-colors rounded flex items-center gap-1"
+                    title="Create New Matchup"
+                  >
+                    New Matchup
+                  </button>
                 </div>
               </div>
-            </button>
+            </div>
 
             {/* Week Content - Tabular Layout */}
             {!isCollapsed && (
@@ -443,8 +739,8 @@ const GameResultsTable = ({
                                     }}
                                     disabled={savingSeriesId === seriesId}
                                     className={`px-2 py-1 text-xs font-sans border transition-colors flex items-center gap-1 ${
-                                      editingSeriesId === seriesId 
-                                        ? 'bg-green-700 hover:bg-green-600 text-slate-100 border-green-600 disabled:opacity-50' 
+                                      editingSeriesId === seriesId
+                                        ? 'bg-green-700 hover:bg-green-600 text-slate-100 border-green-600 disabled:opacity-50'
                                         : 'bg-blue-700 hover:bg-blue-600 text-gray-300 border-blue-600'
                                     }`}
                                     title={editingSeriesId === seriesId ? "Save Changes" : "Edit Series"}
@@ -455,17 +751,24 @@ const GameResultsTable = ({
                                         SAVING
                                       </>
                                     ) : editingSeriesId === seriesId ? (
-                                      '💾 SAVE'
+                                      'SAVE'
                                     ) : (
-                                      '⋯ EDIT'
+                                      'Insert Stats'
                                     )}
                                   </button>
                                   <button
                                     onClick={() => onAddSeriesGame(firstGame)}
-                                    className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 text-xs font-sans border border-gray-400 transition-colors"
+                                    className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 text-xs font-sans border border-green-500 transition-colors"
                                     title="Add Game to Series"
                                   >
-                                    + GAME
+                                    Add Games
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteMatchup(sortedSeriesGames)}
+                                    className="bg-red-700 hover:bg-red-600 text-gray-300 px-2 py-1 text-xs font-sans border border-red-600 transition-colors"
+                                    title="Delete Entire Matchup"
+                                  >
+                                    DEL
                                   </button>
                                 </div>
                               </td>
@@ -974,6 +1277,26 @@ const GameResultsTable = ({
           </div>
         );
       })}
+
+      {/* Create Matchup Modal */}
+      {showCreateMatchupModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-96 max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Create New Matchup - Week {createMatchupWeek}</h3>
+            <MatchupForm
+              teams={teams}
+              week={createMatchupWeek}
+              onSubmit={handleCreateMatchupSubmit}
+              onCancel={() => {
+                setShowCreateMatchupModal(false);
+                setCreateMatchupWeek(null);
+              }}
+              loading={loading}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
