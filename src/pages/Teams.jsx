@@ -370,16 +370,18 @@ export default function Teams() {
           />
         )}
 
-        {/* Team label wrapped around circle */}
+        {/* Team label wrapped over the top center of circle */}
         {(() => {
           const labelRadius = nodeSize / 2 + 25;
-          const circumference = 2 * Math.PI * labelRadius;
           const textLength = teamName.length;
-          const charSpacing = Math.min(circumference / textLength / 2, 12); // Limit spacing to prevent too spread out text
+          const charSpacing = 8; // Fixed spacing between characters
 
-          // Calculate starting angle to center the text
-          const totalTextAngle = (textLength * charSpacing) / labelRadius;
-          const startAngle = labelAngle - totalTextAngle / 2;
+          // Calculate the arc that the text should span (roughly 120 degrees over the top)
+          const maxArcAngle = Math.PI * 2/3; // 120 degrees in radians
+          const totalTextAngle = Math.min((textLength * charSpacing) / labelRadius, maxArcAngle);
+
+          // Start angle - center the text arc over the top of the circle
+          const startAngle = -Math.PI / 2 - totalTextAngle / 2; // -90 degrees minus half the text arc
 
           return teamName.split('').map((char, charIndex) => {
             const charAngle = startAngle + (charIndex * charSpacing) / labelRadius;
