@@ -30,12 +30,12 @@ const Stats = () => {
       try {
         setLoading(true);
         console.log('Fetching stats and teams data from API for season:', selectedSeason);
-        
+
         const [statsData, teamsData] = await Promise.all([
           apiService.getStats(selectedSeason),
           apiService.getTeams(selectedSeason)
         ]);
-        
+
         console.log('Stats data received:', statsData);
         console.log('Teams data received:', teamsData);
         setStats(statsData);
@@ -55,6 +55,7 @@ const Stats = () => {
 
     fetchData();
   }, [selectedSeason]);
+
 
   // Process stats data to add calculated fields
   const processedStats = useMemo(() => {
@@ -241,21 +242,54 @@ const Stats = () => {
   // Generate premium statistics data
   const premiumStatistics = useMemo(() => {
     if (processedStats.length === 0) return null;
-    
-    const topPlayers = [...processedStats].sort((a, b) => b.total_points - a.total_points).slice(0, 5);
+
+    const topPointPlayers = [...processedStats].sort((a, b) => b.total_points - a.total_points).slice(0, 5);
+    const topGoalPlayers = [...processedStats].sort((a, b) => b.total_goals - a.total_goals).slice(0, 5);
+    const topAssistPlayers = [...processedStats].sort((a, b) => b.total_assists - a.total_assists).slice(0, 5);
+    const topSavePlayers = [...processedStats].sort((a, b) => b.total_saves - a.total_saves).slice(0, 5);
+    const topMVPPlayers = [...processedStats].sort((a, b) => b.total_mvps - a.total_mvps).slice(0, 5);
+
     const avgStats = {
       points: processedStats.reduce((sum, p) => sum + p.total_points, 0) / processedStats.length,
       goals: processedStats.reduce((sum, p) => sum + p.total_goals, 0) / processedStats.length,
       assists: processedStats.reduce((sum, p) => sum + p.total_assists, 0) / processedStats.length,
     };
-    
+
+    const avgPerGameStats = {
+      points: processedStats.reduce((sum, p) => sum + p.ppg, 0) / processedStats.length,
+      goals: processedStats.reduce((sum, p) => sum + p.gpg, 0) / processedStats.length,
+      assists: processedStats.reduce((sum, p) => sum + p.apg, 0) / processedStats.length,
+    };
+
     return {
-      topPlayers: topPlayers.map(p => ({
-        label: p.player_name || p.name || p.display_name || 'Unknown Player',
-        value: p.total_points
+      topPlayers: topPointPlayers.map(p => ({
+        label: formatPlayerName(p.player_name || p.name || p.display_name || 'Unknown Player', p.gamertag),
+        value: p.total_points,
+        team: p.team_name || 'Free Agent'
+      })),
+      topGoalScorers: topGoalPlayers.map(p => ({
+        label: formatPlayerName(p.player_name || p.name || p.display_name || 'Unknown Player', p.gamertag),
+        value: p.total_goals,
+        team: p.team_name || 'Free Agent'
+      })),
+      topPlaymakers: topAssistPlayers.map(p => ({
+        label: formatPlayerName(p.player_name || p.name || p.display_name || 'Unknown Player', p.gamertag),
+        value: p.total_assists,
+        team: p.team_name || 'Free Agent'
+      })),
+      topGuardians: topSavePlayers.map(p => ({
+        label: formatPlayerName(p.player_name || p.name || p.display_name || 'Unknown Player', p.gamertag),
+        value: p.total_saves,
+        team: p.team_name || 'Free Agent'
+      })),
+      topMVPs: topMVPPlayers.map(p => ({
+        label: formatPlayerName(p.player_name || p.name || p.display_name || 'Unknown Player', p.gamertag),
+        value: p.total_mvps,
+        team: p.team_name || 'Free Agent'
       })),
       totalPlayers: processedStats.length,
-      avgStats
+      avgStats,
+      avgPerGameStats
     };
   }, [processedStats]);
 
@@ -334,52 +368,353 @@ const Stats = () => {
         {/* Premium Statistics Dashboard */}
         {premiumStatistics && (
           <div className="mb-12">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <MetricCard
-                title="Active Players"
-                value={premiumStatistics.totalPlayers}
-                subtitle="Registered Players"
-                trend={12}
-                icon=""
-              />
-              <MetricCard
-                title="Avg Performance"
-                value={Math.round(premiumStatistics.avgStats.points)}
-                subtitle="Points per player"
-                trend={8}
-                icon=""
-              />
-              <MetricCard
-                title="Total Goals"
-                value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
-                subtitle="Season aggregate"
-                trend={-3}
-                icon=""
-              />
-              <MetricCard
-                title="Engagement"
-                value="94.2%"
-                subtitle="Player activity"
-                trend={5}
-                icon=""
-              />
+            {/* KPI Cards Infinite Loop Carousel */}
+            <div className="relative mb-8">
+              <style jsx>{`
+                @keyframes infiniteScroll {
+                  0% { transform: translateX(0); }
+                  100% { transform: translateX(-200%); }
+                }
+                .infinite-scroll {
+                  animation: infiniteScroll 60s linear infinite;
+                }
+              `}</style>
+              <div className="overflow-hidden">
+                <div className="flex infinite-scroll gap-8">
+                  {/* Slide 1 - Original */}
+                  <div className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <MetricCard
+                        title="Total Goals"
+                        value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
+                        subtitle="Season aggregate"
+                        trend={10}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Total Assists"
+                        value={processedStats.reduce((sum, p) => sum + p.total_assists, 0)}
+                        subtitle="Season aggregate"
+                        trend={8}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Top Player"
+                        value={processedStats.length > 0 ?
+                          (processedStats[0].player_name || processedStats[0].name || processedStats[0].display_name || 'Unknown').split(' ')[0]
+                          : 'N/A'}
+                        subtitle={`${processedStats.length > 0 ? processedStats[0].total_points.toLocaleString() : 0} points`}
+                        trend={15}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Top Team"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const topTeam = teamStats.reduce((max, team) =>
+                            team.totalPoints > max.totalPoints ? team : max
+                          );
+                          return topTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 points';
+                          const topTeam = teamStats.reduce((max, team) =>
+                            team.totalPoints > max.totalPoints ? team : max
+                          );
+                          return `${topTeam.totalPoints.toLocaleString()} points`;
+                        })()}
+                        trend={12}
+                        icon=""
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slide 2 - Original */}
+                  <div className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <MetricCard
+                        title="Total Demos"
+                        value={processedStats.reduce((sum, p) => sum + p.total_demos, 0)}
+                        subtitle="Season aggregate"
+                        trend={6}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Best SH% Team"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const bestSHTeam = teamStats.reduce((max, team) =>
+                            team.avgSH > max.avgSH ? team : max
+                          );
+                          return bestSHTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0%';
+                          const bestSHTeam = teamStats.reduce((max, team) =>
+                            team.avgSH > max.avgSH ? team : max
+                          );
+                          return `${bestSHTeam.avgSH.toFixed(1)}%`;
+                        })()}
+                        trend={9}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Most Demos/Game"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const mostDemosTeam = teamStats.reduce((max, team) =>
+                            team.avgDemoPerGame > max.avgDemoPerGame ? team : max
+                          );
+                          return mostDemosTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 demos/game';
+                          const mostDemosTeam = teamStats.reduce((max, team) =>
+                            team.avgDemoPerGame > max.avgDemoPerGame ? team : max
+                          );
+                          return `${mostDemosTeam.avgDemoPerGame.toFixed(1)} demos/game`;
+                        })()}
+                        trend={7}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Most Saves/Game"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const mostSavesTeam = teamStats.reduce((max, team) =>
+                            team.avgSVPG > max.avgSVPG ? team : max
+                          );
+                          return mostSavesTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 saves/game';
+                          const mostSavesTeam = teamStats.reduce((max, team) =>
+                            team.avgSVPG > max.avgSVPG ? team : max
+                          );
+                          return `${mostSavesTeam.avgSVPG.toFixed(1)} saves/game`;
+                        })()}
+                        trend={11}
+                        icon=""
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slide 1 - Duplicate for seamless loop */}
+                  <div className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <MetricCard
+                        title="Total Goals"
+                        value={processedStats.reduce((sum, p) => sum + p.total_goals, 0)}
+                        subtitle="Season aggregate"
+                        trend={10}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Total Assists"
+                        value={processedStats.reduce((sum, p) => sum + p.total_assists, 0)}
+                        subtitle="Season aggregate"
+                        trend={8}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Top Player"
+                        value={processedStats.length > 0 ?
+                          (processedStats[0].player_name || processedStats[0].name || processedStats[0].display_name || 'Unknown').split(' ')[0]
+                          : 'N/A'}
+                        subtitle={`${processedStats.length > 0 ? processedStats[0].total_points.toLocaleString() : 0} points`}
+                        trend={15}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Top Team"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const topTeam = teamStats.reduce((max, team) =>
+                            team.totalPoints > max.totalPoints ? team : max
+                          );
+                          return topTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 points';
+                          const topTeam = teamStats.reduce((max, team) =>
+                            team.totalPoints > max.totalPoints ? team : max
+                          );
+                          return `${topTeam.totalPoints.toLocaleString()} points`;
+                        })()}
+                        trend={12}
+                        icon=""
+                      />
+                    </div>
+                  </div>
+
+                  {/* Slide 2 - Duplicate for seamless loop */}
+                  <div className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <MetricCard
+                        title="Total Demos"
+                        value={processedStats.reduce((sum, p) => sum + p.total_demos, 0)}
+                        subtitle="Season aggregate"
+                        trend={6}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Best SH% Team"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const bestSHTeam = teamStats.reduce((max, team) =>
+                            team.avgSH > max.avgSH ? team : max
+                          );
+                          return bestSHTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0%';
+                          const bestSHTeam = teamStats.reduce((max, team) =>
+                            team.avgSH > max.avgSH ? team : max
+                          );
+                          return `${bestSHTeam.avgSH.toFixed(1)}%`;
+                        })()}
+                        trend={9}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Most Demos/Game"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const mostDemosTeam = teamStats.reduce((max, team) =>
+                            team.avgDemoPerGame > max.avgDemoPerGame ? team : max
+                          );
+                          return mostDemosTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 demos/game';
+                          const mostDemosTeam = teamStats.reduce((max, team) =>
+                            team.avgDemoPerGame > max.avgDemoPerGame ? team : max
+                          );
+                          return `${mostDemosTeam.avgDemoPerGame.toFixed(1)} demos/game`;
+                        })()}
+                        trend={7}
+                        icon=""
+                      />
+                      <MetricCard
+                        title="Most Saves/Game"
+                        value={(() => {
+                          if (teamStats.length === 0) return 'N/A';
+                          const mostSavesTeam = teamStats.reduce((max, team) =>
+                            team.avgSVPG > max.avgSVPG ? team : max
+                          );
+                          return mostSavesTeam.team;
+                        })()}
+                        subtitle={(() => {
+                          if (teamStats.length === 0) return '0 saves/game';
+                          const mostSavesTeam = teamStats.reduce((max, team) =>
+                            team.avgSVPG > max.avgSVPG ? team : max
+                          );
+                          return `${mostSavesTeam.avgSVPG.toFixed(1)} saves/game`;
+                        })()}
+                        trend={11}
+                        icon=""
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-2">
+            {/* Charts Section - Enhanced Top Performers */}
+            <div className="mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 <PremiumChart
-                  title="Top Performers"
+                  title="Top Point Leaders"
                   data={premiumStatistics.topPlayers}
                   type="bar"
                   gradient="blue"
                 />
+                <PremiumChart
+                  title="Top Goal Scorers"
+                  data={premiumStatistics.topGoalScorers}
+                  type="bar"
+                  gradient="green"
+                />
+                <PremiumChart
+                  title="Top Assists Leaders"
+                  data={premiumStatistics.topPlaymakers}
+                  type="bar"
+                  gradient="purple"
+                />
+                <PremiumChart
+                  title="Top Guardians"
+                  data={premiumStatistics.topGuardians}
+                  type="bar"
+                  gradient="orange"
+                />
+                <PremiumChart
+                  title="Most Valuable Players"
+                  data={premiumStatistics.topMVPs}
+                  type="bar"
+                  gradient="red"
+                />
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 border border-gray-600">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                    League Overview
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-300">Active Players</span>
+                      <span className="text-white font-bold text-lg">28</span>
+                    </div>
+
+                    <div>
+                      <div className="text-gray-300 text-sm mb-2">Top 3 SH% Teams</div>
+                      <div className="space-y-1">
+                        {(() => {
+                          if (teamStats.length === 0) return <div className="text-orange-400 text-xs">N/A</div>;
+                          const top3SH = [...teamStats]
+                            .sort((a, b) => b.avgSH - a.avgSH)
+                            .slice(0, 3);
+                          return top3SH.map((team, index) => (
+                            <div key={team.team} className="flex justify-between items-center">
+                              <span className="text-gray-400 text-xs">
+                                {index + 1}. {team.team}
+                              </span>
+                              <span className="text-orange-400 font-bold text-xs">
+                                {team.avgSH.toFixed(1)}%
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-gray-300 text-sm mb-2">Top 3 SVPG Teams</div>
+                      <div className="space-y-1">
+                        {(() => {
+                          if (teamStats.length === 0) return <div className="text-cyan-400 text-xs">N/A</div>;
+                          const top3SVPG = [...teamStats]
+                            .sort((a, b) => b.avgSVPG - a.avgSVPG)
+                            .slice(0, 3);
+                          return top3SVPG.map((team, index) => (
+                            <div key={team.team} className="flex justify-between items-center">
+                              <span className="text-gray-400 text-xs">
+                                {index + 1}. {team.team}
+                              </span>
+                              <span className="text-cyan-400 font-bold text-xs">
+                                {team.avgSVPG.toFixed(1)}
+                              </span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <RadialChart
-                title="Close Match Rate"
-                data={{ percentage: 87, label: "Rate" }}
-              />
             </div>
           </div>
         )}
@@ -515,32 +850,32 @@ const Stats = () => {
               <p className="text-sm text-gray-300 mt-1">Real-time player statistics and metrics</p>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
+              <table className="w-full table-auto">
                 <thead className="bg-gradient-to-r from-gray-900 to-gray-800 border-b border-gray-600">
                 <tr>
                   <th className="px-2 py-5 text-center font-bold text-white w-12 border-r border-white/5">#</th>
                   <StatHeader
                     column={viewType === "players" ? "player_name" : "team"}
                     label={viewType === "players" ? "Player" : "Team"}
-                    className="w-1/6"
+                    className="min-w-[120px] sm:min-w-[150px]"
                   />
-                  <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="Points" className="w-16" />
-                  <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="Goals" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="Assists" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="Shots" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="OTG" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="Saves" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="Epic Saves" className="w-16" />
-                  <StatHeader column={viewType === "players" ? "epicSavePercent" : "avgEpicSavePercent"} label="Epic Save %" className="w-16" />
-                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="Demos" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "demoPerGame" : "avgDemoPerGame"} label="Demo/Game" className="w-16" />
-                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" className="w-12" />
-                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="Games Played" className="w-16" />
+                  <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="Points" className="w-16 sm:w-20" />
+                  <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="Goals" className="w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="Assists" className="w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="Shots" className="hidden md:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" className="w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="OTG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" className="hidden md:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="Saves" className="hidden sm:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="Epic Saves" className="hidden lg:table-cell w-16 sm:w-20" />
+                  <StatHeader column={viewType === "players" ? "epicSavePercent" : "avgEpicSavePercent"} label="Epic Save %" className="hidden lg:table-cell w-16 sm:w-20" />
+                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="Demos" className="hidden md:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "demoPerGame" : "avgDemoPerGame"} label="Demo/Game" className="hidden lg:table-cell w-16 sm:w-20" />
+                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="Games" className="w-16 sm:w-20" />
                 </tr>
               </thead>
               <tbody>
@@ -574,43 +909,43 @@ const Stats = () => {
                     <td className="px-1 py-3 text-center font-semibold text-blue-400 text-sm">
                       {viewType === "players" ? item.total_assists : item.totalAssists}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden md:table-cell px-1 py-3 text-center text-sm">
                       {viewType === "players" ? item.total_shots : item.totalShots}
                     </td>
                     <td className="px-1 py-3 text-center font-bold text-orange-400 text-sm">
                       {viewType === "players" ? item.total_mvps : item.totalMVPs}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       0
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden md:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
                     </td>
-                    <td className="px-1 py-3 text-center font-semibold text-purple-400 text-sm">
+                    <td className="hidden sm:table-cell px-1 py-3 text-center font-semibold text-purple-400 text-sm">
                       {viewType === "players" ? item.total_saves : item.totalSaves}
                     </td>
-                    <td className="px-1 py-3 text-center text-cyan-400 text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-cyan-400 text-sm">
                       {viewType === "players" ? item.total_epic_saves : item.totalEpicSaves}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.epicSavePercent : item.avgEpicSavePercent || 0).toFixed(1)}%
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.svpg : item.avgSVPG || 0).toFixed(2)}
                     </td>
-                    <td className="px-1 py-3 text-center text-red-400 text-sm">
+                    <td className="hidden md:table-cell px-1 py-3 text-center text-red-400 text-sm">
                       {viewType === "players" ? item.total_demos : item.totalDemos}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.demoPerGame : item.avgDemoPerGame || 0).toFixed(2)}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.ppg : item.avgPPG || 0).toFixed(1)}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.gpg : item.avgGPG || 0).toFixed(2)}
                     </td>
-                    <td className="px-1 py-3 text-center text-sm">
+                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.apg : item.avgAPG || 0).toFixed(2)}
                     </td>
                     <td className="px-1 py-3 text-center text-sm">
