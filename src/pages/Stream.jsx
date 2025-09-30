@@ -60,10 +60,14 @@ const Stream = () => {
     };
   }, []);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (only within chat container)
   useEffect(() => {
     if (chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Only scroll within the chat container, not the entire page
+      const chatContainer = chatEndRef.current.closest('.overflow-y-auto');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
     }
   }, [messages]);
 
@@ -223,15 +227,12 @@ const Stream = () => {
   }
 
   return (
-    <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'container mx-auto px-4 pt-24 pb-8'}`}>
+    <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-black' : 'container mx-auto px-4 pt-40 pb-8'}`}>
       {!isFullscreen && (
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center justify-center gap-3">
-            📺 Live Stream
+          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+            Live Stream
           </h1>
-          <p className="text-gray-300">
-            Watch the live Rocket League action
-          </p>
         </div>
       )}
 

@@ -288,34 +288,6 @@ export default function Teams() {
           fill="rgba(0, 0, 0, 0.3)"
         />
 
-        {/* Strength arc background */}
-        <circle
-          cx={x}
-          cy={y}
-          r={nodeSize / 2 + 6}
-          fill="none"
-          stroke="rgba(75, 85, 99, 0.3)"
-          strokeWidth="3"
-        />
-
-        {/* Strength arc */}
-        <circle
-          cx={x}
-          cy={y}
-          r={nodeSize / 2 + 6}
-          fill="none"
-          stroke={teamPrimaryColor}
-          strokeWidth="3"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset="62.75"
-          strokeLinecap="round"
-          className="transition-all duration-500 group-hover:stroke-width-4"
-          style={{
-            filter: `drop-shadow(0 0 8px ${teamPrimaryColor}40)`,
-            transform: 'rotate(-90deg)',
-            transformOrigin: `${x}px ${y}px`
-          }}
-        />
 
         {/* Define gradient for this team */}
         <defs>
@@ -335,7 +307,7 @@ export default function Teams() {
           cy={y}
           r={nodeSize / 2}
           fill={`url(#teamRadial-${teamId}-${index})`}
-          stroke="white"
+          stroke={teamPrimaryColor}
           strokeWidth="3"
           className="transition-all duration-300 group-hover:stroke-width-4 group-hover:drop-shadow-xl"
           style={{
@@ -357,24 +329,47 @@ export default function Teams() {
             fontFamily: 'Arial, sans-serif'
           }}
         >
-          {teamName.split(' ').map(word => word[0]).join('').substring(0, 3).toUpperCase()}
+          {(() => {
+            // Custom abbreviations for specific teams
+            if (teamName.toLowerCase().includes('mj')) return 'MJ';
+            if (teamName.toLowerCase().includes('otters') || teamName.toLowerCase().includes('otter')) return 'OO';
+            // Default: first letters of each word, max 3 characters
+            return teamName.split(' ').map(word => word[0]).join('').substring(0, 3).toUpperCase();
+          })()}
         </text>
 
-        {/* Conference indicator dots */}
-        {teamConference && (
+        {/* Primary color line (outer ring) */}
+        <circle
+          cx={x}
+          cy={y}
+          r={nodeSize / 2 + 4}
+          fill="none"
+          stroke={teamPrimaryColor}
+          strokeWidth="2"
+          className="transition-all duration-300 group-hover:stroke-width-3"
+          style={{
+            filter: `drop-shadow(0 0 4px ${teamPrimaryColor}60)`
+          }}
+        />
+
+        {/* Secondary color line (inner ring) */}
+        {teamSecondaryColor !== teamPrimaryColor && (
           <circle
-            cx={x + nodeSize / 2 - 8}
-            cy={y - nodeSize / 2 + 8}
-            r="4"
-            fill={teamConference === 'East' ? '#EF4444' : '#10B981'}
-            stroke="white"
-            strokeWidth="1"
-            className="drop-shadow-sm"
+            cx={x}
+            cy={y}
+            r={nodeSize / 2 + 6}
+            fill="none"
+            stroke={teamSecondaryColor}
+            strokeWidth="2"
+            className="transition-all duration-300 group-hover:stroke-width-3"
+            style={{
+              filter: `drop-shadow(0 0 4px ${teamSecondaryColor}60)`
+            }}
           />
         )}
 
-        {/* Team label wrapped over the top center of circle */}
-        {(() => {
+        {/* Team label wrapped over the top center of circle - Hidden on mobile */}
+        {!isMobile && (() => {
           const labelRadius = nodeSize / 2 + 25;
           const textLength = teamName.length;
           const charSpacing = 8; // Fixed spacing between characters
@@ -399,7 +394,7 @@ export default function Teams() {
                 y={charY}
                 textAnchor="middle"
                 fill="white"
-                fontSize={isMobile ? "10" : "12"}
+                fontSize="12"
                 fontWeight="600"
                 className="select-none transition-all duration-300 group-hover:text-sm group-hover:font-bold"
                 style={{
