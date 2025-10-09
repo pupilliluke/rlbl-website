@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 
-function PlayerStatsTable({ data, headers }) {
+function PlayerStatsTable({ data, headers, isTeamStats = false }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'desc' });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -13,10 +13,12 @@ function PlayerStatsTable({ data, headers }) {
     if (searchTerm) {
       sortableData = sortableData.filter(row => {
         const playerName = row.Player || '';
-        const teamName = row.Team || row.Conference || '';
+        const teamName = row.Team || row.Conference || row.WEST || row.West || row.East || '';
+        const searchLower = searchTerm.toLowerCase();
+
         return (
-          playerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          teamName.toLowerCase().includes(searchTerm.toLowerCase())
+          playerName.toLowerCase().includes(searchLower) ||
+          teamName.toLowerCase().includes(searchLower)
         );
       });
     }
@@ -51,11 +53,19 @@ function PlayerStatsTable({ data, headers }) {
   }, [data, sortConfig, searchTerm]);
 
   const requestSort = (key) => {
-    let direction = 'desc';
-    if (sortConfig.key === key && sortConfig.direction === 'desc') {
-      direction = 'asc';
+    const isTeamColumn = key === 'Team' || key === 'Conference';
+
+    if (isTeamColumn) {
+      // For team column, just reset to original order
+      setSortConfig({ key: null, direction: 'desc' });
+    } else {
+      // Standard sorting for other columns
+      let direction = 'desc';
+      if (sortConfig.key === key && sortConfig.direction === 'desc') {
+        direction = 'asc';
+      }
+      setSortConfig({ key, direction });
     }
-    setSortConfig({ key, direction });
   };
 
   const getSortIcon = (key) => {
@@ -65,12 +75,22 @@ function PlayerStatsTable({ data, headers }) {
     return sortConfig.direction === 'asc' ? '↑' : '↓';
   };
 
-  // Define column groups for player stats
+  // Define column groups for both player and team stats
   const getColumnGroups = () => {
-    const offensiveStats = ['Points', 'Goals', 'Assists', 'Shots', 'SH%', 'MVP', 'OTG'];
-    const defensiveStats = ['Saves', 'Epic Saves', 'Epic Save %'];
-    const demoStats = ['Demos'];
-    const perGameStats = ['PPG', 'GPG', 'APG', 'SVPG', 'Demo/Game', 'Games Played'];
+    // Different stat definitions for team vs player stats
+    const offensiveStats = isTeamStats
+      ? ['Points', 'Pts', 'Points per GM', 'Goals', 'G', 'Shots', 'SH%', 'Goals per GM', 'Shots per GM']
+      : ['Points', 'Goals', 'Assists', 'Shots', 'SH%', 'MVP', 'OTG'];
+
+    const defensiveStats = isTeamStats
+      ? ['Saves', 'SV', 'Epic SV per GM', 'Saves per GM', 'Saves per SA', 'Shots Allowed', 'Shots Allowed per GM', 'Goals Allowed', 'Goals Allowed per GM', 'Goals Allowed per Shot']
+      : ['Saves', 'Epic Saves', 'Epic Save %'];
+
+    const demoStats = ['Demos', 'Demo', 'Demo per GM'];
+
+    const perGameStats = isTeamStats
+      ? ['Games Played', 'GP', 'East Record', 'West Record', 'Last 6']
+      : ['Games Played', 'PPG', 'GPG', 'APG', 'SVPG', 'Demo/Game'];
 
     const groups = [];
     let currentIndex = 0;
@@ -92,7 +112,7 @@ function PlayerStatsTable({ data, headers }) {
       currentIndex++;
     }
     if (offensiveCols.length > 0) {
-      groups.push({ name: '🟢 OFFENSIVE STATS', color: 'text-green-400', columns: offensiveCols });
+      groups.push({ name: '🟢 OFFENSIVE STATS', color: 'text-green-300', columns: offensiveCols });
     }
 
     // Defensive stats
@@ -102,7 +122,7 @@ function PlayerStatsTable({ data, headers }) {
       currentIndex++;
     }
     if (defensiveCols.length > 0) {
-      groups.push({ name: '🔴 DEFENSIVE STATS', color: 'text-red-400', columns: defensiveCols });
+      groups.push({ name: '🔴 DEFENSIVE STATS', color: 'text-red-300', columns: defensiveCols });
     }
 
     // Demo stats
@@ -112,7 +132,7 @@ function PlayerStatsTable({ data, headers }) {
       currentIndex++;
     }
     if (demoCols.length > 0) {
-      groups.push({ name: '💥 DEMOS', color: 'text-orange-400', columns: demoCols });
+      groups.push({ name: '💥 DEMOS', color: 'text-orange-300', columns: demoCols });
     }
 
     // Per game stats
@@ -122,7 +142,7 @@ function PlayerStatsTable({ data, headers }) {
       currentIndex++;
     }
     if (perGameCols.length > 0) {
-      groups.push({ name: '🔵 PER GAME / EFFICIENCY', color: 'text-blue-400', columns: perGameCols });
+      groups.push({ name: '🔵 PER GAME / EFFICIENCY', color: 'text-blue-300', columns: perGameCols });
     }
 
     // Any remaining columns
@@ -155,39 +175,46 @@ function PlayerStatsTable({ data, headers }) {
           className="flex-1 px-4 py-3 rounded-xl bg-white border border-gray-300 text-black placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-all"
         />
         <div className="text-sm text-gray-400">
-          {sortedData.length} {sortedData.length === 1 ? 'player' : 'players'}
+          {sortedData.length} {sortedData.length === 1 ? (isTeamStats ? 'team' : 'player') : (isTeamStats ? 'teams' : 'players')}
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-white/10">
+      <div className="overflow-x-auto rounded-xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20">
         <table className="w-full text-sm">
-          <thead className="bg-white/5 border-b border-white/10">
+          <thead>
             {/* Category Headers Row */}
-            <tr className="bg-white/10">
-              {columnGroups.map((group, groupIndex) => (
-                group.columns.length > 0 && (
+            <tr className="bg-gradient-to-r from-purple-900/40 via-blue-900/40 to-purple-900/40 border-b-2 border-purple-500/50">
+              {columnGroups.map((group, groupIndex) => {
+                // Determine background color for each group
+                let groupBg = '';
+                if (group.name.includes('OFFENSIVE')) groupBg = 'bg-green-900/30';
+                else if (group.name.includes('DEFENSIVE')) groupBg = 'bg-red-900/30';
+                else if (group.name.includes('DEMOS')) groupBg = 'bg-orange-900/30';
+                else if (group.name.includes('PER GAME')) groupBg = 'bg-blue-900/30';
+
+                return group.columns.length > 0 && (
                   <th
                     key={`group-${groupIndex}`}
                     colSpan={group.columns.length}
-                    className={`px-4 py-2 text-center font-bold text-xs uppercase tracking-wider border-r border-white/10 ${group.color}`}
+                    className={`px-4 py-3 text-center font-bold text-sm uppercase tracking-wider border-r border-white/20 ${group.color} ${groupBg} backdrop-blur-sm`}
                   >
-                    {group.name}
+                    <div className="drop-shadow-lg">{group.name}</div>
                   </th>
-                )
-              ))}
+                );
+              })}
             </tr>
             {/* Column Headers Row */}
-            <tr>
+            <tr className="bg-gradient-to-r from-gray-900/60 via-gray-800/60 to-gray-900/60 border-b-2 border-blue-500/30">
               {headers.map((header) => (
                 <th
                   key={header}
                   onClick={() => requestSort(header)}
-                  className="px-4 py-3 text-left font-semibold text-gray-300 hover:bg-white/10 cursor-pointer transition-all whitespace-nowrap select-none group"
+                  className="px-4 py-3 text-left font-bold text-gray-200 hover:bg-blue-600/20 cursor-pointer transition-all whitespace-nowrap select-none group border-r border-white/10"
                 >
                   <div className="flex items-center gap-2">
-                    <span>{header}</span>
-                    <span className="text-gray-500 group-hover:text-blue-400 transition-colors">
+                    <span className="group-hover:text-blue-300 transition-colors">{header}</span>
+                    <span className="text-blue-400 group-hover:text-blue-300 transition-colors text-base">
                       {getSortIcon(header)}
                     </span>
                   </div>
@@ -195,24 +222,63 @@ function PlayerStatsTable({ data, headers }) {
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody>
             {sortedData.map((row, index) => (
               <tr
                 key={index}
-                className="hover:bg-white/5 transition-all"
+                className={`hover:bg-gradient-to-r hover:from-blue-600/20 hover:to-purple-600/20 transition-all duration-200 border-b border-white/5 ${
+                  index % 2 === 0
+                    ? 'bg-gradient-to-r from-gray-900/30 via-gray-800/20 to-gray-900/30'
+                    : 'bg-gradient-to-r from-gray-800/40 via-gray-700/30 to-gray-800/40'
+                }`}
               >
-                {headers.map((header) => (
-                  <td
-                    key={header}
-                    className={`px-4 py-3 whitespace-nowrap ${
-                      header === 'Player' ? 'font-semibold text-blue-400' :
-                      header === 'Team' || header === 'Conference' ? 'text-gray-300' :
-                      'text-gray-400'
-                    }`}
-                  >
-                    {row[header] || '-'}
-                  </td>
-                ))}
+                {headers.map((header, cellIndex) => {
+                  const isPlayer = header === 'Player';
+                  const isTeamCol = header === 'Team' || header === 'Conference' || header === 'WEST' || header === 'West' || header === 'East';
+
+                  // Offensive stats - different for team vs player
+                  const isOffensive = isTeamStats
+                    ? ['Points', 'Pts', 'Points per GM', 'Goals', 'G', 'Shots', 'SH%', 'Goals per GM', 'Shots per GM'].includes(header)
+                    : ['Points', 'Goals', 'Assists', 'Shots', 'SH%', 'MVP', 'OTG'].includes(header);
+
+                  // Defensive stats - different for team vs player
+                  const isDefensive = isTeamStats
+                    ? ['Saves', 'SV', 'Epic SV per GM', 'Saves per GM', 'Saves per SA', 'Shots Allowed', 'Shots Allowed per GM', 'Goals Allowed', 'Goals Allowed per GM', 'Goals Allowed per Shot'].includes(header)
+                    : ['Saves', 'Epic Saves', 'Epic Save %'].includes(header);
+
+                  const isDemos = ['Demos', 'Demo', 'Demo per GM'].includes(header);
+
+                  // Per game stats - different for team vs player
+                  const isPerGame = isTeamStats
+                    ? ['Games Played', 'GP', 'East Record', 'West Record', 'Last 6'].includes(header)
+                    : ['Games Played', 'PPG', 'GPG', 'APG', 'SVPG', 'Demo/Game'].includes(header);
+
+                  // Alternate column background color
+                  let columnBg = cellIndex % 2 === 0 ? 'bg-gray-900/20' : 'bg-gray-800/20';
+
+                  // Add category color tint
+                  if (isOffensive) columnBg += ' bg-blend-multiply';
+                  else if (isDefensive) columnBg += ' bg-blend-multiply';
+                  else if (isDemos) columnBg += ' bg-blend-multiply';
+                  else if (isPerGame) columnBg += ' bg-blend-multiply';
+
+                  return (
+                    <td
+                      key={header}
+                      className={`px-4 py-3 whitespace-nowrap border-r border-white/5 ${columnBg} ${
+                        isPlayer ? 'font-bold text-gray-100 text-base' :
+                        isTeamCol ? 'font-semibold text-gray-200' :
+                        isOffensive ? 'text-gray-100 font-medium' :
+                        isDefensive ? 'text-gray-100 font-medium' :
+                        isDemos ? 'text-gray-100 font-medium' :
+                        isPerGame ? 'text-gray-100 font-medium' :
+                        'text-gray-200'
+                      }`}
+                    >
+                      {row[header] || '-'}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

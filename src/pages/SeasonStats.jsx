@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import PlayerStatsTable from '../components/PlayerStatsTable';
+import ConferenceSlider from '../components/ConferenceSlider';
 import { SHEETS_CONFIG, fetchSheetData } from '../utils/sheetsData';
 
 function SeasonStats() {
@@ -7,6 +8,7 @@ function SeasonStats() {
   const [sheetData, setSheetData] = useState({ headers: [], data: [], teamHeaders: null, teamData: null });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('players');
+  const [conferenceFilter, setConferenceFilter] = useState('both'); // 'west', 'east', 'both'
 
   useEffect(() => {
     const loadData = async () => {
@@ -25,8 +27,9 @@ function SeasonStats() {
   }, [selectedSeason]);
 
   return (
-    <div className="container mx-auto spacing-container mt-20">
-      <div className="spacing-section">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white">
+      <div className="container mx-auto spacing-container mt-20">
+        <div className="spacing-section">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center holographic animate-luxury-fade-in">
           Season Statistics
         </h1>
@@ -98,7 +101,30 @@ function SeasonStats() {
             {activeTab === 'players' ? (
               <PlayerStatsTable data={sheetData.data} headers={sheetData.headers} />
             ) : (
-              <PlayerStatsTable data={sheetData.teamData} headers={sheetData.teamHeaders} />
+              <>
+                {/* Conference Slider for Teams */}
+                <ConferenceSlider
+                  value={conferenceFilter}
+                  onChange={setConferenceFilter}
+                />
+
+                {/* Render tables based on filter */}
+                {conferenceFilter === 'both' ? (
+                  <PlayerStatsTable data={sheetData.teamData} headers={sheetData.teamHeaders} isTeamStats={true} />
+                ) : conferenceFilter === 'west' ? (
+                  <PlayerStatsTable
+                    data={sheetData.teamData?.filter(row => row.Conference === 'West')}
+                    headers={sheetData.teamHeaders}
+                    isTeamStats={true}
+                  />
+                ) : (
+                  <PlayerStatsTable
+                    data={sheetData.teamData?.filter(row => row.Conference === 'East')}
+                    headers={sheetData.teamHeaders}
+                    isTeamStats={true}
+                  />
+                )}
+              </>
             )}
           </>
         )}
@@ -153,6 +179,7 @@ function SeasonStats() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
