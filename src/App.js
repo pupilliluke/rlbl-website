@@ -13,6 +13,7 @@ import Navbar from "./components/Navbar";
 import TeamStats from "./pages/TeamStats";
 import PlayerStats from "./pages/PlayerStats";
 import Stream from "./pages/Stream";
+import SeasonStats from "./pages/SeasonStats";
 
 import "./index.css";
 import "./styles/animations.css";
@@ -32,6 +33,7 @@ function App() {
           <Route path="/power-rankings" element={<><Weekly /><Footer /></>} />
           <Route path="/stats" element={<><Stats /><Footer /></>} />
           <Route path="/schedule" element={<><Schedule /><Footer /></>} />
+          <Route path="/season-stats" element={<><SeasonStats /><Footer /></>} />
           <Route path="/legacy" element={<><Legacy /><Footer /></>} />
           <Route path="/admin" element={<><Admin /><Footer /></>} />
           <Route path="/teams/:teamSlug" element={<><TeamStats /><Footer /></>} />

@@ -8,7 +8,8 @@ import {
   ChartBarIcon,
   CalendarIcon,
   BuildingIcon,
-  StreamIcon
+  StreamIcon,
+  TableIcon
 } from "./Icons";
 
 function Navbar() {
@@ -59,6 +60,7 @@ function Navbar() {
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Season Stats", path: "/season-stats", IconComponent: TableIcon },
               { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (
@@ -145,6 +147,7 @@ function Navbar() {
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
+              { label: "Season Stats", path: "/season-stats", IconComponent: TableIcon },
               { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (
