@@ -77,14 +77,36 @@ export const parseCSV = (csvText) => {
     }
   }
 
-  const playerHeaders = playerEndIndex > 0 ? headers.slice(0, playerEndIndex) : headers;
-  const teamHeaders = teamStartIndex > 0 ? headers.slice(teamStartIndex) : [];
+  let playerHeaders = playerEndIndex > 0 ? headers.slice(0, playerEndIndex) : headers;
+  let teamHeaders = teamStartIndex > 0 ? headers.slice(teamStartIndex) : [];
+
+  // Rename 'WEST', 'West', or 'East' in the first column to 'Team'
+  if (playerHeaders.length > 0) {
+    const firstHeader = playerHeaders[0];
+    if (firstHeader === 'WEST' || firstHeader === 'West' || firstHeader === 'East') {
+      playerHeaders = ['Team', ...playerHeaders.slice(1)];
+    }
+  }
+
+  if (teamHeaders.length > 0) {
+    const firstHeader = teamHeaders[0];
+    if (firstHeader === 'WEST' || firstHeader === 'West' || firstHeader === 'East') {
+      teamHeaders = ['Team', ...teamHeaders.slice(1)];
+    }
+  }
 
   const data = [];
   const teamData = [];
 
   // Get the index of the Player column
   const playerColumnIndex = playerHeaders.findIndex(h => h === 'Player');
+
+  // Track the current team name for filling in '-' entries
+  let currentTeamName = '';
+
+  // Track the current conference for both player and team data
+  // Default to 'West' - teams are West unless they appear after an "East" header
+  let currentConference = 'West';
 
   // Filter out rows that are summaries or section headers
   const skipPlayerPatterns = [
@@ -103,20 +125,40 @@ export const parseCSV = (csvText) => {
     // Get the player name value
     const playerValue = values[playerColumnIndex]?.trim() || '';
 
+    // Check first column for conference indicators (for player data)
+    const firstColumnValue = values[0]?.trim() || '';
+    if (firstColumnValue.toLowerCase().includes('western') || firstColumnValue === 'WEST' || firstColumnValue === 'West') {
+      currentConference = 'West';
+      continue; // Skip this header row
+    } else if (firstColumnValue.toLowerCase().includes('eastern') || firstColumnValue === 'East') {
+      currentConference = 'East';
+      continue; // Skip this header row
+    }
+
     // Process player data
     if (playerValue && playerValue !== '') {
       // Skip summary/header rows
       if (!skipPlayerPatterns.some(pattern => playerValue.includes(pattern))) {
-        // Also skip rows where the first column (team) is just a dash
-        const firstColumnValue = values[0]?.trim() || '';
-        if (firstColumnValue === '-') {
-          continue; // Skip this row
+        // Update current team name if this row has a real team name
+        if (firstColumnValue !== '-' && firstColumnValue !== '') {
+          currentTeamName = firstColumnValue;
         }
 
         const row = {};
         playerHeaders.forEach((header, index) => {
-          row[header] = values[index] ? values[index].trim().replace(/"/g, '') : '';
+          let value = values[index] ? values[index].trim().replace(/"/g, '') : '';
+
+          // Replace '-' in the first column (team/conference) with the current team name
+          if (index === 0 && value === '-' && currentTeamName) {
+            value = currentTeamName;
+          }
+
+          row[header] = value;
         });
+
+        // Add conference field to player data
+        row['Conference'] = currentConference;
+
         data.push(row);
       }
     }
@@ -125,13 +167,20 @@ export const parseCSV = (csvText) => {
     if (teamStartIndex > 0 && values.length > teamStartIndex) {
       const teamNameValue = values[teamStartIndex]?.trim() || '';
 
-      if (teamNameValue && teamNameValue !== '' &&
+      // Check if this is a conference header row
+      if (teamNameValue === 'East' || teamNameValue === 'West') {
+        currentConference = teamNameValue;
+      } else if (teamNameValue && teamNameValue !== '' &&
           !skipPlayerPatterns.some(pattern => teamNameValue.includes(pattern))) {
         const teamRow = {};
         teamHeaders.forEach((header, index) => {
           const valueIndex = teamStartIndex + index;
           teamRow[header] = values[valueIndex] ? values[valueIndex].trim().replace(/"/g, '') : '';
         });
+
+        // Add conference field to the team data
+        teamRow['Conference'] = currentConference;
+
         teamData.push(teamRow);
       }
     }
