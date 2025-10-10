@@ -55,7 +55,8 @@ function Navbar() {
           <div className="hidden lg:flex items-center space-x-1">
             {[
               { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
-              { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              // { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              { label: "Standings Data", path: "/standings-data", IconComponent: TableIcon },
               { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               // { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
@@ -142,7 +143,8 @@ function Navbar() {
             {[
               { label: "Home", path: "/", IconComponent: DashboardIcon },
               { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
-              { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              // { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
+              { label: "Standings Data", path: "/standings-data", IconComponent: TableIcon },
               { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
               { label: "Weekly", path: "/power-rankings", IconComponent: ChartUpIcon },
               // { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },

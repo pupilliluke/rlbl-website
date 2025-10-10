@@ -72,6 +72,7 @@ const Stats = () => {
         total_mvps: parseInt(player.total_mvps) || 0,
         total_demos: parseInt(player.total_demos) || 0,
         total_epic_saves: parseInt(player.total_epic_saves) || 0,
+        total_otg: parseInt(player.total_otg) || 0,
         games_played: gamesPlayed,
         // Calculated fields
         ppg: (parseInt(player.total_points) || 0) / gamesPlayed,
@@ -124,17 +125,17 @@ const Stats = () => {
     // Add player statistics to teams
     processedStats.forEach(player => {
       let teamName = player.team_name || 'Free Agent';
-      
+
       // Skip Free Agent players
       if (teamName === 'Free Agent' || teamName === 'Career Total') {
         return;
       }
-      
+
       // For current season, match against our team list
       if (isCurrentSeason && !teamMap[teamName]) {
         // Try to find team with similar name
-        const matchingTeam = Object.keys(teamMap).find(t => 
-          t.toLowerCase().includes(teamName.toLowerCase()) || 
+        const matchingTeam = Object.keys(teamMap).find(t =>
+          t.toLowerCase().includes(teamName.toLowerCase()) ||
           teamName.toLowerCase().includes(t.toLowerCase())
         );
         if (matchingTeam) {
@@ -145,7 +146,7 @@ const Stats = () => {
           return;
         }
       }
-      
+
       // If team doesn't exist in teamMap, create it (for historical seasons)
       if (!teamMap[teamName]) {
         teamMap[teamName] = {
@@ -163,14 +164,19 @@ const Stats = () => {
           totalDemos: 0,
           totalEpicSaves: 0,
           totalGames: 0,
+          totalShotsAllowed: 0,
+          totalGoalsAllowed: 0,
           avgPPG: 0,
           avgGPG: 0,
           avgAPG: 0,
           avgSVPG: 0,
-          avgSH: 0
+          avgSH: 0,
+          eastRecord: '0-0',
+          westRecord: '0-0',
+          last6: '0-0-0'
         };
       }
-      
+
       const team = teamMap[teamName];
       team.players++;
       team.totalPoints += player.total_points;
@@ -182,12 +188,14 @@ const Stats = () => {
       team.totalDemos += player.total_demos;
       team.totalEpicSaves += player.total_epic_saves;
       team.totalGames += player.games_played;
+      team.totalShotsAllowed += parseInt(player.total_shots_allowed) || 0;
+      team.totalGoalsAllowed += parseInt(player.total_goals_allowed) || 0;
     });
 
     // For current season, show all teams even with 0 games. For historical seasons, filter out teams with no games.
     const teamsArray = Object.values(teamMap);
     const filteredTeams = isCurrentSeason ? teamsArray : teamsArray.filter(team => team.totalGames > 0);
-    
+
     return filteredTeams.map(team => ({
       ...team,
       // Team averages per game (total team stats divided by games played)
@@ -198,6 +206,14 @@ const Stats = () => {
       avgSH: team.totalShots > 0 ? ((team.totalGoals / team.totalShots) * 100) : 0,
       avgEpicSavePercent: team.totalSaves > 0 ? ((team.totalEpicSaves / team.totalSaves) * 100) : 0,
       avgDemoPerGame: team.totalGames > 0 ? (team.totalDemos / team.totalGames) : 0,
+      // New defensive stats
+      avgShotsAllowedPerGame: team.totalGames > 0 ? (team.totalShotsAllowed / team.totalGames) : 0,
+      avgGoalsAllowedPerGame: team.totalGames > 0 ? (team.totalGoalsAllowed / team.totalGames) : 0,
+      goalsAllowedPerShot: team.totalShotsAllowed > 0 ? ((team.totalGoalsAllowed / team.totalShotsAllowed) * 100) : 0,
+      savesPerShotsAgainst: team.totalShotsAllowed > 0 ? ((team.totalSaves / team.totalShotsAllowed) * 100) : 0,
+      avgEpicSavePerGame: team.totalGames > 0 ? (team.totalEpicSaves / team.totalGames) : 0,
+      avgShotsPerGame: team.totalGames > 0 ? (team.totalShots / team.totalGames) : 0,
+      avgPointsPerGame: team.totalGames > 0 ? (team.totalPoints / team.totalGames) : 0,
       // Display total games as team games (not divided by players)
       displayGames: team.totalGames > 0 ? Math.round(team.totalGames / team.players) : 0
     }));
@@ -860,22 +876,35 @@ const Stats = () => {
                     className="min-w-[120px] sm:min-w-[150px]"
                   />
                   <StatHeader column={viewType === "players" ? "total_points" : "totalPoints"} label="Points" className="w-16 sm:w-20" />
+                  {viewType === "teams" && <StatHeader column="avgPointsPerGame" label="Pts/GM" className="hidden lg:table-cell w-16 sm:w-20" />}
                   <StatHeader column={viewType === "players" ? "total_goals" : "totalGoals"} label="Goals" className="w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="Assists" className="w-12 sm:w-16" />
                   <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="Shots" className="hidden md:table-cell w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" className="w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "total_shots" : "totalShots"} label="OTG" className="hidden lg:table-cell w-12 sm:w-16" />
                   <StatHeader column={viewType === "players" ? "shPercent" : "avgSH"} label="SH%" className="hidden md:table-cell w-12 sm:w-16" />
+                  {viewType === "teams" && <StatHeader column="avgGPG" label="G/GM" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  {viewType === "teams" && <StatHeader column="avgShotsPerGame" label="Shots/GM" className="hidden lg:table-cell w-16 sm:w-20" />}
+                  <StatHeader column={viewType === "players" ? "total_assists" : "totalAssists"} label="Assists" className="w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_mvps" : "totalMVPs"} label="MVP" className="w-12 sm:w-16" />
+                  <StatHeader column={viewType === "players" ? "total_otg" : "totalOTG"} label="OTG" className="hidden lg:table-cell w-12 sm:w-16" />
                   <StatHeader column={viewType === "players" ? "total_saves" : "totalSaves"} label="Saves" className="hidden sm:table-cell w-12 sm:w-16" />
                   <StatHeader column={viewType === "players" ? "total_epic_saves" : "totalEpicSaves"} label="Epic Saves" className="hidden lg:table-cell w-16 sm:w-20" />
                   <StatHeader column={viewType === "players" ? "epicSavePercent" : "avgEpicSavePercent"} label="Epic Save %" className="hidden lg:table-cell w-16 sm:w-20" />
-                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="SVPG" className="hidden lg:table-cell w-12 sm:w-16" />
+                  {viewType === "teams" && <StatHeader column="avgEpicSavePerGame" label="Epic SV/GM" className="hidden lg:table-cell w-16 sm:w-20" />}
+                  <StatHeader column={viewType === "players" ? "svpg" : "avgSVPG"} label="Saves/GM" className="hidden lg:table-cell w-12 sm:w-16" />
+                  {viewType === "teams" && <StatHeader column="savesPerShotsAgainst" label="Saves/SA" className="hidden lg:table-cell w-16 sm:w-20" />}
+                  {viewType === "teams" && <StatHeader column="totalShotsAllowed" label="SA" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  {viewType === "teams" && <StatHeader column="avgShotsAllowedPerGame" label="SA/GM" className="hidden lg:table-cell w-16 sm:w-20" />}
+                  {viewType === "teams" && <StatHeader column="totalGoalsAllowed" label="GA" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  {viewType === "teams" && <StatHeader column="avgGoalsAllowedPerGame" label="GA/GM" className="hidden lg:table-cell w-16 sm:w-20" />}
+                  {viewType === "teams" && <StatHeader column="goalsAllowedPerShot" label="GA/Shot" className="hidden lg:table-cell w-16 sm:w-20" />}
                   <StatHeader column={viewType === "players" ? "total_demos" : "totalDemos"} label="Demos" className="hidden md:table-cell w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "demoPerGame" : "avgDemoPerGame"} label="Demo/Game" className="hidden lg:table-cell w-16 sm:w-20" />
-                  <StatHeader column={viewType === "players" ? "ppg" : "avgPPG"} label="PPG" className="hidden lg:table-cell w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "gpg" : "avgGPG"} label="GPG" className="hidden lg:table-cell w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "apg" : "avgAPG"} label="APG" className="hidden lg:table-cell w-12 sm:w-16" />
-                  <StatHeader column={viewType === "players" ? "games_played" : "totalGames"} label="Games" className="w-16 sm:w-20" />
+                  <StatHeader column={viewType === "players" ? "demoPerGame" : "avgDemoPerGame"} label="Demo/GM" className="hidden lg:table-cell w-16 sm:w-20" />
+                  {viewType === "players" && <StatHeader column="ppg" label="PPG" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  {viewType === "players" && <StatHeader column="gpg" label="GPG" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  {viewType === "players" && <StatHeader column="apg" label="APG" className="hidden lg:table-cell w-12 sm:w-16" />}
+                  <StatHeader column={viewType === "players" ? "games_played" : "displayGames"} label="Games" className="w-16 sm:w-20" />
+                  {viewType === "teams" && <StatHeader column="eastRecord" label="East Rec" className="hidden xl:table-cell w-20" />}
+                  {viewType === "teams" && <StatHeader column="westRecord" label="West Rec" className="hidden xl:table-cell w-20" />}
+                  {viewType === "teams" && <StatHeader column="last6" label="Last 6" className="hidden xl:table-cell w-20" />}
                 </tr>
               </thead>
               <tbody>
@@ -903,23 +932,26 @@ const Stats = () => {
                     <td className="px-1 py-3 text-center font-bold text-yellow-400 text-sm">
                       {viewType === "players" ? item.total_points.toLocaleString() : item.totalPoints.toLocaleString()}
                     </td>
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgPointsPerGame || 0).toFixed(1)}</td>}
                     <td className="px-1 py-3 text-center font-semibold text-green-400 text-sm">
                       {viewType === "players" ? item.total_goals : item.totalGoals}
                     </td>
-                    <td className="px-1 py-3 text-center font-semibold text-blue-400 text-sm">
-                      {viewType === "players" ? item.total_assists : item.totalAssists}
-                    </td>
                     <td className="hidden md:table-cell px-1 py-3 text-center text-sm">
                       {viewType === "players" ? item.total_shots : item.totalShots}
+                    </td>
+                    <td className="hidden md:table-cell px-1 py-3 text-center text-sm">
+                      {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
+                    </td>
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgGPG || 0).toFixed(2)}</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgShotsPerGame || 0).toFixed(1)}</td>}
+                    <td className="px-1 py-3 text-center font-semibold text-blue-400 text-sm">
+                      {viewType === "players" ? item.total_assists : item.totalAssists}
                     </td>
                     <td className="px-1 py-3 text-center font-bold text-orange-400 text-sm">
                       {viewType === "players" ? item.total_mvps : item.totalMVPs}
                     </td>
                     <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
-                      0
-                    </td>
-                    <td className="hidden md:table-cell px-1 py-3 text-center text-sm">
-                      {(viewType === "players" ? item.shPercent : item.avgSH || 0).toFixed(1)}%
+                      {viewType === "players" ? (item.total_otg || 0) : (item.totalOTG || 0)}
                     </td>
                     <td className="hidden sm:table-cell px-1 py-3 text-center font-semibold text-purple-400 text-sm">
                       {viewType === "players" ? item.total_saves : item.totalSaves}
@@ -930,27 +962,31 @@ const Stats = () => {
                     <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.epicSavePercent : item.avgEpicSavePercent || 0).toFixed(1)}%
                     </td>
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgEpicSavePerGame || 0).toFixed(2)}</td>}
                     <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.svpg : item.avgSVPG || 0).toFixed(2)}
                     </td>
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.savesPerShotsAgainst || 0).toFixed(1)}%</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{item.totalShotsAllowed || 0}</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgShotsAllowedPerGame || 0).toFixed(1)}</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{item.totalGoalsAllowed || 0}</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.avgGoalsAllowedPerGame || 0).toFixed(2)}</td>}
+                    {viewType === "teams" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.goalsAllowedPerShot || 0).toFixed(1)}%</td>}
                     <td className="hidden md:table-cell px-1 py-3 text-center text-red-400 text-sm">
                       {viewType === "players" ? item.total_demos : item.totalDemos}
                     </td>
                     <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
                       {(viewType === "players" ? item.demoPerGame : item.avgDemoPerGame || 0).toFixed(2)}
                     </td>
-                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
-                      {(viewType === "players" ? item.ppg : item.avgPPG || 0).toFixed(1)}
-                    </td>
-                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
-                      {(viewType === "players" ? item.gpg : item.avgGPG || 0).toFixed(2)}
-                    </td>
-                    <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">
-                      {(viewType === "players" ? item.apg : item.avgAPG || 0).toFixed(2)}
-                    </td>
+                    {viewType === "players" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.ppg || 0).toFixed(1)}</td>}
+                    {viewType === "players" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.gpg || 0).toFixed(2)}</td>}
+                    {viewType === "players" && <td className="hidden lg:table-cell px-1 py-3 text-center text-sm">{(item.apg || 0).toFixed(2)}</td>}
                     <td className="px-1 py-3 text-center text-sm">
                       {viewType === "players" ? item.games_played : item.displayGames}
                     </td>
+                    {viewType === "teams" && <td className="hidden xl:table-cell px-1 py-3 text-center text-sm">{item.eastRecord || '0-0'}</td>}
+                    {viewType === "teams" && <td className="hidden xl:table-cell px-1 py-3 text-center text-sm">{item.westRecord || '0-0'}</td>}
+                    {viewType === "teams" && <td className="hidden xl:table-cell px-1 py-3 text-center text-sm">{item.last6 || '0-0-0'}</td>}
                   </tr>
                 ))}
               </tbody>
