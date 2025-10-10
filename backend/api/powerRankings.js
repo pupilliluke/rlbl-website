@@ -4,7 +4,7 @@ const PowerRankingsDao = require('../dao/PowerRankingsDao');
 
 const powerRankingsDao = new PowerRankingsDao();
 
-// GET /power-rankings - Get all power rankings
+// GET /weeklys - Get all power rankings
 router.get('/', async (req, res) => {
   try {
     const rankings = await powerRankingsDao.findAll();
@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /power-rankings/:id - Get power ranking by ID
+// GET /weekly/:id - Get power ranking by ID
 router.get('/:id', async (req, res) => {
   try {
     const ranking = await powerRankingsDao.findById(req.params.id);
@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /power-rankings/season/:seasonId/week/:week - Get power rankings for specific week
+// GET /weekly/season/:seasonId/week/:week - Get power rankings for specific week
 router.get('/season/:seasonId/week/:week', async (req, res) => {
   try {
     const seasonId = parseInt(req.params.seasonId);
@@ -40,7 +40,7 @@ router.get('/season/:seasonId/week/:week', async (req, res) => {
   }
 });
 
-// POST /power-rankings - Create or update power ranking
+// POST /weekly - Create or update power ranking
 router.post('/', async (req, res) => {
   try {
     const {
@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /power-rankings/upsert - Upsert power ranking
+// PUT /weekly/upsert - Upsert power ranking
 router.put('/upsert', async (req, res) => {
   try {
     const {
@@ -104,7 +104,7 @@ router.put('/upsert', async (req, res) => {
   }
 });
 
-// PUT /power-rankings/:id - Update power ranking by ID
+// PUT /weekly/:id - Update power ranking by ID
 router.put('/:id', async (req, res) => {
   try {
     const {
@@ -130,7 +130,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /power-rankings/:id - Delete power ranking
+// DELETE /weekly/:id - Delete power ranking
 router.delete('/:id', async (req, res) => {
   try {
     const ranking = await powerRankingsDao.delete(req.params.id);

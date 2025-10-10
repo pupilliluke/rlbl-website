@@ -79,16 +79,59 @@ class PlayerGameStatsDao extends BaseDao {
 
   async getPlayerStatsWithTeams(seasonId = null) {
     const { query } = require('../../lib/database');
-    
+
     // Get comprehensive stats from player_game_stats table with team information
     try {
       let sql = `
-        SELECT 
+        WITH player_team_stats AS (
+          SELECT
+            p.id,
+            p.player_name,
+            p.gamertag,
+            ts.id as team_season_id,
+            t.team_name,
+            t.color as team_color,
+            SUM(pgs.points) as team_points,
+            COUNT(pgs.game_id) as team_games
+          FROM player_game_stats pgs
+          JOIN players p ON pgs.player_id = p.id
+          JOIN games g ON pgs.game_id = g.id
+          LEFT JOIN team_seasons ts ON pgs.team_season_id = ts.id
+          LEFT JOIN teams t ON ts.team_id = t.id
+      `;
+
+      const params = [];
+      let whereClause = [];
+
+      if (seasonId && seasonId !== 'career') {
+        const seasonIdInt = parseInt(seasonId);
+        if (!isNaN(seasonIdInt)) {
+          whereClause.push('g.season_id = $' + (params.length + 1));
+          params.push(seasonIdInt);
+        }
+      }
+
+      if (whereClause.length > 0) {
+        sql += ' WHERE ' + whereClause.join(' AND ');
+      }
+
+      sql += `
+          GROUP BY p.id, p.player_name, p.gamertag, ts.id, t.team_name, t.color
+        ),
+        primary_teams AS (
+          SELECT DISTINCT ON (id)
+            id,
+            team_name,
+            team_color
+          FROM player_team_stats
+          ORDER BY id, team_points DESC, team_games DESC
+        )
+        SELECT
           p.id,
           p.player_name,
           p.gamertag,
-          COALESCE(t.team_name, 'Multiple Teams') as team_name,
-          COALESCE(t.color, '#808080') as team_color,
+          COALESCE(pt.team_name, 'Multiple Teams') as team_name,
+          COALESCE(pt.team_color, '#808080') as team_color,
           SUM(pgs.points) as total_points,
           SUM(pgs.goals) as total_goals,
           SUM(pgs.assists) as total_assists,
@@ -105,27 +148,15 @@ class PlayerGameStatsDao extends BaseDao {
         FROM player_game_stats pgs
         JOIN players p ON pgs.player_id = p.id
         JOIN games g ON pgs.game_id = g.id
-        LEFT JOIN team_seasons ts ON pgs.team_season_id = ts.id
-        LEFT JOIN teams t ON ts.team_id = t.id
+        LEFT JOIN primary_teams pt ON p.id = pt.id
       `;
-      
-      const params = [];
-      let whereClause = [];
-      
-      if (seasonId && seasonId !== 'career') {
-        const seasonIdInt = parseInt(seasonId);
-        if (!isNaN(seasonIdInt)) {
-          whereClause.push('g.season_id = $' + (params.length + 1));
-          params.push(seasonIdInt);
-        }
-      }
-      
+
       if (whereClause.length > 0) {
         sql += ' WHERE ' + whereClause.join(' AND ');
       }
-      
-      sql += ' GROUP BY p.id, p.player_name, p.gamertag, t.team_name, t.color ORDER BY total_points DESC';
-      
+
+      sql += ' GROUP BY p.id, p.player_name, p.gamertag, pt.team_name, pt.team_color ORDER BY total_points DESC';
+
       const result = await query(sql, params);
       
       // If we have data, return it

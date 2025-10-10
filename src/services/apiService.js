@@ -107,7 +107,7 @@ export const apiService = {
   },
 
   // Power Rankings
-  getPowerRankings: () => apiCall('/power-rankings'),
+  getPowerRankings: () => apiCall('/weekly'),
 
   // Season endpoints
   getTeamSeasons: (seasonId = null) => {
@@ -461,10 +461,29 @@ export const apiService = {
     }
   },
 
+  updateGameNotes: async (id, notes) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/games/${id}/notes`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notes }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update game notes ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Power Rankings CRUD operations
   createPowerRanking: async (rankingData) => {
     try {
-      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/weekly`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -483,7 +502,7 @@ export const apiService = {
 
   updatePowerRanking: async (id, rankingData) => {
     try {
-      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings/${id}`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/weekly/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -502,7 +521,7 @@ export const apiService = {
 
   deletePowerRanking: async (id) => {
     try {
-      const response = await fetch(`${ADMIN_API_BASE_URL}/power-rankings/${id}`, {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/weekly/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {

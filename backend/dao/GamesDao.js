@@ -85,6 +85,15 @@ class GamesDao extends BaseDao {
     return r.rows[0];
   }
 
+  async updateNotes(gameId, notes) {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `UPDATE games SET notes = $2 WHERE id = $1 RETURNING *`,
+      [gameId, notes]
+    );
+    return r.rows[0];
+  }
+
   async deleteBySeason(seasonId) {
     const { query } = require('../../lib/database');
     await query('DELETE FROM games WHERE season_id = $1', [seasonId]);

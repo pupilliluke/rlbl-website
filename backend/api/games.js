@@ -123,23 +123,43 @@ router.put('/:id', async (req, res) => {
 router.put('/:id/score', async (req, res) => {
   try {
     const { home_score, away_score } = req.body;
-    
+
     if (home_score === undefined || away_score === undefined) {
       return res.status(400).json({ error: 'home_score and away_score are required' });
     }
 
     const game = await gamesDao.setScore(
-      req.params.id, 
-      parseInt(home_score), 
+      req.params.id,
+      parseInt(home_score),
       parseInt(away_score)
     );
-    
+
     if (!game) {
       return res.status(404).json({ error: 'Game not found' });
     }
     res.json(game);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update game score', details: error.message });
+  }
+});
+
+// PUT /games/:id/notes - Update game notes
+router.put('/:id/notes', async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    if (notes === undefined) {
+      return res.status(400).json({ error: 'notes field is required' });
+    }
+
+    const game = await gamesDao.updateNotes(req.params.id, notes);
+
+    if (!game) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    res.json(game);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update game notes', details: error.message });
   }
 });
 
