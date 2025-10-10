@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LeagueInfo from "./pages/LeagueInfo";
 import Standings from "./pages/Standings";
+import StandingsData from "./pages/StandingsData";
 import Teams from "./pages/Teams";
 import Weekly from "./pages/Weekly";
 import Stats from "./pages/Stats";
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/leagueinfo" element={<><LeagueInfo /><Footer /></>} />
           <Route path="/standings" element={<><Standings /><Footer /></>} />
+          <Route path="/standings-data" element={<><StandingsData /><Footer /></>} />
           <Route path="/teams" element={<><Teams /><Footer /></>} />
           <Route path="/power-rankings" element={<><Weekly /><Footer /></>} />
           <Route path="/stats" element={<><Stats /><Footer /></>} />
