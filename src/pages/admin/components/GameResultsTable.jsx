@@ -140,6 +140,7 @@ const GameResultsTable = ({
   const [createMatchupWeek, setCreateMatchupWeek] = React.useState(null);
   const [teams, setTeams] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const [gameNotes, setGameNotes] = React.useState({});
 
   // Load teams data for matchup creation/editing
   React.useEffect(() => {
@@ -494,7 +495,7 @@ const GameResultsTable = ({
       ...prev,
       [statKey]: {
         ...prev[statKey],
-        [statField]: value === '' ? 0 : parseInt(value) || 0
+        [statField]: value === '' ? '' : parseInt(value) || 0
       }
     }));
   };
@@ -502,6 +503,29 @@ const GameResultsTable = ({
   const getCurrentStats = (gameId, playerId) => {
     const statKey = `${gameId}-${playerId}`;
     return editableStats[statKey] || {};
+  };
+
+  const handleNotesChange = (gameId, value) => {
+    setGameNotes(prev => ({
+      ...prev,
+      [gameId]: value
+    }));
+  };
+
+  const handleNotesSave = async (gameId) => {
+    try {
+      const notes = gameNotes[gameId] || '';
+      await apiService.updateGameNotes(gameId, notes);
+
+      // Update local state
+      const updatedGames = gameResultsData.map(g =>
+        g.id === gameId ? { ...g, notes } : g
+      );
+      onUpdateGameResults(updatedGames);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+      alert('Failed to save notes. Please try again.');
+    }
   };
 
   if (!gameResultsData || gameResultsData.length === 0) {
@@ -949,19 +973,19 @@ const GameResultsTable = ({
                                               <div className="overflow-x-auto">
                                                 <table className="w-full text-xs font-sans bg-white">
                                                 <thead>
-                                                  <tr className="border-b border-gray-300 bg-gray-100">
-                                                    <th className="text-left py-2 px-3 text-black font-bold">TEAM</th>
-                                                    <th className="text-left py-2 px-3 text-black font-bold">PLAYER</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">PTS</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">G</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">A</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">S</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">SH</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">MVP</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">DEM</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">ES</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">OTG</th>
-                                                    <th className="text-center py-2 px-2 text-black font-bold">GP</th>
+                                                  <tr className="border-b border-gray-300">
+                                                    <th className="text-left py-2 px-3 text-black font-bold bg-gray-200">TEAM</th>
+                                                    <th className="text-left py-2 px-3 text-black font-bold bg-gray-300">PLAYER</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-200">PTS</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-300">G</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-200">A</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-300">S</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-200">SH</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-300">MVP</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-200">DEM</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-300">ES</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-200">OTG</th>
+                                                    <th className="text-center py-2 px-2 text-black font-bold bg-gray-300">GP</th>
                                                   </tr>
                                                 </thead>
                                                 <tbody>
@@ -974,19 +998,20 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
 
                                                     return (
-                                                      <tr key={`admin-home-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
-                                                        <td className="py-2 px-3 text-black font-bold">
+                                                      <tr key={`admin-home-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 hover:bg-gray-50">
+                                                        <td className="py-2 px-3 text-black font-bold bg-gray-200">
                                                           {rowIndex === 0 ? `🏠 ${game.home_display}` : ''}
                                                         </td>
-                                                        <td className="py-2 px-3 text-black font-bold">
+                                                        <td className="py-2 px-3 text-black font-bold bg-gray-300">
                                                           {player.display_name || player.player_name}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.points || 0}
+                                                              value={displayStats.points || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400 font-bold"
                                                             />
@@ -994,12 +1019,13 @@ const GameResultsTable = ({
                                                             <span className="text-black font-bold">{displayStats.points}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.goals || 0}
+                                                              value={displayStats.goals || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'goals', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1007,12 +1033,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.goals}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.assists || 0}
+                                                              value={displayStats.assists || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'assists', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1020,12 +1047,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.assists}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.saves || 0}
+                                                              value={displayStats.saves || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'saves', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1033,12 +1061,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.saves}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.shots || 0}
+                                                              value={displayStats.shots || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'shots', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1046,12 +1075,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.shots}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.mvps || 0}
+                                                              value={displayStats.mvps || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'mvps', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1059,12 +1089,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.mvps || 0}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.demos || 0}
+                                                              value={displayStats.demos || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'demos', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1072,12 +1103,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.demos}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.epic_saves || 0}
+                                                              value={displayStats.epic_saves || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1085,12 +1117,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.epic_saves}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.otg || 0}
+                                                              value={displayStats.otg || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'otg', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1098,7 +1131,7 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.otg || 0}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           <span className="text-black">1</span>
                                                         </td>
                                                       </tr>
@@ -1119,19 +1152,20 @@ const GameResultsTable = ({
                                                     const displayStats = isEditing && Object.keys(currentStats).length > 0 ? currentStats : player.stats;
 
                                                     return (
-                                                      <tr key={`admin-away-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 bg-white hover:bg-gray-50">
-                                                        <td className="py-2 px-3 text-black font-bold">
+                                                      <tr key={`admin-away-${seriesId}-${game.id}-${player.id}`} className="border-b border-gray-300 hover:bg-gray-50">
+                                                        <td className="py-2 px-3 text-black font-bold bg-gray-200">
                                                           {rowIndex === 0 ? `✈️ ${game.away_display}` : ''}
                                                         </td>
-                                                        <td className="py-2 px-3 text-black font-bold">
+                                                        <td className="py-2 px-3 text-black font-bold bg-gray-300">
                                                           {player.display_name || player.player_name}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.points || 0}
+                                                              value={displayStats.points || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'points', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400 font-bold"
                                                             />
@@ -1139,12 +1173,13 @@ const GameResultsTable = ({
                                                             <span className="text-black font-bold">{displayStats.points}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.goals || 0}
+                                                              value={displayStats.goals || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'goals', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1152,12 +1187,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.goals}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.assists || 0}
+                                                              value={displayStats.assists || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'assists', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1165,12 +1201,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.assists}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.saves || 0}
+                                                              value={displayStats.saves || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'saves', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1178,12 +1215,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.saves}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.shots || 0}
+                                                              value={displayStats.shots || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'shots', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1191,12 +1229,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.shots}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.mvps || 0}
+                                                              value={displayStats.mvps || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'mvps', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1204,12 +1243,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.mvps || 0}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.demos || 0}
+                                                              value={displayStats.demos || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'demos', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1217,12 +1257,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.demos}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.epic_saves || 0}
+                                                              value={displayStats.epic_saves || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'epic_saves', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1230,12 +1271,13 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.epic_saves}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-200">
                                                           {isEditing ? (
                                                             <input
                                                               type="number"
                                                               min="0"
-                                                              value={displayStats.otg || 0}
+                                                              value={displayStats.otg || ''}
+                                                              placeholder="0"
                                                               onChange={(e) => handleStatChange(game.id, player.id, 'otg', e.target.value)}
                                                               className="w-12 bg-white text-black text-center text-xs rounded border border-gray-400"
                                                             />
@@ -1243,7 +1285,7 @@ const GameResultsTable = ({
                                                             <span className="text-black">{displayStats.otg || 0}</span>
                                                           )}
                                                         </td>
-                                                        <td className="text-center py-2 px-2">
+                                                        <td className="text-center py-2 px-2 bg-gray-300">
                                                           <span className="text-black">1</span>
                                                         </td>
                                                       </tr>
@@ -1251,6 +1293,32 @@ const GameResultsTable = ({
                                                   })}
                                                 </tbody>
                                                 </table>
+                                              </div>
+
+                                              {/* Game Notes Section */}
+                                              <div className="mt-4 p-3 bg-gray-100 rounded border border-gray-300">
+                                                <h4 className="text-sm font-bold text-gray-800 mb-2">Game Notes</h4>
+                                                {editingSeriesId === seriesId ? (
+                                                  <div className="space-y-2">
+                                                    <textarea
+                                                      value={gameNotes[game.id] !== undefined ? gameNotes[game.id] : (game.notes || '')}
+                                                      onChange={(e) => handleNotesChange(game.id, e.target.value)}
+                                                      placeholder="Add notes about this game..."
+                                                      className="w-full px-3 py-2 bg-white border border-gray-400 rounded text-black text-sm font-sans resize-vertical"
+                                                      rows="3"
+                                                    />
+                                                    <button
+                                                      onClick={() => handleNotesSave(game.id)}
+                                                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs rounded transition-colors"
+                                                    >
+                                                      Save Notes
+                                                    </button>
+                                                  </div>
+                                                ) : (
+                                                  <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                                    {game.notes || <span className="italic text-gray-500">No notes added</span>}
+                                                  </div>
+                                                )}
                                               </div>
                                             </div>
                                           ) : (

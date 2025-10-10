@@ -32,7 +32,7 @@ function App() {
           <Route path="/standings" element={<><Standings /><Footer /></>} />
           <Route path="/standings-data" element={<><StandingsData /><Footer /></>} />
           <Route path="/teams" element={<><Teams /><Footer /></>} />
-          <Route path="/power-rankings" element={<><Weekly /><Footer /></>} />
+          <Route path="/weekly" element={<><Weekly /><Footer /></>} />
           <Route path="/stats" element={<><Stats /><Footer /></>} />
           <Route path="/schedule" element={<><Schedule /><Footer /></>} />
           <Route path="/season-stats" element={<><SeasonStats /><Footer /></>} />

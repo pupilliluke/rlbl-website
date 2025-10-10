@@ -38,13 +38,13 @@ function Navbar() {
               {/* Main Navigation */}
               <div className="hidden lg:flex items-center space-x-1">
                 {[
-                  { label: "Dashboard", path: "/leagueinfo", icon: "<à" },
-                  { label: "Standings", path: "/standings", icon: "=Ê" },
-                  { label: "Teams", path: "/teams", icon: "½" },
-                  { label: "Weekly", path: "/power-rankings", icon: "=Ê" },
-                  { label: "Analytics", path: "/stats", icon: "=È" },
-                  { label: "Schedule", path: "/schedule", icon: "=Å" },
-                  { label: "Legacy", path: "/legacy", icon: "<Û" }
+                  { label: "Dashboard", path: "/leagueinfo", icon: "<ï¿½" },
+                  { label: "Standings", path: "/standings", icon: "=ï¿½" },
+                  { label: "Teams", path: "/teams", icon: "ï¿½" },
+                  { label: "Weekly", path: "/weekly", icon: "=ï¿½" },
+                  { label: "Analytics", path: "/stats", icon: "=ï¿½" },
+                  { label: "Schedule", path: "/schedule", icon: "=ï¿½" },
+                  { label: "Legacy", path: "/legacy", icon: "<ï¿½" }
                 ].map(({ label, path, icon }) => (
                   <Link
                     key={path}
@@ -116,13 +116,13 @@ function Navbar() {
             <div className="max-w-7xl mx-auto spacing-container">
               <div className="flex flex-col space-y-1 py-4">
                 {[
-                  { label: "Dashboard", path: "/leagueinfo", icon: "<à" },
-                  { label: "Standings", path: "/standings", icon: "=Ê" },
-                  { label: "Teams", path: "/teams", icon: "½" },
-                  { label: "Weekly", path: "/power-rankings", icon: "=Ê" },
-                  { label: "Analytics", path: "/stats", icon: "=È" },
-                  { label: "Schedule", path: "/schedule", icon: "=Å" },
-                  { label: "Legacy", path: "/legacy", icon: "<Û" }
+                  { label: "Dashboard", path: "/leagueinfo", icon: "<ï¿½" },
+                  { label: "Standings", path: "/standings", icon: "=ï¿½" },
+                  { label: "Teams", path: "/teams", icon: "ï¿½" },
+                  { label: "Weekly", path: "/weekly", icon: "=ï¿½" },
+                  { label: "Analytics", path: "/stats", icon: "=ï¿½" },
+                  { label: "Schedule", path: "/schedule", icon: "=ï¿½" },
+                  { label: "Legacy", path: "/legacy", icon: "<ï¿½" }
                 ].map(({ label, path, icon }) => (
                   <Link
                     key={path}

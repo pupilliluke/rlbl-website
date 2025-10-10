@@ -41,7 +41,7 @@ router.get('/', (req, res) => {
       games: '/api/games',
       playerGameStats: '/api/player-game-stats',
       standings: '/api/standings',
-      powerRankings: '/api/power-rankings',
+      powerRankings: '/api/weekly',
       brackets: '/api/brackets',
       users: '/api/users',
       stats: '/api/stats',
@@ -62,7 +62,7 @@ router.use('/roster-memberships', rosterMembershipsRouter);
 router.use('/games', gamesRouter);
 router.use('/player-game-stats', playerGameStatsRouter);
 router.use('/standings', standingsRouter);
-router.use('/power-rankings', powerRankingsRouter);
+router.use('/weekly', powerRankingsRouter);
 router.use('/brackets', bracketsRouter);
 router.use('/users', usersRouter);
 router.use('/stats', statsRouter);
@@ -83,7 +83,7 @@ router.use('*', (req, res) => {
       games: '/api/games',
       playerGameStats: '/api/player-game-stats',
       standings: '/api/standings',
-      powerRankings: '/api/power-rankings',
+      powerRankings: '/api/weekly',
       brackets: '/api/brackets',
       users: '/api/users',
       stats: '/api/stats',

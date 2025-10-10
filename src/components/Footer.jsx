@@ -29,7 +29,7 @@ export default function Footer() {
         <a href="/leagueinfo" className="hover:text-white transition">League Info</a>
         <a href="/standings" className="hover:text-white transition">Standings</a>
         <a href="/teams" className="hover:text-white transition">Teams</a>
-        <a href="/power-rankings" className="hover:text-white transition">Power Rankings</a>
+        <a href="/weekly" className="hover:text-white transition">Power Rankings</a>
         <a href="/stats" className="hover:text-white transition">Player Stats</a>
         <a href="/schedule" className="hover:text-white transition">Schedule</a>
         <a href="/legacy" className="hover:text-white transition">Legacy</a>
