@@ -39,7 +39,8 @@ export default function TeamStats() {
             try {
               const standingsResponse = await apiService.getStandings(activeSeasonData.id);
               const standingsData = standingsResponse.standings || standingsResponse;
-              const teamStanding = standingsData.find(s => s.id === foundTeam.id || slugify(s.team_name) === teamSlug);
+              // foundTeam.id is actually a team_season_id, so compare with team_season_id from standings
+              const teamStanding = standingsData.find(s => s.team_season_id === foundTeam.id);
               setStandings(teamStanding);
             } catch (error) {
               console.error('Failed to fetch standings:', error);
@@ -47,13 +48,43 @@ export default function TeamStats() {
 
             // Get team games (schedule)
             try {
-              const gamesData = await apiService.getGames(activeSeasonData.id);
-              const teamGamesData = gamesData.filter(game => 
-                game.home_display === foundTeam.team_name || 
-                game.away_display === foundTeam.team_name ||
-                game.home_team_name === foundTeam.team_name || 
-                game.away_team_name === foundTeam.team_name
+              const [gamesData, teamSeasons, playerGameStats] = await Promise.all([
+                apiService.getGames(activeSeasonData.id),
+                apiService.getTeamSeasons(activeSeasonData.id),
+                apiService.getPlayerGameStats(activeSeasonData.id)
+              ]);
+
+              // Filter games by team_season_id (foundTeam.id is actually a team_season_id)
+              const teamGamesRaw = gamesData.filter(game =>
+                game.home_team_season_id === foundTeam.id ||
+                game.away_team_season_id === foundTeam.id
               );
+
+              // Enrich games with display names and scores (like Weekly tab)
+              const teamGamesData = teamGamesRaw.map(game => {
+                const homeTeamSeason = teamSeasons.find(ts => ts.id === game.home_team_season_id);
+                const awayTeamSeason = teamSeasons.find(ts => ts.id === game.away_team_season_id);
+
+                // Calculate total goals from player stats
+                const homePlayerStats = playerGameStats.filter(stat =>
+                  stat.team_season_id === game.home_team_season_id && stat.game_id === game.id
+                );
+                const awayPlayerStats = playerGameStats.filter(stat =>
+                  stat.team_season_id === game.away_team_season_id && stat.game_id === game.id
+                );
+
+                const totalHomeGoals = homePlayerStats.reduce((sum, stat) => sum + (stat.goals || 0), 0);
+                const totalAwayGoals = awayPlayerStats.reduce((sum, stat) => sum + (stat.goals || 0), 0);
+
+                return {
+                  ...game,
+                  home_display: homeTeamSeason?.display_name || 'Unknown Team',
+                  away_display: awayTeamSeason?.display_name || 'Unknown Team',
+                  home_score: totalHomeGoals,
+                  away_score: totalAwayGoals
+                };
+              });
+
               setTeamGames(teamGamesData);
             } catch (error) {
               console.error('Failed to fetch games:', error);

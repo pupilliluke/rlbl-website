@@ -56,12 +56,12 @@ function Navbar() {
             {[
               { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
               // { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
-              { label: "Standings Data", path: "/standings-data", IconComponent: TableIcon },
+              { label: "Standings", path: "/standings-data", IconComponent: TableIcon },
               { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
               { label: "Weekly", path: "/weekly", IconComponent: ChartUpIcon },
               // { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
-              { label: "Season Stats", path: "/season-stats", IconComponent: TableIcon },
+              { label: "Statistics", path: "/season-stats", IconComponent: TableIcon },
               { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (
@@ -103,12 +103,6 @@ function Navbar() {
 
           {/* Desktop Right Section */}
           <div className="hidden lg:flex items-center gap-4 absolute right-0">
-            {/* Status Indicator */}
-            <div className="flex items-center gap-2 spacing-compact rounded-full glass text-xs">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-glow-pulse"></div>
-              <span className="text-green-400 font-medium">Live</span>
-            </div>
-
             {/* Admin Access */}
             <Link
               to="/admin"
@@ -144,12 +138,12 @@ function Navbar() {
               { label: "Home", path: "/", IconComponent: DashboardIcon },
               { label: "Dashboard", path: "/leagueinfo", IconComponent: DashboardIcon },
               // { label: "Standings", path: "/standings", IconComponent: TrophyIcon },
-              { label: "Standings Data", path: "/standings-data", IconComponent: TableIcon },
+              { label: "Standings", path: "/standings-data", IconComponent: TableIcon },
               { label: "Teams", path: "/teams", IconComponent: SoccerIcon },
               { label: "Weekly", path: "/weekly", IconComponent: ChartUpIcon },
               // { label: "Statistics", path: "/stats", IconComponent: ChartBarIcon },
               { label: "Schedule", path: "/schedule", IconComponent: CalendarIcon },
-              { label: "Season Stats", path: "/season-stats", IconComponent: TableIcon },
+              { label: "Statistics", path: "/season-stats", IconComponent: TableIcon },
               { label: "Stream", path: "/stream", IconComponent: StreamIcon },
               { label: "Legacy", path: "/legacy", IconComponent: BuildingIcon }
             ].map(({ label, path, IconComponent }) => (

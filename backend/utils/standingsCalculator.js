@@ -84,8 +84,12 @@ class StandingsCalculator {
         gameType: hasOvertime ? 'overtime_loss' : 'regulation_loss'
       };
     } else {
-      // This should never happen in Rocket League - no ties possible
-      throw new Error(`Invalid game state: tie score ${teamScore}-${opponentScore} in game`);
+      // 0-0 tie - this is an unplayed game, return 0 points
+      // The generateStandings function should filter these out, but handle gracefully
+      return {
+        points: 0,
+        gameType: 'unplayed'
+      };
     }
   }
 
