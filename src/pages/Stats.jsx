@@ -3,6 +3,7 @@ import { apiService, fallbackData } from "../services/apiService";
 import { formatPlayerName } from "../utils/formatters.js";
 import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
 import StatsTable from "../components/StatsTable.jsx";
+import * as XLSX from 'xlsx-js-style';
 
 const Stats = () => {
   // Function to get conference for a team/player (database-driven)
@@ -25,15 +26,24 @@ const Stats = () => {
   const [, setError] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("career");
   const [selectedConference, setSelectedConference] = useState("all");
+  const [playoffFilter, setPlayoffFilter] = useState("all"); // 'all', 'regular', 'playoffs'
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching stats and teams data from API for season:', selectedSeason);
+        console.log('Fetching stats and teams data from API for season:', selectedSeason, 'playoffs:', playoffFilter);
+
+        // Determine playoff parameter for API
+        let playoffParam = null;
+        if (playoffFilter === 'playoffs') {
+          playoffParam = true;
+        } else if (playoffFilter === 'regular') {
+          playoffParam = false;
+        }
 
         const [statsData, teamsData] = await Promise.all([
-          apiService.getStats(selectedSeason),
+          apiService.getStats(selectedSeason, playoffParam),
           apiService.getTeams(selectedSeason)
         ]);
 
@@ -55,7 +65,7 @@ const Stats = () => {
     };
 
     fetchData();
-  }, [selectedSeason]);
+  }, [selectedSeason, playoffFilter]);
 
 
   // Process stats data to add calculated fields
@@ -255,6 +265,378 @@ const Stats = () => {
       })
       .slice(0, showCount);
   }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount, selectedConference, selectedSeason]);
+
+  // Export current view to CSV
+  const exportToCSV = () => {
+    // Helper function to convert RGB to hex
+    const rgbToHex = (r, g, b) => {
+      return ('FF' + // Alpha channel (fully opaque)
+        ('0' + Math.round(r).toString(16)).slice(-2) +
+        ('0' + Math.round(g).toString(16)).slice(-2) +
+        ('0' + Math.round(b).toString(16)).slice(-2)).toUpperCase();
+    };
+
+    // Helper function to calculate color based on rank
+    const getColorFromRank = (rank, totalCount) => {
+      if (rank === 1) {
+        // Gold for #1 - matching reference image
+        return rgbToHex(255, 242, 204); // Light gold/yellow
+      }
+
+      const median = Math.ceil(totalCount / 2);
+
+      if (rank <= median) {
+        // Top half: Green gradient matching reference colors
+        // Darkest green at #2: RGB(146, 208, 80)
+        // Lightest green at median: RGB(198, 224, 180)
+        const progress = (rank - 2) / (median - 2); // 0 at rank 2, 1 at median
+        const r = Math.round(146 + (198 - 146) * progress);
+        const g = Math.round(208 + (224 - 208) * progress);
+        const b = Math.round(80 + (180 - 80) * progress);
+        return rgbToHex(r, g, b);
+      } else {
+        // Bottom half: Red gradient matching reference colors
+        // Lightest red after median: RGB(255, 230, 230)
+        // Darkest red at last: RGB(255, 199, 206)
+        const progress = (rank - median - 1) / (totalCount - median - 1); // 0 just after median, 1 at last place
+        const r = 255;
+        const g = Math.round(230 - (230 - 199) * progress);
+        const b = Math.round(230 - (230 - 206) * progress);
+        return rgbToHex(r, g, b);
+      }
+    };
+
+    // Helper function to rank data for a specific column
+    const rankColumn = (data, getValue, higherIsBetter = true) => {
+      const validData = data.filter(item => getValue(item) !== null && getValue(item) !== undefined);
+      const sorted = [...validData].sort((a, b) => {
+        const aVal = getValue(a);
+        const bVal = getValue(b);
+        return higherIsBetter ? bVal - aVal : aVal - bVal;
+      });
+
+      const ranks = new Map();
+      sorted.forEach((item, index) => {
+        ranks.set(item, index + 1);
+      });
+
+      return ranks;
+    };
+
+    if (viewType === "players") {
+      // Determine if we should group by team
+      const groupByTeam = showCount === 999;
+      let dataToExport = sortedData;
+
+      // If grouping by team, reorganize data
+      if (groupByTeam) {
+        const teamGroups = {};
+        processedStats.forEach(player => {
+          const teamName = player.team_name || 'Unknown Team';
+          if (!teamGroups[teamName]) {
+            teamGroups[teamName] = [];
+          }
+          teamGroups[teamName].push(player);
+        });
+
+        dataToExport = [];
+        Object.keys(teamGroups).sort().forEach(teamName => {
+          dataToExport.push({ isTeamHeader: true, teamName });
+          teamGroups[teamName].forEach(player => {
+            dataToExport.push(player);
+          });
+        });
+      }
+
+      // Filter out team headers for data processing
+      const playerData = dataToExport.filter(item => !item.isTeamHeader);
+
+      // Rank each column
+      const rankMaps = {
+        points: rankColumn(playerData, item => item.total_points),
+        goals: rankColumn(playerData, item => item.total_goals),
+        assists: rankColumn(playerData, item => item.total_assists),
+        shots: rankColumn(playerData, item => item.total_shots),
+        mvps: rankColumn(playerData, item => item.total_mvps),
+        otg: rankColumn(playerData, item => item.total_otg),
+        shPercent: rankColumn(playerData, item => item.shPercent),
+        saves: rankColumn(playerData, item => item.total_saves),
+        epicSaves: rankColumn(playerData, item => item.total_epic_saves),
+        epicSavePercent: rankColumn(playerData, item => item.epicSavePercent),
+        svpg: rankColumn(playerData, item => item.svpg),
+        demos: rankColumn(playerData, item => item.total_demos),
+        demoPerGame: rankColumn(playerData, item => item.demoPerGame),
+        ppg: rankColumn(playerData, item => item.ppg),
+        gpg: rankColumn(playerData, item => item.gpg),
+        apg: rankColumn(playerData, item => item.apg),
+        gamesPlayed: rankColumn(playerData, item => item.games_played)
+      };
+
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const wsData = [];
+
+      // Header row 1 - Category headers
+      wsData.push(['', '', 'OFFENSIVE STATS', '', '', '', '', '', '', 'DEFENSIVE STATS', '', '', '', '', 'DEMOS', '', 'PER GAME / EFFICIENCY', '', '']);
+
+      // Header row 2 - Column headers
+      wsData.push(['Team', 'Player', 'Points', 'Goals', 'Assists', 'Shots', 'MVP', 'OTG', 'SH%', 'Saves', 'Epic Saves', 'Epic Save %', 'SVPG', 'Demos', 'Demo/Game', 'PPG', 'GPG', 'APG', 'Games Played']);
+
+      // Track totals for average row
+      let totals = {
+        count: 0,
+        points: 0,
+        goals: 0,
+        assists: 0,
+        shots: 0,
+        mvps: 0,
+        otg: 0,
+        saves: 0,
+        epicSaves: 0,
+        demos: 0,
+        gamesPlayed: 0
+      };
+
+      // Data rows
+      dataToExport.forEach(item => {
+        if (item.isTeamHeader) {
+          return;
+        }
+
+        totals.count++;
+        totals.points += item.total_points || 0;
+        totals.goals += item.total_goals || 0;
+        totals.assists += item.total_assists || 0;
+        totals.shots += item.total_shots || 0;
+        totals.mvps += item.total_mvps || 0;
+        totals.otg += item.total_otg || 0;
+        totals.saves += item.total_saves || 0;
+        totals.epicSaves += item.total_epic_saves || 0;
+        totals.demos += item.total_demos || 0;
+        totals.gamesPlayed += item.games_played || 0;
+
+        const row = [
+          item.team_name || '',
+          item.player_name || item.name || 'Unknown',
+          item.total_points || 0,
+          item.total_goals || 0,
+          item.total_assists || 0,
+          item.total_shots || 0,
+          item.total_mvps || 0,
+          item.total_otg || 0,
+          item.shPercent ? parseFloat(item.shPercent.toFixed(1)) : 0,
+          item.total_saves || 0,
+          item.total_epic_saves || 0,
+          item.epicSavePercent ? parseFloat(item.epicSavePercent.toFixed(2)) : 0,
+          item.svpg ? parseFloat(item.svpg.toFixed(2)) : 0,
+          item.total_demos || 0,
+          item.demoPerGame ? parseFloat(item.demoPerGame.toFixed(2)) : 0,
+          item.ppg ? parseFloat(item.ppg.toFixed(2)) : 0,
+          item.gpg ? parseFloat(item.gpg.toFixed(2)) : 0,
+          item.apg ? parseFloat(item.apg.toFixed(2)) : 0,
+          item.games_played || 0
+        ];
+        wsData.push(row);
+      });
+
+      // Add average row
+      if (totals.count > 0) {
+        const avgShootingPct = totals.shots > 0 ? parseFloat(((totals.goals / totals.shots) * 100).toFixed(1)) : 0;
+        const avgEpicSavePct = totals.saves > 0 ? parseFloat(((totals.epicSaves / totals.saves) * 100).toFixed(2)) : 0;
+
+        wsData.push(['']); // Empty row
+        wsData.push([
+          'Average:',
+          '',
+          parseFloat((totals.points / totals.count).toFixed(2)),
+          parseFloat((totals.goals / totals.count).toFixed(2)),
+          parseFloat((totals.assists / totals.count).toFixed(2)),
+          parseFloat((totals.shots / totals.count).toFixed(2)),
+          parseFloat((totals.mvps / totals.count).toFixed(2)),
+          parseFloat((totals.otg / totals.count).toFixed(2)),
+          avgShootingPct,
+          parseFloat((totals.saves / totals.count).toFixed(2)),
+          parseFloat((totals.epicSaves / totals.count).toFixed(2)),
+          avgEpicSavePct,
+          parseFloat((totals.saves / totals.count).toFixed(2)),
+          parseFloat((totals.demos / totals.count).toFixed(2)),
+          parseFloat((totals.demos / totals.count).toFixed(2)),
+          parseFloat((totals.points / totals.count).toFixed(2)),
+          parseFloat((totals.goals / totals.count).toFixed(2)),
+          parseFloat((totals.assists / totals.count).toFixed(2)),
+          parseFloat((totals.gamesPlayed / totals.count).toFixed(1))
+        ]);
+      }
+
+      // Create worksheet
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Apply cell styling with color coding
+      const totalPlayers = playerData.length;
+      playerData.forEach((item, index) => {
+        const rowIndex = index + 2; // +2 because of 2 header rows
+        const statColumns = [
+          { col: 2, rankMap: rankMaps.points },
+          { col: 3, rankMap: rankMaps.goals },
+          { col: 4, rankMap: rankMaps.assists },
+          { col: 5, rankMap: rankMaps.shots },
+          { col: 6, rankMap: rankMaps.mvps },
+          { col: 7, rankMap: rankMaps.otg },
+          { col: 8, rankMap: rankMaps.shPercent },
+          { col: 9, rankMap: rankMaps.saves },
+          { col: 10, rankMap: rankMaps.epicSaves },
+          { col: 11, rankMap: rankMaps.epicSavePercent },
+          { col: 12, rankMap: rankMaps.svpg },
+          { col: 13, rankMap: rankMaps.demos },
+          { col: 14, rankMap: rankMaps.demoPerGame },
+          { col: 15, rankMap: rankMaps.ppg },
+          { col: 16, rankMap: rankMaps.gpg },
+          { col: 17, rankMap: rankMaps.apg },
+          { col: 18, rankMap: rankMaps.gamesPlayed }
+        ];
+
+        statColumns.forEach(({ col, rankMap }) => {
+          const rank = rankMap.get(item);
+          if (rank) {
+            const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+            if (!ws[cellAddress]) ws[cellAddress] = {};
+            const color = getColorFromRank(rank, totalPlayers);
+            ws[cellAddress].s = {
+              fill: {
+                fgColor: { rgb: color }
+              }
+            };
+          }
+        });
+      });
+
+      // Style category headers (row 0)
+      const categoryColors = [
+        { start: 2, end: 8, color: rgbToHex(0, 255, 0) }, // Green: OFFENSIVE STATS
+        { start: 9, end: 13, color: rgbToHex(255, 0, 0) }, // Red: DEFENSIVE STATS
+        { start: 14, end: 14, color: rgbToHex(255, 165, 0) }, // Orange: DEMOS
+        { start: 16, end: 18, color: rgbToHex(0, 0, 255) } // Blue: PER GAME / EFFICIENCY
+      ];
+
+      categoryColors.forEach(({ start, end, color }) => {
+        for (let col = start; col <= end; col++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+          if (!ws[cellAddress]) ws[cellAddress] = { v: '', t: 's' };
+          ws[cellAddress].s = {
+            fill: { fgColor: { rgb: color } },
+            font: { bold: true, color: { rgb: 'FFFFFFFF' } }
+          };
+        }
+      });
+
+      XLSX.utils.book_append_sheet(wb, ws, 'Player Stats');
+
+      // Generate file and download
+      const seasonLabel = selectedSeason === 'career' ? 'career' : selectedSeason.replace('season', 'season_');
+      const playoffLabel = playoffFilter === 'playoffs' ? '_playoffs' : playoffFilter === 'regular' ? '_regular' : '';
+      const conferenceLabel = selectedConference !== 'all' ? `_${selectedConference}` : '';
+
+      XLSX.writeFile(wb, `${seasonLabel}_players${playoffLabel}${conferenceLabel}_stats.xlsx`);
+    } else {
+      // Team stats export (similar structure, but simpler for now)
+      const wb = XLSX.utils.book_new();
+      const wsData = [];
+
+      wsData.push(['', 'OFFENSIVE STATS', '', '', '', '', '', '', 'DEFENSIVE STATS', '', '', '', '', '', '', '']);
+      wsData.push(['Team', 'Players', 'Points', 'Goals', 'Assists', 'Shots', 'MVPs', 'Demos', 'SH%', 'Saves', 'Epic Saves', 'Epic Save %', 'Shots Allowed', 'Goals Allowed', 'PPG', 'GPG', 'APG', 'SVPG', 'Games']);
+
+      let totals = {
+        count: 0,
+        players: 0,
+        points: 0,
+        goals: 0,
+        assists: 0,
+        shots: 0,
+        mvps: 0,
+        demos: 0,
+        saves: 0,
+        epicSaves: 0,
+        shotsAllowed: 0,
+        goalsAllowed: 0,
+        games: 0
+      };
+
+      sortedData.forEach(item => {
+        totals.count++;
+        totals.players += item.players || 0;
+        totals.points += item.totalPoints || 0;
+        totals.goals += item.totalGoals || 0;
+        totals.assists += item.totalAssists || 0;
+        totals.shots += item.totalShots || 0;
+        totals.mvps += item.totalMVPs || 0;
+        totals.demos += item.totalDemos || 0;
+        totals.saves += item.totalSaves || 0;
+        totals.epicSaves += item.totalEpicSaves || 0;
+        totals.shotsAllowed += item.totalShotsAllowed || 0;
+        totals.goalsAllowed += item.totalGoalsAllowed || 0;
+        totals.games += item.displayGames || 0;
+
+        wsData.push([
+          item.team || 'Unknown',
+          item.players || 0,
+          item.totalPoints || 0,
+          item.totalGoals || 0,
+          item.totalAssists || 0,
+          item.totalShots || 0,
+          item.totalMVPs || 0,
+          item.totalDemos || 0,
+          item.avgSH ? parseFloat(item.avgSH.toFixed(1)) : 0,
+          item.totalSaves || 0,
+          item.totalEpicSaves || 0,
+          item.avgEpicSavePercent ? parseFloat(item.avgEpicSavePercent.toFixed(2)) : 0,
+          item.totalShotsAllowed || 0,
+          item.totalGoalsAllowed || 0,
+          item.avgPPG ? parseFloat(item.avgPPG.toFixed(2)) : 0,
+          item.avgGPG ? parseFloat(item.avgGPG.toFixed(2)) : 0,
+          item.avgAPG ? parseFloat(item.avgAPG.toFixed(2)) : 0,
+          item.avgSVPG ? parseFloat(item.avgSVPG.toFixed(2)) : 0,
+          item.displayGames || 0
+        ]);
+      });
+
+      if (totals.count > 0) {
+        const avgShootingPct = totals.shots > 0 ? parseFloat(((totals.goals / totals.shots) * 100).toFixed(1)) : 0;
+        const avgEpicSavePct = totals.saves > 0 ? parseFloat(((totals.epicSaves / totals.saves) * 100).toFixed(2)) : 0;
+
+        wsData.push(['']);
+        wsData.push([
+          'Average:',
+          parseFloat((totals.players / totals.count).toFixed(1)),
+          parseFloat((totals.points / totals.count).toFixed(2)),
+          parseFloat((totals.goals / totals.count).toFixed(2)),
+          parseFloat((totals.assists / totals.count).toFixed(2)),
+          parseFloat((totals.shots / totals.count).toFixed(2)),
+          parseFloat((totals.mvps / totals.count).toFixed(2)),
+          parseFloat((totals.demos / totals.count).toFixed(2)),
+          avgShootingPct,
+          parseFloat((totals.saves / totals.count).toFixed(2)),
+          parseFloat((totals.epicSaves / totals.count).toFixed(2)),
+          avgEpicSavePct,
+          parseFloat((totals.shotsAllowed / totals.count).toFixed(2)),
+          parseFloat((totals.goalsAllowed / totals.count).toFixed(2)),
+          parseFloat((totals.points / totals.games).toFixed(2)),
+          parseFloat((totals.goals / totals.games).toFixed(2)),
+          parseFloat((totals.assists / totals.games).toFixed(2)),
+          parseFloat((totals.saves / totals.games).toFixed(2)),
+          parseFloat((totals.games / totals.count).toFixed(1))
+        ]);
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      XLSX.utils.book_append_sheet(wb, ws, 'Team Stats');
+
+      const seasonLabel = selectedSeason === 'career' ? 'career' : selectedSeason.replace('season', 'season_');
+      const playoffLabel = playoffFilter === 'playoffs' ? '_playoffs' : playoffFilter === 'regular' ? '_regular' : '';
+      const conferenceLabel = selectedConference !== 'all' ? `_${selectedConference}` : '';
+
+      XLSX.writeFile(wb, `${seasonLabel}_teams${playoffLabel}${conferenceLabel}_stats.xlsx`);
+    }
+  };
 
   // Generate premium statistics data
   const premiumStatistics = useMemo(() => {
@@ -789,6 +1171,30 @@ const Stats = () => {
                   <option value="East" className="text-black bg-white">East</option>
                 </select>
               )}
+
+              {/* Playoff Filter - Show when a specific season is selected */}
+              {selectedSeason !== 'career' && (
+                <select
+                  value={playoffFilter}
+                  onChange={(e) => setPlayoffFilter(e.target.value)}
+                  className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
+                >
+                  <option value="all" className="text-black bg-white">All Games</option>
+                  <option value="regular" className="text-black bg-white">Regular Season</option>
+                  <option value="playoffs" className="text-black bg-white">Playoffs</option>
+                </select>
+              )}
+
+              {/* Export Button */}
+              <button
+                onClick={exportToCSV}
+                className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-700 border border-green-500 text-sm font-medium text-white transition-all duration-300 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export CSV
+              </button>
 
               {/* Premium Results Count */}
               <select
