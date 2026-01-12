@@ -147,7 +147,7 @@ function StandingsData() {
                   <th className="px-4 py-4 text-center font-bold text-white text-sm hidden md:table-cell">L(OT)</th>
                   <th className="px-4 py-4 text-center font-bold text-white text-sm">L</th>
                   <th className="px-4 py-4 text-center font-bold text-white text-sm hidden lg:table-cell">FF</th>
-                  <th className="px-4 py-4 text-center font-bold text-white text-sm hidden lg:table-cell">GF</th>
+                  <th className="px-4 py-4 text-center font-bold text-white text-sm hidden lg:table-cell border-l-2 border-gray-500">GF</th>
                   <th className="px-4 py-4 text-center font-bold text-white text-sm hidden lg:table-cell">GA</th>
                   <th className="px-4 py-4 text-center font-bold text-white text-sm hidden lg:table-cell">GD</th>
                 </tr>
@@ -188,7 +188,7 @@ function StandingsData() {
                     <td className="hidden lg:table-cell px-4 py-3 text-center text-sm text-gray-300">
                       {row.FF || '0'}
                     </td>
-                    <td className="hidden lg:table-cell px-4 py-3 text-center text-sm text-green-400">
+                    <td className="hidden lg:table-cell px-4 py-3 text-center text-sm text-green-400 border-l-2 border-gray-500">
                       {row.GF}
                     </td>
                     <td className="hidden lg:table-cell px-4 py-3 text-center text-sm text-red-400">

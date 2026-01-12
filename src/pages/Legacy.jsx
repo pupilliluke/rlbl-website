@@ -304,6 +304,174 @@ export default function Legacy() {
               </div>
             )}
 
+            {/* All-Time Leaders - Show only when viewing career stats */}
+            {selectedSeason === "career" && stats.length > 0 && (() => {
+              // Calculate leaders for each stat
+              const topAssists = stats.reduce((max, p) =>
+                (parseInt(p.total_assists) || 0) > (parseInt(max.total_assists) || 0) ? p : max
+              );
+              const topSaves = stats.reduce((max, p) =>
+                (parseInt(p.total_saves) || 0) > (parseInt(max.total_saves) || 0) ? p : max
+              );
+              const topShots = stats.reduce((max, p) =>
+                (parseInt(p.total_shots) || 0) > (parseInt(max.total_shots) || 0) ? p : max
+              );
+              const topDemos = stats.reduce((max, p) =>
+                (parseInt(p.total_demos) || 0) > (parseInt(max.total_demos) || 0) ? p : max
+              );
+              const topEpicSaves = stats.reduce((max, p) =>
+                (parseInt(p.total_epic_saves) || 0) > (parseInt(max.total_epic_saves) || 0) ? p : max
+              );
+              const topOTG = stats.reduce((max, p) =>
+                (parseInt(p.total_otg) || 0) > (parseInt(max.total_otg) || 0) ? p : max
+              );
+              const mostGames = stats.reduce((max, p) =>
+                (parseInt(p.games_played) || 0) > (parseInt(max.games_played) || 0) ? p : max
+              );
+
+              return (
+                <div className="mb-12">
+                  <h2 className="text-3xl font-black text-transparent bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text mb-6 flex items-center gap-3">
+                    <TrophyIcon className="w-8 h-8 text-yellow-400" />
+                    All-Time Leaders
+                  </h2>
+                  <div className="bg-gradient-to-br from-purple-900/40 to-blue-900/40 rounded-2xl p-8 border-2 border-yellow-400/50 shadow-2xl shadow-yellow-500/20">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* Points Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-yellow-400/30 hover:border-yellow-400 transition-all duration-300 hover:shadow-xl hover:shadow-yellow-500/30">
+                        <div className="text-yellow-400 font-bold text-sm mb-2 uppercase tracking-wide">📊 Total Points</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topPoints.player_name, topPoints.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-yellow-300 transition-colors block mb-1"
+                        >
+                          {topPoints.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-yellow-400 mb-1">{(topPoints.total_points || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topPoints.team_name}</div>
+                      </div>
+
+                      {/* Goals Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-green-400/30 hover:border-green-400 transition-all duration-300 hover:shadow-xl hover:shadow-green-500/30">
+                        <div className="text-green-400 font-bold text-sm mb-2 uppercase tracking-wide">⚽ Total Goals</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topScorer.player_name, topScorer.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-green-300 transition-colors block mb-1"
+                        >
+                          {topScorer.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-green-400 mb-1">{(topScorer.total_goals || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topScorer.team_name}</div>
+                      </div>
+
+                      {/* Assists Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-blue-400/30 hover:border-blue-400 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30">
+                        <div className="text-blue-400 font-bold text-sm mb-2 uppercase tracking-wide">🎯 Total Assists</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topAssists.player_name, topAssists.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-blue-300 transition-colors block mb-1"
+                        >
+                          {topAssists.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-blue-400 mb-1">{(topAssists.total_assists || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topAssists.team_name}</div>
+                      </div>
+
+                      {/* Saves Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-purple-400/30 hover:border-purple-400 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/30">
+                        <div className="text-purple-400 font-bold text-sm mb-2 uppercase tracking-wide">🛡️ Total Saves</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topSaves.player_name, topSaves.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-purple-300 transition-colors block mb-1"
+                        >
+                          {topSaves.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-purple-400 mb-1">{(topSaves.total_saves || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topSaves.team_name}</div>
+                      </div>
+
+                      {/* MVPs Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-orange-400/30 hover:border-orange-400 transition-all duration-300 hover:shadow-xl hover:shadow-orange-500/30">
+                        <div className="text-orange-400 font-bold text-sm mb-2 uppercase tracking-wide">⭐ Total MVPs</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topMVP.player_name, topMVP.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-orange-300 transition-colors block mb-1"
+                        >
+                          {topMVP.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-orange-400 mb-1">{(topMVP.total_mvps || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topMVP.team_name}</div>
+                      </div>
+
+                      {/* Shots Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-cyan-400/30 hover:border-cyan-400 transition-all duration-300 hover:shadow-xl hover:shadow-cyan-500/30">
+                        <div className="text-cyan-400 font-bold text-sm mb-2 uppercase tracking-wide">🎯 Total Shots</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topShots.player_name, topShots.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-cyan-300 transition-colors block mb-1"
+                        >
+                          {topShots.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-cyan-400 mb-1">{(topShots.total_shots || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topShots.team_name}</div>
+                      </div>
+
+                      {/* Demos Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-red-400/30 hover:border-red-400 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/30">
+                        <div className="text-red-400 font-bold text-sm mb-2 uppercase tracking-wide">💥 Total Demos</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topDemos.player_name, topDemos.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-red-300 transition-colors block mb-1"
+                        >
+                          {topDemos.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-red-400 mb-1">{(topDemos.total_demos || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topDemos.team_name}</div>
+                      </div>
+
+                      {/* Epic Saves Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-pink-400/30 hover:border-pink-400 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/30">
+                        <div className="text-pink-400 font-bold text-sm mb-2 uppercase tracking-wide">✨ Epic Saves</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topEpicSaves.player_name, topEpicSaves.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-pink-300 transition-colors block mb-1"
+                        >
+                          {topEpicSaves.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-pink-400 mb-1">{(topEpicSaves.total_epic_saves || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topEpicSaves.team_name}</div>
+                      </div>
+
+                      {/* OT Goals Leader */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-yellow-300/30 hover:border-yellow-300 transition-all duration-300 hover:shadow-xl hover:shadow-yellow-300/30">
+                        <div className="text-yellow-300 font-bold text-sm mb-2 uppercase tracking-wide">⏱️ OT Goals</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(topOTG.player_name, topOTG.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-yellow-200 transition-colors block mb-1"
+                        >
+                          {topOTG.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-yellow-300 mb-1">{(topOTG.total_otg || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{topOTG.team_name}</div>
+                      </div>
+
+                      {/* Most Games Played */}
+                      <div className="bg-black/40 rounded-xl p-6 border border-gray-400/30 hover:border-gray-300 transition-all duration-300 hover:shadow-xl hover:shadow-gray-500/30">
+                        <div className="text-gray-300 font-bold text-sm mb-2 uppercase tracking-wide">🎮 Games Played</div>
+                        <button
+                          onClick={() => navigate(`/players/${createPlayerSlug(mostGames.player_name, mostGames.player_name)}`)}
+                          className="text-2xl font-black text-white hover:text-gray-200 transition-colors block mb-1"
+                        >
+                          {mostGames.player_name}
+                        </button>
+                        <div className="text-3xl font-black text-gray-300 mb-1">{(mostGames.games_played || 0).toLocaleString()}</div>
+                        <div className="text-xs text-gray-400">{mostGames.team_name}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Records Section */}
             {stats.length > 0 && (
               <div className="mb-12">
