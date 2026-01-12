@@ -348,37 +348,100 @@ const GameResultsTable = ({
   const handleSeriesSave = async (seriesId, seriesGames) => {
     try {
       setSavingSeriesId(seriesId);
-      
+
+      // CRITICAL MVP VALIDATION - Only validate games that have edited stats
+      // First, determine which games have been edited
+      const editedGameIds = new Set();
+      Object.keys(editableStats).forEach(statKey => {
+        const [gameId] = statKey.split('-');
+        editedGameIds.add(parseInt(gameId));
+      });
+
+      const mvpValidationErrors = [];
+
+      // Only validate games that have been edited
+      seriesGames.forEach(game => {
+        const gameId = game.id;
+
+        // Skip validation for games that weren't edited
+        if (!editedGameIds.has(gameId)) return;
+
+        const gamePlayerData = gamePlayersData[gameId];
+        if (!gamePlayerData) return;
+
+        // Count MVPs for this game from edited stats ONLY
+        let mvpCount = 0;
+        const allPlayers = [...gamePlayerData.homePlayers, ...gamePlayerData.awayPlayers];
+
+        allPlayers.forEach(player => {
+          const statKey = `${gameId}-${player.id}`;
+          // Check editableStats which contains current values
+          const editedStats = editableStats[statKey];
+          if (editedStats) {
+            // Parse the MVP value as a number
+            const mvpValue = parseInt(editedStats.mvps) || 0;
+            // If MVP is set (non-zero), count it
+            if (mvpValue > 0) {
+              mvpCount += mvpValue;
+            }
+          }
+        });
+
+        // Debug log to help diagnose the issue
+        console.log(`Game ${game.series_game || 1} MVP validation:`, {
+          gameId,
+          mvpCount,
+          playerMVPs: allPlayers.map(p => ({
+            playerId: p.id,
+            playerName: p.player_name || p.display_name,
+            mvpValue: parseInt(editableStats[`${gameId}-${p.id}`]?.mvps) || 0
+          }))
+        });
+
+        if (mvpCount === 0) {
+          mvpValidationErrors.push(`Game ${game.series_game || 1}: No MVP selected`);
+        } else if (mvpCount > 1) {
+          mvpValidationErrors.push(`Game ${game.series_game || 1}: ${mvpCount} MVPs selected (only 1 allowed)`);
+        }
+      });
+
+      // If there are MVP validation errors, show alert and prevent submission
+      if (mvpValidationErrors.length > 0) {
+        alert(`❌ WOOOAAH THERE BIG GUY:\n\n${mvpValidationErrors.join('\n')}\n\nPlease ensure exactly ONE MVP is selected for each game before saving.`);
+        setSavingSeriesId(null);
+        return;
+      }
+
       // Save all edited stats to the API
       const savePromises = [];
-      
+
       Object.entries(editableStats).forEach(([statKey, stats]) => {
         const [gameId, playerId] = statKey.split('-');
-        
+
         // Get the game and player data to find team_season_id
         const gameData = gamePlayersData[gameId];
         if (!gameData) {
           console.error('No game data found for game', gameId);
           return;
         }
-        
+
         const allPlayers = [...gameData.homePlayers, ...gameData.awayPlayers];
         const player = allPlayers.find(p => p.id === parseInt(playerId));
         if (!player) {
           console.error('No player found for ID', playerId, 'in game', gameId);
           return;
         }
-        
+
         // Determine team_season_id based on which team the player is on
         const game = seriesGames.find(g => g.id === parseInt(gameId));
         if (!game) {
           console.error('No game found for ID', gameId);
           return;
         }
-        
+
         const isHomeTeam = gameData.homePlayers.some(p => p.id === parseInt(playerId));
         const team_season_id = isHomeTeam ? game.home_team_season_id : game.away_team_season_id;
-        
+
         // Create or update player game stats with all required fields
         const statData = {
           game_id: parseInt(gameId),
@@ -395,7 +458,7 @@ const GameResultsTable = ({
         };
 
         console.log('Preparing to save stats for player', playerId, 'game', gameId, ':', statData);
-        
+
         if (player.stats && player.stats.id) {
           // Update existing stat
           console.log('Updating existing stat with ID:', player.stats.id);

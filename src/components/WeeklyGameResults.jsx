@@ -1,10 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import { createTeamSlug } from "../utils/slugify.js";
 
 const WeeklyGameResults = ({
   gameResultsData,
   apiService,
   searchQuery
 }) => {
+  const navigate = useNavigate();
   // All React hooks MUST be at the top of the component
   const [collapsedWeeks, setCollapsedWeeks] = React.useState(new Set());
   const [collapsedSeries, setCollapsedSeries] = React.useState(new Set());
@@ -331,15 +334,35 @@ const WeeklyGameResults = ({
                             <React.Fragment key={seriesKey}>
                               {/* Series Header Row - ESPN Style */}
                               <tr className="border-b border-gray-200 bg-gray-200 hover:bg-gray-300 transition-colors">
-                                <td
-                                  className="py-3 px-6 text-gray-800 font-semibold cursor-pointer"
-                                  onClick={() => toggleSeriesCollapse(seriesId)}
-                                >
+                                <td className="py-3 px-6 text-gray-800 font-semibold">
                                   <div className="flex items-center gap-3">
-                                    <span className="text-sm text-blue-600">
+                                    <span
+                                      className="text-sm text-blue-600 cursor-pointer"
+                                      onClick={() => toggleSeriesCollapse(seriesId)}
+                                    >
                                       {isSeriesCollapsed ? '▶' : '▼'}
                                     </span>
-                                    <span className="text-base">{matchupName}</span>
+                                    <span className="text-base">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigate(`/teams/${createTeamSlug(firstGame.home_display)}`);
+                                        }}
+                                        className="hover:text-blue-600 hover:underline transition-colors"
+                                      >
+                                        {firstGame.home_display}
+                                      </button>
+                                      <span> vs </span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigate(`/teams/${createTeamSlug(firstGame.away_display)}`);
+                                        }}
+                                        className="hover:text-blue-600 hover:underline transition-colors"
+                                      >
+                                        {firstGame.away_display}
+                                      </button>
+                                    </span>
                                     <span className="text-xs text-gray-500 font-normal">
                                       ({sortedSeriesGames.length} games)
                                     </span>
@@ -415,26 +438,62 @@ const WeeklyGameResults = ({
                                             if (game.home_team_forfeit) {
                                               return (
                                                 <div>
-                                                  <span className="text-red-600">Forfeit ({game.home_display})</span>
+                                                  <span className="text-red-600">Forfeit (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/teams/${createTeamSlug(game.home_display)}`);
+                                                      }}
+                                                      className="hover:underline"
+                                                    >
+                                                      {game.home_display}
+                                                    </button>
+                                                  )</span>
                                                 </div>
                                               );
                                             } else if (game.away_team_forfeit) {
                                               return (
                                                 <div>
-                                                  <span className="text-red-600">Forfeit ({game.away_display})</span>
+                                                  <span className="text-red-600">Forfeit (
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/teams/${createTeamSlug(game.away_display)}`);
+                                                      }}
+                                                      className="hover:underline"
+                                                    >
+                                                      {game.away_display}
+                                                    </button>
+                                                  )</span>
                                                 </div>
                                               );
                                             } else if (homeGoals > awayGoals) {
                                               return (
                                                 <div>
-                                                  <span className="text-green-600">{game.home_display}</span>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/teams/${createTeamSlug(game.home_display)}`);
+                                                    }}
+                                                    className="text-green-600 hover:underline"
+                                                  >
+                                                    {game.home_display}
+                                                  </button>
                                                   <span className="text-gray-600 ml-1">({homeGoals}-{awayGoals})</span>
                                                 </div>
                                               );
                                             } else if (awayGoals > homeGoals) {
                                               return (
                                                 <div>
-                                                  <span className="text-green-600">{game.away_display}</span>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      navigate(`/teams/${createTeamSlug(game.away_display)}`);
+                                                    }}
+                                                    className="text-green-600 hover:underline"
+                                                  >
+                                                    {game.away_display}
+                                                  </button>
                                                   <span className="text-gray-600 ml-1">({awayGoals}-{homeGoals})</span>
                                                 </div>
                                               );
@@ -505,7 +564,17 @@ const WeeklyGameResults = ({
                                                       .map((player, rowIndex) => (
                                                       <tr key={`home-team-${game.id}-player-${player.id}`} className="border-b border-gray-300 hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold bg-gray-200">
-                                                          {rowIndex === 0 ? `🏠 ${game.home_display}` : ''}
+                                                          {rowIndex === 0 ? (
+                                                            <button
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/teams/${createTeamSlug(game.home_display)}`);
+                                                              }}
+                                                              className="hover:text-blue-600 hover:underline"
+                                                            >
+                                                              🏠 {game.home_display}
+                                                            </button>
+                                                          ) : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold bg-gray-300">
                                                           {player.display_name || player.player_name || 'Unknown Player'}
@@ -554,7 +623,17 @@ const WeeklyGameResults = ({
                                                       .map((player, rowIndex) => (
                                                       <tr key={`away-team-${game.id}-player-${player.id}`} className="border-b border-gray-300 hover:bg-gray-50">
                                                         <td className="py-2 px-3 text-black font-bold bg-gray-200">
-                                                          {rowIndex === 0 ? `✈️ ${game.away_display}` : ''}
+                                                          {rowIndex === 0 ? (
+                                                            <button
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                navigate(`/teams/${createTeamSlug(game.away_display)}`);
+                                                              }}
+                                                              className="hover:text-blue-600 hover:underline"
+                                                            >
+                                                              ✈️ {game.away_display}
+                                                            </button>
+                                                          ) : ''}
                                                         </td>
                                                         <td className="py-2 px-3 text-black font-bold bg-gray-300">
                                                           {player.display_name || player.player_name || 'Unknown Player'}

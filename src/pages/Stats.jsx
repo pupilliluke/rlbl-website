@@ -748,9 +748,27 @@ const Stats = () => {
               </p>
             </div>
             <div className="hidden md:flex items-center gap-4">
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-orange-400">S3</div>
-                <div className="text-xs text-white">Season</div>
+              <div className={`backdrop-blur-sm rounded-2xl px-8 py-5 text-center border-2 shadow-2xl ${
+                selectedSeason === 'career'
+                  ? 'bg-gradient-to-br from-purple-900/90 to-blue-900/90 border-purple-400 shadow-purple-500/50'
+                  : 'bg-gray-800/90 border-gray-600'
+              }`}>
+                <div className={`font-black mb-1 ${
+                  selectedSeason === 'career'
+                    ? 'text-4xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
+                    : 'text-2xl text-orange-400'
+                }`}>
+                  {selectedSeason === 'career' ? 'CAREER' :
+                   selectedSeason === 'current' ? 'S3' :
+                   selectedSeason === 'season2' ? 'S2' :
+                   selectedSeason === 'season2_playoffs' ? 'S2 PO' :
+                   selectedSeason === 'season1' ? 'S1' : 'SEASON'}
+                </div>
+                <div className={`text-xs font-semibold ${
+                  selectedSeason === 'career' ? 'text-yellow-200' : 'text-white'
+                }`}>
+                  {selectedSeason === 'career' ? 'All-Time Stats' : 'Season'}
+                </div>
               </div>
               <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
                 <div className="text-2xl font-bold text-blue-400">RL</div>
@@ -1117,6 +1135,48 @@ const Stats = () => {
             </div>
           </div>
         )}
+
+        {/* Season Display Section */}
+        <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-sm rounded-2xl p-8 mb-8 border-2 border-gray-600 shadow-2xl">
+          <div className="flex items-center justify-center gap-6">
+            <div className="text-center">
+              <div className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Viewing Statistics For</div>
+              <div className={`text-5xl font-black mb-2 ${
+                selectedSeason === 'career'
+                  ? 'bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
+                  : 'text-blue-400'
+              }`}>
+                {selectedSeason === 'career' ? 'CAREER STATS' :
+                 selectedSeason === 'current' ? 'SEASON 3' :
+                 selectedSeason === 'season2' ? 'SEASON 2 - SPRING 25' :
+                 selectedSeason === 'season2_playoffs' ? 'SEASON 2 PLAYOFFS' :
+                 selectedSeason === 'season1' ? 'SEASON 1 - FALL 24' : 'SEASON'}
+              </div>
+              <div className="flex items-center justify-center gap-4 text-sm">
+                {selectedSeason === 'career' && (
+                  <span className="text-yellow-300 font-semibold">All-Time Records</span>
+                )}
+                {selectedSeason === 'current' && (
+                  <span className="text-green-400 font-semibold">Current Season</span>
+                )}
+                {selectedConference !== 'all' && selectedSeason === 'current' && (
+                  <>
+                    <span className="text-gray-500">•</span>
+                    <span className="text-purple-400 font-semibold">{selectedConference} Conference</span>
+                  </>
+                )}
+                {playoffFilter !== 'all' && selectedSeason !== 'career' && (
+                  <>
+                    <span className="text-gray-500">•</span>
+                    <span className="text-orange-400 font-semibold">
+                      {playoffFilter === 'playoffs' ? 'Playoffs Only' : 'Regular Season Only'}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Executive Controls */}
         <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-600">
