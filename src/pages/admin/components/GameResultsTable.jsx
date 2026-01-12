@@ -375,14 +375,27 @@ const GameResultsTable = ({
 
         allPlayers.forEach(player => {
           const statKey = `${gameId}-${player.id}`;
-          // Only check editableStats - don't fall back to player.stats to avoid double counting
-          const stats = editableStats[statKey];
-          if (stats) {
-            const mvps = parseInt(stats.mvps) || 0;
-            if (mvps > 0) {
-              mvpCount += mvps;
+          // Check editableStats which contains current values
+          const editedStats = editableStats[statKey];
+          if (editedStats) {
+            // Parse the MVP value as a number
+            const mvpValue = parseInt(editedStats.mvps) || 0;
+            // If MVP is set (non-zero), count it
+            if (mvpValue > 0) {
+              mvpCount += mvpValue;
             }
           }
+        });
+
+        // Debug log to help diagnose the issue
+        console.log(`Game ${game.series_game || 1} MVP validation:`, {
+          gameId,
+          mvpCount,
+          playerMVPs: allPlayers.map(p => ({
+            playerId: p.id,
+            playerName: p.player_name || p.display_name,
+            mvpValue: parseInt(editableStats[`${gameId}-${p.id}`]?.mvps) || 0
+          }))
         });
 
         if (mvpCount === 0) {
