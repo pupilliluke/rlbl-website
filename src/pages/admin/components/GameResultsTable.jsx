@@ -369,17 +369,19 @@ const GameResultsTable = ({
         const gamePlayerData = gamePlayersData[gameId];
         if (!gamePlayerData) return;
 
-        // Count MVPs for this game from edited stats
+        // Count MVPs for this game from edited stats ONLY
         let mvpCount = 0;
         const allPlayers = [...gamePlayerData.homePlayers, ...gamePlayerData.awayPlayers];
 
         allPlayers.forEach(player => {
           const statKey = `${gameId}-${player.id}`;
-          const stats = editableStats[statKey] || player.stats || {};
-          const mvps = parseInt(stats.mvps) || 0;
-
-          if (mvps > 0) {
-            mvpCount += mvps;
+          // Only check editableStats - don't fall back to player.stats to avoid double counting
+          const stats = editableStats[statKey];
+          if (stats) {
+            const mvps = parseInt(stats.mvps) || 0;
+            if (mvps > 0) {
+              mvpCount += mvps;
+            }
           }
         });
 
