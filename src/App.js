@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LeagueInfo from "./pages/LeagueInfo";
 import Standings from "./pages/Standings";
-import StandingsData from "./pages/StandingsData";
+// import StandingsData from "./pages/StandingsData"; // Old Excel-based standings - replaced with database-driven Standings
 import Teams from "./pages/Teams";
 import Weekly from "./pages/Weekly";
 import Stats from "./pages/Stats";
@@ -14,7 +14,7 @@ import Navbar from "./components/Navbar";
 import TeamStats from "./pages/TeamStats";
 import PlayerStats from "./pages/PlayerStats";
 import Stream from "./pages/Stream";
-import SeasonStats from "./pages/SeasonStats";
+// import SeasonStats from "./pages/SeasonStats"; // Old Excel-based stats - replaced with database-driven Stats
 
 import "./index.css";
 import "./styles/animations.css";
@@ -30,12 +30,14 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/leagueinfo" element={<><LeagueInfo /><Footer /></>} />
           <Route path="/standings" element={<><Standings /><Footer /></>} />
-          <Route path="/standings-data" element={<><StandingsData /><Footer /></>} />
+          {/* Replace old Excel-based StandingsData with database-driven Standings */}
+          <Route path="/standings-data" element={<><Standings /><Footer /></>} />
           <Route path="/teams" element={<><Teams /><Footer /></>} />
           <Route path="/weekly" element={<><Weekly /><Footer /></>} />
           <Route path="/stats" element={<><Stats /><Footer /></>} />
           <Route path="/schedule" element={<><Schedule /><Footer /></>} />
-          <Route path="/season-stats" element={<><SeasonStats /><Footer /></>} />
+          {/* Replace old Excel-based SeasonStats with database-driven Stats */}
+          <Route path="/season-stats" element={<><Stats /><Footer /></>} />
           <Route path="/legacy" element={<><Legacy /><Footer /></>} />
           <Route path="/admin" element={<><Admin /><Footer /></>} />
           <Route path="/teams/:teamSlug" element={<><TeamStats /><Footer /></>} />

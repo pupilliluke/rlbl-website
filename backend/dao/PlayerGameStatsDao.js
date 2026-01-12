@@ -77,7 +77,7 @@ class PlayerGameStatsDao extends BaseDao {
     return r.rows[0];
   }
 
-  async getPlayerStatsWithTeams(seasonId = null) {
+  async getPlayerStatsWithTeams(seasonId = null, isPlayoffs = null) {
     const { query } = require('../../lib/database');
 
     // Get comprehensive stats from player_game_stats table with team information
@@ -109,6 +109,12 @@ class PlayerGameStatsDao extends BaseDao {
           whereClause.push('g.season_id = $' + (params.length + 1));
           params.push(seasonIdInt);
         }
+      }
+
+      // Add playoff filter
+      if (isPlayoffs !== null) {
+        whereClause.push('g.is_playoffs = $' + (params.length + 1));
+        params.push(isPlayoffs);
       }
 
       if (whereClause.length > 0) {
