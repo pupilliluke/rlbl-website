@@ -35,12 +35,18 @@ export default function TeamStats() {
           if (foundTeam) {
             setTeam(foundTeam);
 
+            // Determine the correct IDs from the foundTeam object
+            // foundTeam from getTeams() has: id (team_season_id), team_id, team_name, etc.
+            const teamSeasonId = foundTeam.id || foundTeam.team_season_id;
+            const teamId = foundTeam.team_id;
+            console.log('Found team:', foundTeam, 'Team ID:', teamId, 'Team Season ID:', teamSeasonId);
+
             // Get team standings for this season
             try {
               const standingsResponse = await apiService.getStandings(activeSeasonData.id);
               const standingsData = standingsResponse.standings || standingsResponse;
-              // foundTeam.id is actually a team_season_id, so compare with team_season_id from standings
-              const teamStanding = standingsData.find(s => s.team_season_id === foundTeam.id);
+              // Compare with team_season_id from standings
+              const teamStanding = standingsData.find(s => s.team_season_id === teamSeasonId);
               setStandings(teamStanding);
             } catch (error) {
               console.error('Failed to fetch standings:', error);
@@ -54,10 +60,10 @@ export default function TeamStats() {
                 apiService.getPlayerGameStats(activeSeasonData.id)
               ]);
 
-              // Filter games by team_season_id (foundTeam.id is actually a team_season_id)
+              // Filter games by team_season_id
               const teamGamesRaw = gamesData.filter(game =>
-                game.home_team_season_id === foundTeam.id ||
-                game.away_team_season_id === foundTeam.id
+                game.home_team_season_id === teamSeasonId ||
+                game.away_team_season_id === teamSeasonId
               );
 
               // Enrich games with display names and scores (like Weekly tab)
@@ -92,7 +98,7 @@ export default function TeamStats() {
 
             // Get team players (from roster memberships)
             try {
-              const rosterData = await apiService.getRosterMemberships(foundTeam.id, activeSeasonData.id);
+              const rosterData = await apiService.getRosterMemberships(teamId, activeSeasonData.id);
               
               // For each roster member, try to get their stats
               const playersWithStats = [];
@@ -250,34 +256,63 @@ export default function TeamStats() {
           <h2 className="text-2xl md:text-3xl font-bold text-blue-400 mb-6">🏆 Team Record</h2>
           <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 shadow-lg">
             {standings ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-green-400">{standings.wins || 0}</div>
-                  <div className="text-sm text-gray-400">Wins</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-red-400">{standings.losses || 0}</div>
-                  <div className="text-sm text-gray-400">Losses</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-blue-400">{standings.points_for || 0}</div>
-                  <div className="text-sm text-gray-400">Points For</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-orange-400">{standings.points_against || 0}</div>
-                  <div className="text-sm text-gray-400">Points Against</div>
-                </div>
-                <div className="text-center">
-                  <div className={`text-2xl md:text-3xl font-bold ${(standings.point_diff || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {(standings.point_diff || 0) >= 0 ? '+' : ''}{standings.point_diff || 0}
+              <>
+                {/* Main Record */}
+                <div className="text-center mb-6">
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2">
+                    {standings.wins || 0}-{standings.losses || 0}{standings.ties > 0 ? `-${standings.ties}` : ''}
                   </div>
-                  <div className="text-sm text-gray-400">Point Diff</div>
+                  <div className="text-sm text-gray-400">
+                    Win-Loss{standings.ties > 0 ? '-Tie' : ''} Record
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-yellow-400">{standings.win_percentage || 0}%</div>
-                  <div className="text-sm text-gray-400">Win %</div>
+
+                {/* Detailed Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+                  <div className="text-center bg-gray-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-green-400">{standings.regulation_wins || 0}</div>
+                    <div className="text-xs text-gray-400">Reg Wins</div>
+                  </div>
+                  <div className="text-center bg-gray-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-cyan-400">{standings.overtime_wins || 0}</div>
+                    <div className="text-xs text-gray-400">OT Wins</div>
+                  </div>
+                  <div className="text-center bg-gray-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-orange-400">{standings.overtime_losses || 0}</div>
+                    <div className="text-xs text-gray-400">OT Losses</div>
+                  </div>
+                  <div className="text-center bg-gray-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-red-400">{standings.regulation_losses || 0}</div>
+                    <div className="text-xs text-gray-400">Reg Losses</div>
+                  </div>
+                  <div className="text-center bg-gray-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-gray-400">{standings.forfeits || 0}</div>
+                    <div className="text-xs text-gray-400">Forfeits</div>
+                  </div>
                 </div>
-              </div>
+
+                {/* Goals and Points */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl md:text-3xl font-bold text-blue-400">{standings.points_for || 0}</div>
+                    <div className="text-sm text-gray-400">GF (Goals For)</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl md:text-3xl font-bold text-orange-400">{standings.points_against || 0}</div>
+                    <div className="text-sm text-gray-400">GA (Goals Against)</div>
+                  </div>
+                  <div className="text-center">
+                    <div className={`text-2xl md:text-3xl font-bold ${(standings.point_diff || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {(standings.point_diff || 0) >= 0 ? '+' : ''}{standings.point_diff || 0}
+                    </div>
+                    <div className="text-sm text-gray-400">Goal Diff</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl md:text-3xl font-bold text-purple-400">{standings.league_points || 0}</div>
+                    <div className="text-sm text-gray-400">League Points</div>
+                  </div>
+                </div>
+              </>
             ) : (
               <div className="text-center text-gray-400">
                 <p>No standings data available for this team.</p>

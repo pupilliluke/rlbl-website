@@ -174,8 +174,8 @@ export default function Standings() {
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">L</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">OTG</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">FF</th>
-              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PF</th>
-              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">PA</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white border-l-2 border-gray-500">GF</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">GA</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">Diff</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">LP</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white hidden md:table-cell">Win%</th>
@@ -218,7 +218,7 @@ export default function Standings() {
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.losses}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{(team.overtime_wins || 0) + (team.overtime_losses || 0)}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.forfeits || 0}</td>
-                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400">{team.points_for}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400 border-l-2 border-gray-500">{team.points_for}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-orange-400">{team.points_against}</td>
                   <td className={`py-3 md:py-4 px-3 md:px-4 text-center font-semibold ${
                     team.point_diff > 0 ? 'text-green-400' :
@@ -510,8 +510,8 @@ export default function Standings() {
             <div><strong>L</strong> - Losses</div>
             <div><strong>OTG</strong> - Overtime Games</div>
             <div><strong>FF</strong> - Forfeits</div>
-            <div><strong>PF</strong> - Points For</div>
-            <div><strong>PA</strong> - Points Against</div>
+            <div><strong>GF</strong> - Goals For</div>
+            <div><strong>GA</strong> - Goals Against</div>
             <div><strong>Diff</strong> - Point Differential</div>
             <div><strong>LP</strong> - League Points</div>
             <div><strong>Win%</strong> - Win Percentage</div>
