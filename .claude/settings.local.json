@@ -42,7 +42,10 @@
       "Bash(PORT=5001 node backend/api/index.js)",
       "Bash(PORT=5001 node backend/server.js)",
       "Bash(npm test:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git config:*)",
+      "Bash(pkill:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

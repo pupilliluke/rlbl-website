@@ -62,17 +62,27 @@ export default function Standings() {
     fetchSeasons();
   }, []);
 
-  // Fetch standings when season changes
+  // Auto-generate and fetch standings when season changes
   useEffect(() => {
     const fetchStandings = async () => {
       if (!selectedSeason) return;
-      
+
       try {
         setLoading(true);
-        console.log(`Fetching standings data for season ${selectedSeason}...`);
+        console.log(`Auto-generating standings from game data for season ${selectedSeason}...`);
+
+        // First, auto-generate standings from game results
+        try {
+          await apiService.autoGenerateStandings(selectedSeason);
+          console.log('Standings auto-generated successfully');
+        } catch (genErr) {
+          console.warn('Auto-generate failed, will use existing standings:', genErr);
+        }
+
+        // Then fetch the standings (whether newly generated or existing)
         const standingsResponse = await apiService.getStandings(selectedSeason);
         console.log('Standings data received:', standingsResponse);
-        
+
         // Handle new response format with metadata
         if (standingsResponse.standings) {
           setStandings(standingsResponse.standings);
@@ -185,7 +195,7 @@ export default function Standings() {
               const rowClass = showConferenceRank && styles[rank] ? styles[rank] : "";
 
               return (
-                <tr key={team.id} className={`${rowClass} ${baseStyle}`}>
+                <tr key={team.team_season_id} className={`${rowClass} ${baseStyle}`}>
                   <td className="py-3 md:py-4 px-3 md:px-4 font-bold">
                     <span className="mr-2">{rank}</span>
                     {showConferenceRank && team.overallRank && (
@@ -218,7 +228,7 @@ export default function Standings() {
                   </td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center">
                     <button
-                      onClick={() => fetchLeaguePointsBreakdown(team.id, team.team_name)}
+                      onClick={() => fetchLeaguePointsBreakdown(team.team_season_id, team.team_name)}
                       className="text-purple-400 font-bold hover:text-purple-300 hover:underline cursor-pointer transition-colors"
                     >
                       {team.league_points || 0}
@@ -381,6 +391,36 @@ export default function Standings() {
                 </button>
               </div>
             )}
+
+            {/* Recalculate Standings Button */}
+            <button
+              onClick={async () => {
+                if (!selectedSeason) return;
+                setLoading(true);
+                try {
+                  await apiService.autoGenerateStandings(selectedSeason);
+                  const standingsResponse = await apiService.getStandings(selectedSeason);
+                  if (standingsResponse.standings) {
+                    setStandings(standingsResponse.standings);
+                    setStandingsMetadata(standingsResponse.metadata);
+                  } else {
+                    setStandings(standingsResponse);
+                    setStandingsMetadata(null);
+                  }
+                } catch (err) {
+                  console.error('Failed to recalculate standings:', err);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg border border-green-500 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
           </div>
         </div>
 

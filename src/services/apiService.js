@@ -1,12 +1,12 @@
 // API Service for Rocket League app - Using backend server
 const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? '/api'
-  : 'http://localhost:5001/api';
+  : 'http://localhost:5000/api';
 
 // Use same base URL for admin functions
 const ADMIN_API_BASE_URL = process.env.NODE_ENV === 'production'
   ? '/api'
-  : 'http://localhost:5001/api';
+  : 'http://localhost:5000/api';
 
 // Generic API call function
 const apiCall = async (endpoint, method = 'GET', body = null) => {
@@ -94,11 +94,25 @@ export const apiService = {
   getSchedule: () => apiCall('/schedule'),
 
   // Stats
-  getStats: async (season) => {
+  getStats: async (season, playoffs = null) => {
     try {
-      const endpoint = season ? `/stats?season=${encodeURIComponent(season)}` : '/stats';
+      let endpoint = '/stats';
+      const params = [];
+
+      if (season) {
+        params.push(`season=${encodeURIComponent(season)}`);
+      }
+
+      if (playoffs !== null) {
+        params.push(`playoffs=${playoffs}`);
+      }
+
+      if (params.length > 0) {
+        endpoint += '?' + params.join('&');
+      }
+
       const result = await apiCall(endpoint);
-      console.log(`Stats API returned ${result.length} records for season:`, season);
+      console.log(`Stats API returned ${result.length} records for season:`, season, 'playoffs:', playoffs);
       return result;
     } catch (error) {
       console.error('Stats API failed:', error);
@@ -171,6 +185,19 @@ export const apiService = {
   },
   getPlayerGameStatsByGame: (gameId) => apiCall(`/player-game-stats/game/${gameId}`),
   getPlayerGameStat: (playerId, gameId) => apiCall(`/player-game-stats/player/${playerId}/game/${gameId}`),
+
+  // MVP Validation
+  validateMVPs: (seasonId) => apiCall(`/player-game-stats/mvp-validation/${seasonId}`),
+
+  // Export Stats as CSV
+  exportStats: (seasonId, playoffs = null) => {
+    let endpoint = `/stats/export/${seasonId}`;
+    if (playoffs !== null) {
+      endpoint += `?playoffs=${playoffs}`;
+    }
+    // Open in new window to trigger download
+    window.open(`${API_BASE_URL}${endpoint}`, '_blank');
+  },
 
   // Player Game Stats CRUD operations
   createPlayerGameStats: async (statsData) => {
