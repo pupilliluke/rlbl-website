@@ -349,12 +349,24 @@ const GameResultsTable = ({
     try {
       setSavingSeriesId(seriesId);
 
-      // CRITICAL MVP VALIDATION - Check each game for exactly one MVP
+      // CRITICAL MVP VALIDATION - Only validate games that have edited stats
+      // First, determine which games have been edited
+      const editedGameIds = new Set();
+      Object.keys(editableStats).forEach(statKey => {
+        const [gameId] = statKey.split('-');
+        editedGameIds.add(parseInt(gameId));
+      });
+
       const mvpValidationErrors = [];
+
+      // Only validate games that have been edited
       seriesGames.forEach(game => {
         const gameId = game.id;
-        const gamePlayerData = gamePlayersData[gameId];
 
+        // Skip validation for games that weren't edited
+        if (!editedGameIds.has(gameId)) return;
+
+        const gamePlayerData = gamePlayersData[gameId];
         if (!gamePlayerData) return;
 
         // Count MVPs for this game from edited stats
