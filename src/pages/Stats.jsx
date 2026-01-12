@@ -748,9 +748,27 @@ const Stats = () => {
               </p>
             </div>
             <div className="hidden md:flex items-center gap-4">
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
-                <div className="text-2xl font-bold text-orange-400">S3</div>
-                <div className="text-xs text-white">Season</div>
+              <div className={`backdrop-blur-sm rounded-2xl px-8 py-5 text-center border-2 shadow-2xl ${
+                selectedSeason === 'career'
+                  ? 'bg-gradient-to-br from-purple-900/90 to-blue-900/90 border-purple-400 shadow-purple-500/50'
+                  : 'bg-gray-800/90 border-gray-600'
+              }`}>
+                <div className={`font-black mb-1 ${
+                  selectedSeason === 'career'
+                    ? 'text-4xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
+                    : 'text-2xl text-orange-400'
+                }`}>
+                  {selectedSeason === 'career' ? 'CAREER' :
+                   selectedSeason === 'current' ? 'S3' :
+                   selectedSeason === 'season2' ? 'S2' :
+                   selectedSeason === 'season2_playoffs' ? 'S2 PO' :
+                   selectedSeason === 'season1' ? 'S1' : 'SEASON'}
+                </div>
+                <div className={`text-xs font-semibold ${
+                  selectedSeason === 'career' ? 'text-yellow-200' : 'text-white'
+                }`}>
+                  {selectedSeason === 'career' ? 'All-Time Stats' : 'Season'}
+                </div>
               </div>
               <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl px-6 py-4 text-center border border-gray-600">
                 <div className="text-2xl font-bold text-blue-400">RL</div>
