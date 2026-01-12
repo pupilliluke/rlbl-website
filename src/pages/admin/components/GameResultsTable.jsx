@@ -392,7 +392,7 @@ const GameResultsTable = ({
 
       // If there are MVP validation errors, show alert and prevent submission
       if (mvpValidationErrors.length > 0) {
-        alert(`❌ MVP VALIDATION FAILED:\n\n${mvpValidationErrors.join('\n')}\n\nPlease ensure exactly ONE MVP is selected for each game before saving.`);
+        alert(`❌ WOOOAAH THERE BIG GUY:\n\n${mvpValidationErrors.join('\n')}\n\nPlease ensure exactly ONE MVP is selected for each game before saving.`);
         setSavingSeriesId(null);
         return;
       }
