@@ -16,6 +16,8 @@ const usersRouter = require('./users');
 const statsRouter = require('./stats');
 const streamSettingsRouter = require('./streamSettings');
 const streamChatRouter = require('./streamChat');
+const seasonStatsSyncRouter = require('./seasonStatsSync');
+const seasonStatsRouter = require('./seasonStats');
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -46,7 +48,9 @@ router.get('/', (req, res) => {
       users: '/api/users',
       stats: '/api/stats',
       streamSettings: '/api/stream-settings',
-      streamChat: '/api/stream-chat'
+      streamChat: '/api/stream-chat',
+      seasonStatsSync: '/api/season-stats-sync',
+      seasonStats: '/api/season-stats'
     },
     health: '/api/health'
   });
@@ -68,6 +72,8 @@ router.use('/users', usersRouter);
 router.use('/stats', statsRouter);
 router.use('/stream-settings', streamSettingsRouter);
 router.use('/stream-chat', streamChatRouter);
+router.use('/season-stats-sync', seasonStatsSyncRouter);
+router.use('/season-stats', seasonStatsRouter);
 
 // 404 handler for undefined API routes
 router.use('*', (req, res) => {
@@ -88,7 +94,9 @@ router.use('*', (req, res) => {
       users: '/api/users',
       stats: '/api/stats',
       streamSettings: '/api/stream-settings',
-      streamChat: '/api/stream-chat'
+      streamChat: '/api/stream-chat',
+      seasonStatsSync: '/api/season-stats-sync',
+      seasonStats: '/api/season-stats'
     }
   });
 });
