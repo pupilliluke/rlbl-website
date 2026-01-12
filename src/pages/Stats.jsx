@@ -1136,6 +1136,48 @@ const Stats = () => {
           </div>
         )}
 
+        {/* Season Display Section */}
+        <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-sm rounded-2xl p-8 mb-8 border-2 border-gray-600 shadow-2xl">
+          <div className="flex items-center justify-center gap-6">
+            <div className="text-center">
+              <div className="text-sm font-semibold text-gray-400 mb-2 uppercase tracking-wide">Viewing Statistics For</div>
+              <div className={`text-5xl font-black mb-2 ${
+                selectedSeason === 'career'
+                  ? 'bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
+                  : 'text-blue-400'
+              }`}>
+                {selectedSeason === 'career' ? 'CAREER STATS' :
+                 selectedSeason === 'current' ? 'SEASON 3' :
+                 selectedSeason === 'season2' ? 'SEASON 2 - SPRING 25' :
+                 selectedSeason === 'season2_playoffs' ? 'SEASON 2 PLAYOFFS' :
+                 selectedSeason === 'season1' ? 'SEASON 1 - FALL 24' : 'SEASON'}
+              </div>
+              <div className="flex items-center justify-center gap-4 text-sm">
+                {selectedSeason === 'career' && (
+                  <span className="text-yellow-300 font-semibold">All-Time Records</span>
+                )}
+                {selectedSeason === 'current' && (
+                  <span className="text-green-400 font-semibold">Current Season</span>
+                )}
+                {selectedConference !== 'all' && selectedSeason === 'current' && (
+                  <>
+                    <span className="text-gray-500">•</span>
+                    <span className="text-purple-400 font-semibold">{selectedConference} Conference</span>
+                  </>
+                )}
+                {playoffFilter !== 'all' && selectedSeason !== 'career' && (
+                  <>
+                    <span className="text-gray-500">•</span>
+                    <span className="text-orange-400 font-semibold">
+                      {playoffFilter === 'playoffs' ? 'Playoffs Only' : 'Regular Season Only'}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Executive Controls */}
         <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-600">
           <div className="flex flex-wrap gap-4 items-center justify-between">
