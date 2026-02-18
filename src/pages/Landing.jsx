@@ -272,22 +272,57 @@ export default function Landing() {
           
           {/* Modern Header Section */}
           <div className="mb-8 sm:mb-12 md:mb-16 relative mt-4 sm:mt-8">
-            <div className="relative text-center space-y-4">
-              <div className="inline-block">
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extralight tracking-wider text-white leading-none">
-                  ROCKET
-                </h1>
-                <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-400 to-transparent mt-2 mb-2" />
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extralight tracking-wider text-white leading-none">
-                  LEAGUE
-                </h1>
+            {/* Glowing backdrop */}
+            <div className="absolute inset-0 -top-8 -bottom-8 bg-gradient-to-b from-blue-600/10 via-purple-600/5 to-transparent blur-3xl" />
+
+            <div className="relative text-center">
+              {/* Main title container with glass effect */}
+              <div className="inline-block relative">
+                {/* Decorative corner accents */}
+                <div className="absolute -top-4 -left-8 w-8 h-8 border-l-2 border-t-2 border-blue-400/50" />
+                <div className="absolute -top-4 -right-8 w-8 h-8 border-r-2 border-t-2 border-blue-400/50" />
+                <div className="absolute -bottom-4 -left-8 w-8 h-8 border-l-2 border-b-2 border-purple-400/50" />
+                <div className="absolute -bottom-4 -right-8 w-8 h-8 border-r-2 border-b-2 border-purple-400/50" />
+
+                {/* Title with layered effect */}
+                <div className="relative px-8 py-4">
+                  <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-thin tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-blue-200 leading-none select-none">
+                    ROCKET
+                  </h1>
+
+                  {/* Animated center divider */}
+                  <div className="relative my-3 sm:my-4">
+                    <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-400/80 to-transparent" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rotate-45 border border-blue-400/60 bg-blue-950/50" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rotate-45 bg-blue-400/80" />
+                  </div>
+
+                  <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-thin tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-b from-blue-200 via-white to-white leading-none select-none">
+                    LEAGUE
+                  </h1>
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-6">
-                <div className="h-px w-16 bg-gradient-to-r from-transparent to-blue-400" />
-                <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-light tracking-widest text-blue-300 uppercase">
-                  Beer League
-                </span>
-                <div className="h-px w-16 bg-gradient-to-l from-transparent to-blue-400" />
+
+              {/* Refined subtitle */}
+              <div className="mt-8 sm:mt-10">
+                <div className="flex items-center justify-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-400/60" />
+                    <div className="h-px w-12 sm:w-20 bg-gradient-to-r from-blue-400/60 to-transparent" />
+                  </div>
+
+                  <div className="relative">
+                    <span className="text-sm sm:text-base md:text-lg font-medium tracking-[0.3em] text-blue-200/90 uppercase">
+                      Beer League
+                    </span>
+                    <div className="absolute -bottom-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent" />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="h-px w-12 sm:w-20 bg-gradient-to-l from-blue-400/60 to-transparent" />
+                    <div className="w-2 h-2 rounded-full bg-blue-400/60" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -319,6 +354,20 @@ export default function Landing() {
                 Historical Data
               </span>
             </Link>
+
+            <a
+              href="/REQUESTS.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group spacing-container bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold text-lg rounded-full transition-smooth hover:shadow-executive"
+            >
+              <span className="flex items-center gap-standard">
+                <svg className="w-6 h-6 group-hover:animate-ai-processing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                Requests
+              </span>
+            </a>
           </div>
 
           {/* Status Indicators */}

@@ -159,21 +159,66 @@ const LeagueInfo = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white page-with-navbar">
       {/* Header */}
-      <div className="bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-          <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent text-center mb-4">
-            <RocketIcon className="w-12 h-12 inline mr-4" />
-            ROCKET LEAGUE BEER LEAGUE
-          </h1>
-          <div className="w-32 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-400 mx-auto rounded-full mb-6"></div>
-          <p className="text-lg md:text-xl text-blue-200 text-center max-w-3xl mx-auto">
-            The official rulebook and standings for the Rocket League Beer League
+      <div className="relative bg-gray-900/95 backdrop-blur-sm shadow-2xl pt-20 overflow-hidden">
+        {/* Background glow effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-600/10 via-purple-600/5 to-transparent" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-blue-500/10 rounded-full blur-3xl" />
+
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-14">
+          {/* Main title container */}
+          <div className="relative inline-block w-full">
+            {/* Decorative corner accents */}
+            <div className="absolute -top-2 left-4 md:left-12 w-12 h-12 border-l-2 border-t-2 border-blue-400/40" />
+            <div className="absolute -top-2 right-4 md:right-12 w-12 h-12 border-r-2 border-t-2 border-blue-400/40" />
+            <div className="absolute -bottom-2 left-4 md:left-12 w-12 h-12 border-l-2 border-b-2 border-cyan-400/40" />
+            <div className="absolute -bottom-2 right-4 md:right-12 w-12 h-12 border-r-2 border-b-2 border-cyan-400/40" />
+
+            <div className="text-center py-4">
+              {/* Icon with glow */}
+              <div className="inline-flex items-center justify-center mb-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-blue-500/30 rounded-full blur-xl" />
+                  <RocketIcon className="relative w-14 h-14 md:w-16 md:h-16 text-blue-400" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-thin tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-cyan-200 to-blue-300 mb-2">
+                ROCKET LEAGUE
+              </h1>
+
+              {/* Animated divider */}
+              <div className="relative my-4 max-w-md mx-auto">
+                <div className="h-px w-full bg-gradient-to-r from-transparent via-blue-400/60 to-transparent" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/80" />
+                  <div className="w-2.5 h-2.5 rotate-45 border border-blue-400/60 bg-gray-900/80" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400/80" />
+                </div>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-orange-300 via-yellow-200 to-orange-300">
+                BEER LEAGUE
+              </h2>
+            </div>
+          </div>
+
+          {/* Subtitle */}
+          <div className="mt-8 text-center">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="h-px w-8 sm:w-16 bg-gradient-to-r from-transparent to-gray-500" />
+              <span className="text-xs sm:text-sm tracking-[0.2em] text-gray-400 uppercase">Official Rulebook & Standings</span>
+              <div className="h-px w-8 sm:w-16 bg-gradient-to-l from-transparent to-gray-500" />
+            </div>
             {activeSeason && (
-              <span className="block mt-2 text-base text-gray-300">
-                Current Season: <span className="text-blue-300 font-semibold">{activeSeason.season_name}</span>
-              </span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800/60 rounded-full border border-gray-700/50">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-sm text-gray-300">
+                  Current Season: <span className="text-blue-300 font-medium">{activeSeason.season_name}</span>
+                </span>
+              </div>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
