@@ -374,13 +374,13 @@ const Admin = () => {
           newItem = await apiService.createTeamSeason(formData);
           break;
         case 'schedule':
-          newItem = await apiService.createGame(formData);
+          newItem = await apiService.createGame({ ...formData, season_id: selectedSeason.id });
           break;
         case 'gameStats':
-          newItem = await apiService.createPlayerGameStats(formData);
+          newItem = await apiService.createPlayerGameStats({ ...formData, season_id: selectedSeason.id });
           break;
         case 'powerRankings':
-          newItem = await apiService.createPowerRanking(formData);
+          newItem = await apiService.createPowerRanking({ ...formData, season_id: selectedSeason.id });
           break;
         case 'seasons':
           newItem = await apiService.createSeason(formData);
@@ -801,6 +801,7 @@ const Admin = () => {
           }}
           apiService={apiService}
           selectedSeason={selectedSeason}
+          isActive={activeTab === 'gameResults'}
         />
       );
     }

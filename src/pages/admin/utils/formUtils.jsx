@@ -3,16 +3,19 @@ import React from "react";
 export const renderFormField = (field, value, type = "text", handleFormChange, teams = [], seasons = []) => {
   const baseClasses = "w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:border-blue-500 focus:outline-none";
 
-  if (field === "team_season_id" && teams.length > 0) {
+  // Handle team selection fields (team_season_id, home_team_season_id, away_team_season_id)
+  if ((field === "team_season_id" || field === "home_team_season_id" || field === "away_team_season_id") && teams.length > 0) {
+    const label = field === "home_team_season_id" ? "Home Team" :
+                  field === "away_team_season_id" ? "Away Team" : "Team";
     return (
       <select
         value={value || ''}
         onChange={(e) => handleFormChange(field, e.target.value)}
         className={baseClasses}
       >
-        <option value="">Select Team</option>
+        <option value="">Select {label}</option>
         {teams.map((team) => (
-          <option key={team.id} value={team.id}>
+          <option key={team.id || team.team_season_id} value={team.id || team.team_season_id}>
             {team.display_name || team.team_name}
           </option>
         ))}
@@ -30,7 +33,7 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
         <option value="">Select Season</option>
         {seasons.map((season) => (
           <option key={season.id} value={season.id}>
-            {season.name}
+            {season.season_name || season.name}
           </option>
         ))}
       </select>
@@ -45,6 +48,8 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
         className={baseClasses}
       >
         <option value="">Select Conference</option>
+        <option value="East">East</option>
+        <option value="West">West</option>
         <option value="homer">Homer</option>
         <option value="garfield">Garfield</option>
       </select>

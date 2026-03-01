@@ -63,8 +63,8 @@ router.get('/season/:seasonId/team/:teamId', async (req, res) => {
 // POST /team-seasons - Create new team season
 router.post('/', async (req, res) => {
   try {
-    const { season_id, team_id, display_name, primary_color, secondary_color, alt_logo_url, ranking } = req.body;
-    
+    const { season_id, team_id, display_name, primary_color, secondary_color, alt_logo_url, ranking, conference } = req.body;
+
     if (!season_id || !team_id) {
       return res.status(400).json({ error: 'season_id and team_id are required' });
     }
@@ -76,7 +76,8 @@ router.post('/', async (req, res) => {
       primary_color: primary_color || null,
       secondary_color: secondary_color || null,
       alt_logo_url: alt_logo_url || null,
-      ranking: ranking ? parseInt(ranking) : 0
+      ranking: ranking ? parseInt(ranking) : 0,
+      conference: conference || null
     };
 
     const teamSeason = await teamSeasonsDao.create(teamSeasonData);
@@ -93,14 +94,15 @@ router.post('/', async (req, res) => {
 // PUT /team-seasons/:id - Update team season
 router.put('/:id', async (req, res) => {
   try {
-    const { display_name, primary_color, secondary_color, alt_logo_url, ranking } = req.body;
-    
+    const { display_name, primary_color, secondary_color, alt_logo_url, ranking, conference } = req.body;
+
     const updateData = {};
     if (display_name !== undefined) updateData.display_name = display_name;
     if (primary_color !== undefined) updateData.primary_color = primary_color;
     if (secondary_color !== undefined) updateData.secondary_color = secondary_color;
     if (alt_logo_url !== undefined) updateData.alt_logo_url = alt_logo_url;
     if (ranking !== undefined) updateData.ranking = ranking;
+    if (conference !== undefined) updateData.conference = conference;
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });

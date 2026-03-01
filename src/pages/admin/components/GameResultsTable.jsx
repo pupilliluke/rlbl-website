@@ -128,7 +128,8 @@ const GameResultsTable = ({
   onAddSeriesGame,
   onUpdateGameResults,
   apiService,
-  selectedSeason
+  selectedSeason,
+  isActive
 }) => {
   const [collapsedGames, setCollapsedGames] = React.useState(new Set());
   const [gamePlayersData, setGamePlayersData] = React.useState({});
@@ -142,10 +143,10 @@ const GameResultsTable = ({
   const [loading, setLoading] = React.useState(false);
   const [gameNotes, setGameNotes] = React.useState({});
 
-  // Load teams data for matchup creation/editing
+  // Load teams data for matchup creation/editing - reload when tab becomes active
   React.useEffect(() => {
     const loadTeams = async () => {
-      if (selectedSeason && apiService) {
+      if (selectedSeason && apiService && isActive) {
         try {
           const teamsData = await apiService.getTeamSeasons(selectedSeason.id);
           setTeams(teamsData);
@@ -155,7 +156,7 @@ const GameResultsTable = ({
       }
     };
     loadTeams();
-  }, [selectedSeason, apiService]);
+  }, [selectedSeason, apiService, isActive]);
 
   const handleCreateMatchup = (weekNumber) => {
     setCreateMatchupWeek(weekNumber);
@@ -591,32 +592,22 @@ const GameResultsTable = ({
     }
   };
 
-  if (!gameResultsData || gameResultsData.length === 0) {
-    return (
-      <div className="bg-gray-900 border border-gray-700 rounded p-8 text-center">
-        <div className="text-4xl mb-4">📊</div>
-        <h3 className="text-lg font-bold text-gray-300 mb-2">No Game Results Available</h3>
-        <p className="text-gray-500 text-sm">Start by adding player stats to completed games.</p>
-      </div>
-    );
-  }
-
-  // Group games by week first, then by series (same teams)
-  const gamesByWeek = gameResultsData.reduce((acc, game) => {
+  // Group games by week first, then by series (same teams) - needed for handleGenerateNewWeek
+  const gamesByWeek = (gameResultsData || []).reduce((acc, game) => {
     const week = game.week;
     if (!acc[week]) {
       acc[week] = {};
     }
-    
+
     // Create series key based on team matchup (normalize team order)
     const team1 = Math.min(game.home_team_season_id, game.away_team_season_id);
     const team2 = Math.max(game.home_team_season_id, game.away_team_season_id);
     const seriesKey = `${team1}_${team2}`;
-    
+
     if (!acc[week][seriesKey]) {
       acc[week][seriesKey] = [];
     }
-    
+
     acc[week][seriesKey].push(game);
     return acc;
   }, {});
@@ -657,7 +648,7 @@ const GameResultsTable = ({
           };
 
           // Update local data
-          const updatedGameResults = [...gameResultsData, enhancedGame];
+          const updatedGameResults = [...(gameResultsData || []), enhancedGame];
           onUpdateGameResults(updatedGameResults);
 
           alert(`Week ${nextWeek} has been created! You can now add specific matchups using the "New Matchup" button, or delete the placeholder game if not needed.`);
@@ -673,6 +664,52 @@ const GameResultsTable = ({
       }
     }
   };
+
+  if (!gameResultsData || gameResultsData.length === 0) {
+    return (
+      <div className="space-y-4">
+        {/* Generate First Week Button */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-white">Game Results</h2>
+          <button
+            onClick={handleGenerateNewWeek}
+            disabled={loading || teams.length < 2}
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white px-4 py-2 text-sm font-sans border border-purple-500 transition-colors rounded flex items-center gap-2"
+            title={teams.length < 2 ? "Add at least 2 teams to this season first" : "Generate First Week"}
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                Generate Week 1
+              </>
+            )}
+          </button>
+        </div>
+        <div className="bg-gray-900 border border-gray-700 rounded p-8 text-center">
+          <div className="text-4xl mb-4">📊</div>
+          <h3 className="text-lg font-bold text-gray-300 mb-2">No Game Results Available</h3>
+          <p className="text-gray-500 text-sm mb-4">
+            {teams.length < 2
+              ? "First, add at least 2 teams to this season in the Teams & Rosters tab."
+              : "Click 'Generate Week 1' to create your first week of matchups."}
+          </p>
+          {teams.length >= 2 && (
+            <button
+              onClick={handleGenerateNewWeek}
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300"
+            >
+              Generate Week 1
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -771,7 +808,15 @@ const GameResultsTable = ({
                         sortedSeriesGames.forEach(game => {
                           const homeGoals = game.total_home_goals || 0;
                           const awayGoals = game.total_away_goals || 0;
-                          if (homeGoals > awayGoals) {
+
+                          // Check for forfeits first
+                          if (game.home_team_forfeit) {
+                            // Home team forfeited, away team wins
+                            awayWins++;
+                          } else if (game.away_team_forfeit) {
+                            // Away team forfeited, home team wins
+                            homeWins++;
+                          } else if (homeGoals > awayGoals) {
                             homeWins++;
                           } else if (awayGoals > homeGoals) {
                             awayWins++;
