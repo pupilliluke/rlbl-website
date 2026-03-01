@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
-import { apiService, fallbackData } from "../services/apiService";
+import { apiService } from "../services/apiService";
 import { formatPlayerName } from "../utils/formatters.js";
-import { PremiumChart, MetricCard, RadialChart } from "../components/PremiumChart.jsx";
+import { PremiumChart, MetricCard } from "../components/PremiumChart.jsx";
 import StatsTable from "../components/StatsTable.jsx";
 import * as XLSX from 'xlsx-js-style';
 
@@ -718,6 +718,7 @@ const Stats = () => {
     return sortOrder === "desc" ? "↓" : "↑";
   };
 
+  // eslint-disable-next-line no-unused-vars
   const StatHeader = ({ column, label, className = "" }) => (
     <th
       className={`px-2 py-5 text-center font-bold text-white cursor-pointer hover:bg-white/5 transition-all duration-300 hover:shadow-luxury border-r border-white/5 last:border-r-0 ${className}`}

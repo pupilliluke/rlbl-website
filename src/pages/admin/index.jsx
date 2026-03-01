@@ -62,6 +62,7 @@ const Admin = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [selectedConference, setSelectedConference] = useState("homer");
   
   // Game Results specific states
@@ -128,6 +129,7 @@ const Admin = () => {
     if (authenticated) {
       loadSeasons();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated]);
 
   // Load initial data for the selected season when season changes
@@ -135,6 +137,7 @@ const Admin = () => {
     if (authenticated && selectedSeason) {
       loadAllData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, selectedSeason]);
 
   const setLoadingState = (key, loading) => {
@@ -345,6 +348,8 @@ const Admin = () => {
         break;
       case 'powerRankings':
         setPowerRankingsData(newData);
+        break;
+      default:
         break;
     }
   };
@@ -727,7 +732,7 @@ const Admin = () => {
       if (newGames.length > 0) {
         // Enhance new games with display names like in loadGameResults
         const enhancedNewGames = await Promise.all(newGames.map(async (newGame) => {
-          const [players, teamSeasons] = await Promise.all([
+          const [, teamSeasons] = await Promise.all([
             apiService.getPlayers(),
             apiService.getTeamSeasons(selectedSeason.id)
           ]);

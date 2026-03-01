@@ -9,6 +9,7 @@ const GameEditModal = ({
   onDelete,
   apiService
 }) => {
+  // eslint-disable-next-line no-unused-vars
   const [players, setPlayers] = useState([]);
   const [homeTeamPlayers, setHomeTeamPlayers] = useState([]);
   const [awayTeamPlayers, setAwayTeamPlayers] = useState([]);

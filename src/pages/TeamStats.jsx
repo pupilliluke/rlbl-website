@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { formatPlayerName } from "../utils/formatters.js";
 import { apiService } from "../services/apiService.js";
 import { slugify, findTeamBySlug, createPlayerSlug } from "../utils/slugify.js";
 

@@ -10,6 +10,7 @@ export default function PlayerStats() {
   const [selectedSeason, setSelectedSeason] = useState('career');
   const [seasonStats, setSeasonStats] = useState(null);
   const [player, setPlayer] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [allStats, setAllStats] = useState([]);
   const [loading, setLoading] = useState(true);
 
