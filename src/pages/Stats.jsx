@@ -1328,7 +1328,7 @@ const Stats = () => {
 
         {/* Excel-Style Data Table */}
         {processedStats.length > 0 && (
-          <StatsTable data={sortedData} viewType={viewType} />
+          <StatsTable data={sortedData} viewType={viewType} onSort={handleSort} sortBy={sortBy} sortOrder={sortOrder} />
         )}
 
         {/* Footer Info */}

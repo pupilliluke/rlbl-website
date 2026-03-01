@@ -83,7 +83,26 @@
         }
         th:last-child {
             border-radius: 0 8px 8px 0;
-            width: 150px;
+            width: 120px;
+        }
+        .status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-confirm {
+            background: #f59e0b;
+            color: white;
+        }
+        .status-progress {
+            background: #3b82f6;
+            color: white;
+        }
+        .status-pending {
+            background: #6b7280;
+            color: white;
         }
         td {
             padding: 12px;
@@ -167,6 +186,7 @@
                         <th>#</th>
                         <th>Issue</th>
                         <th>Location</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -174,46 +194,55 @@
                         <td>1</td>
                         <td class="issue-title">LP (League Points) calculation is wrong - affects standings accuracy</td>
                         <td class="location">Standings page</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>2</td>
                         <td class="issue-title">OTL not tracked - need W-L-OTL format, OTG flag should give losing team OTL instead of L</td>
                         <td class="location">Standings page</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>3</td>
                         <td class="issue-title">OTG games not showing in standings at all</td>
                         <td class="location">Standings page</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>4</td>
                         <td class="issue-title">Can't add matchups/games to Season 2</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-progress">In Progress</span></td>
                     </tr>
                     <tr>
                         <td>5</td>
                         <td class="issue-title">Season 1 doesn't exist in admin</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>6</td>
                         <td class="issue-title">Can't add weeks or matchups</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-progress">In Progress</span></td>
                     </tr>
                     <tr>
                         <td>7</td>
                         <td class="issue-title">Can't add new seasons/playoffs</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>8</td>
                         <td class="issue-title">Can't add/edit teams - wrong teams showing (Styleboyz in S2 but it's S1 team)</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-progress">In Progress</span></td>
                     </tr>
                     <tr>
                         <td>9</td>
                         <td class="issue-title">Player assignment to teams not working (tried adding MJ to S2, didn't save)</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -231,6 +260,7 @@
                         <th>#</th>
                         <th>Issue</th>
                         <th>Location</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -238,21 +268,25 @@
                         <td>10</td>
                         <td class="issue-title">OT Wins/OT Losses not accurate on team pages (same root cause as LP?)</td>
                         <td class="location">Team pages</td>
+                        <td><span class="status status-confirm">Needs Confirmed</span></td>
                     </tr>
                     <tr>
                         <td>11</td>
                         <td class="issue-title">Forfeits not reflected - shows as incomplete games</td>
                         <td class="location">Schedule tab</td>
+                        <td><span class="status status-progress">In Progress</span></td>
                     </tr>
                     <tr>
                         <td>12</td>
                         <td class="issue-title">Week 3 possibly missing a game</td>
                         <td class="location">Schedule tab</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>13</td>
                         <td class="issue-title">Column sorting not working (click to sort by greatest/least)</td>
                         <td class="location">Stats page</td>
+                        <td><span class="status status-progress">In Progress</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -270,6 +304,7 @@
                         <th>#</th>
                         <th>Issue</th>
                         <th>Location</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -277,21 +312,25 @@
                         <td>14</td>
                         <td class="issue-title">Legacy page needs 3 sections: All-Time, Season-High, Game-High</td>
                         <td class="location">Legacy page</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>15</td>
                         <td class="issue-title">Playoffs should be separate from career/total stats</td>
                         <td class="location">Global</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>16</td>
                         <td class="issue-title">Teams across multiple seasons - same page or separate?</td>
                         <td class="location">Team pages</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>17</td>
                         <td class="issue-title">Consolidate weekly matchups into dropdown for cleaner UI</td>
                         <td class="location">Team pages</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -309,6 +348,7 @@
                         <th>#</th>
                         <th>Issue</th>
                         <th>Location</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -316,16 +356,19 @@
                         <td>18</td>
                         <td class="issue-title">Search players in weekly scores (user said not a big deal)</td>
                         <td class="location">Weekly scores</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>19</td>
                         <td class="issue-title">Schedule tab redesign or removal (weekly tab already serves purpose)</td>
                         <td class="location">Schedule tab</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                     <tr>
                         <td>20</td>
                         <td class="issue-title">Players tab - consider making season-agnostic</td>
                         <td class="location">Admin panel</td>
+                        <td><span class="status status-pending">Pending</span></td>
                     </tr>
                 </tbody>
             </table>

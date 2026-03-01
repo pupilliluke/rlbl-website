@@ -318,7 +318,15 @@ const WeeklyGameResults = ({
                           sortedSeriesGames.forEach(game => {
                             const homeGoals = game.total_home_goals || 0;
                             const awayGoals = game.total_away_goals || 0;
-                            if (homeGoals > awayGoals) {
+
+                            // Check for forfeits first
+                            if (game.home_team_forfeit) {
+                              // Home team forfeited, away team wins
+                              awayWins++;
+                            } else if (game.away_team_forfeit) {
+                              // Away team forfeited, home team wins
+                              homeWins++;
+                            } else if (homeGoals > awayGoals) {
                               homeWins++;
                             } else if (awayGoals > homeGoals) {
                               awayWins++;
