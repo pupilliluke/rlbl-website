@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { CalendarIcon } from "../components/Icons";
 import { apiService } from "../services/apiService";
 import WeeklyGameResults from "../components/WeeklyGameResults";
 

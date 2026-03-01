@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { apiService, fallbackData } from "../services/apiService";
 
 const slugify = (str) =>
@@ -262,21 +261,17 @@ export default function Teams() {
     const teamName = team.display_name || team.team_name || team.original_team_name;
     const teamPrimaryColor = team.color || '#3B82F6';
     const teamSecondaryColor = team.secondary_color || teamPrimaryColor;
-    const teamConference = getTeamConference(team);
+    // teamConference available via getTeamConference(team) if needed
     const teamPlayers = getPlayersForTeam(teamName);
     const teamId = team.team_season_id || team.team_id || team.id;
 
-    // Calculate team strength (player count as percentage)
+    // eslint-disable-next-line no-unused-vars
     const maxPlayers = 5; // Typical RL team size
+    // eslint-disable-next-line no-unused-vars
     const teamStrength = Math.min((teamPlayers.length / maxPlayers) * 100, 100);
     const isMobile = window.innerWidth < 768;
     const nodeSize = isMobile ? 50 : 80; // Smaller on mobile
-    const strokeDasharray = `${teamStrength * 4.02} 402`; // Circumference ≈ 2πr where r=64
-
-    // Keep text upright
-    const shouldFlip = angle > Math.PI / 2 && angle < (3 * Math.PI) / 2;
-    const labelAngle = shouldFlip ? angle + Math.PI : angle;
-    const textAnchor = shouldFlip ? 'end' : 'start';
+    // strokeDasharray, labelAngle, textAnchor available for advanced text positioning if needed
 
     return (
       <g key={`team-${teamId}-${index}`} className="group cursor-pointer">

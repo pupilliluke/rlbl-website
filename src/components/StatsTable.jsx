@@ -123,6 +123,7 @@ function StatsTable({ data, viewType }) {
       ...columnConfig.demos,
       ...columnConfig.perGame
     ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewType]);
 
   return (

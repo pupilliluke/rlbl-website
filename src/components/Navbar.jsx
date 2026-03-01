@@ -2,10 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   DashboardIcon,
-  TrophyIcon,
   SoccerIcon,
   ChartUpIcon,
-  ChartBarIcon,
   CalendarIcon,
   BuildingIcon,
   StreamIcon,

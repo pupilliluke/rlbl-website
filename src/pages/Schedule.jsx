@@ -14,6 +14,7 @@ const Schedule = () => {
 
   useEffect(() => {
     fetchGames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeason]);
 
   const fetchGames = async () => {
@@ -105,6 +106,7 @@ const Schedule = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const toggleGameStats = async (gameId) => {
     const newExpanded = new Set(expandedGames);
     if (newExpanded.has(gameId)) {

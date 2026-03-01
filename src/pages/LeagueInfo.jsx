@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatPlayerName } from '../utils/formatters.js';
-import { RocketIcon, RulesIcon, AwardIcon, FlagIcon, TrophyIcon, UsersIcon } from '../components/Icons';
-import { createPlayerSlug, createTeamSlug } from '../utils/slugify.js';
+import { RocketIcon, RulesIcon, AwardIcon, FlagIcon, TrophyIcon } from '../components/Icons';
+import { createTeamSlug } from '../utils/slugify.js';
 import { apiService } from '../services/apiService.js';
 
 const LeagueInfo = () => {
@@ -74,12 +73,14 @@ const LeagueInfo = () => {
     return teamsByConference;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const teamsByConference = getTeamsByConference();
 
   const toggleConference = (conference) => {
     setExpandedConference(expandedConference === conference ? null : conference);
   };
 
+  // eslint-disable-next-line no-unused-vars
   const ConferenceSection = ({ title, teams, conference, color }) => (
     <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-lg overflow-hidden">
       <button

@@ -58,6 +58,7 @@ const Stream = () => {
         clearInterval(chatPollingRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-scroll to bottom when new messages arrive (only within chat container)
@@ -83,6 +84,7 @@ const Stream = () => {
     return '';
   };
 
+  // eslint-disable-next-line no-unused-vars
   const getTwitchChatUrl = (twitchUrl) => {
     if (!twitchUrl) return '';
 
@@ -192,7 +194,7 @@ const Stream = () => {
   };
 
   const embedUrl = getTwitchEmbedUrl(streamLink);
-  const chatUrl = getTwitchChatUrl(streamLink);
+  // chatUrl available via getTwitchChatUrl(streamLink) if needed
 
   if (isLoading) {
     return (

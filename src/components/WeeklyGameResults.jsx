@@ -150,8 +150,6 @@ const WeeklyGameResults = ({
       ]);
 
       // Create clean, unique player lists for each team
-      const homeTeamPlayers = [];
-      const awayTeamPlayers = [];
 
       // Process home team - use Map to ensure uniqueness by player ID
       const homePlayerMap = new Map();
@@ -263,7 +261,6 @@ const WeeklyGameResults = ({
             const isCollapsed = collapsedWeeks.has(weekNumber);
             const weekSeries = gamesByWeek[week];
             const totalGames = Object.values(weekSeries).reduce((sum, games) => sum + games.length, 0);
-            const isLastWeek = weekIndex === sortedWeeks.length - 1;
 
             return (
               <div key={week} className={`${weekIndex > 0 ? 'border-t border-gray-200' : ''}`}>
@@ -312,7 +309,6 @@ const WeeklyGameResults = ({
                         {Object.entries(weekSeries).map(([seriesKey, seriesGames]) => {
                           const sortedSeriesGames = seriesGames.sort((a, b) => (a.series_game || 1) - (b.series_game || 1));
                           const firstGame = sortedSeriesGames[0];
-                          const matchupName = `${firstGame.home_display} vs ${firstGame.away_display}`;
                           const seriesId = `${weekNumber}-${seriesKey}`;
                           const isSeriesCollapsed = collapsedSeries.has(seriesId);
 
