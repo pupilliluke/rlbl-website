@@ -6,14 +6,33 @@ const Schedule = () => {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState(3); // Default to season 3
+  const [selectedSeason, setSelectedSeason] = useState(null); // Will be set to active season
+  const [seasons, setSeasons] = useState([]);
   const [collapsedWeeks, setCollapsedWeeks] = useState(new Set()); // Track collapsed weeks
   const [gameStats, setGameStats] = useState({}); // Track game stats by game ID
   const [expandedGames, setExpandedGames] = useState(new Set()); // Track which games show stats
   const [gamesWithStats, setGamesWithStats] = useState(new Set()); // Track which games have player stats
 
+  // Fetch seasons on mount
   useEffect(() => {
-    fetchGames();
+    const fetchSeasons = async () => {
+      try {
+        const seasonsData = await apiService.getSeasons();
+        setSeasons(seasonsData);
+        // Set active season as default, or first season if none active
+        const activeSeason = seasonsData.find(s => s.is_active);
+        setSelectedSeason(activeSeason?.id || seasonsData[0]?.id || null);
+      } catch (err) {
+        console.error('Error fetching seasons:', err);
+      }
+    };
+    fetchSeasons();
+  }, []);
+
+  useEffect(() => {
+    if (selectedSeason) {
+      fetchGames();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeason]);
 
@@ -159,7 +178,7 @@ const Schedule = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
             <CalendarIcon className="w-8 h-8" />
-            RLBL Schedule - Season {selectedSeason}
+            RLBL Schedule - {seasons.find(s => s.id === selectedSeason)?.season_name || 'Loading...'}
           </h1>
           <p className="text-green-200 text-sm md:text-base">
             Complete league schedule with {games.length} games across {weeks.length} weeks
@@ -168,14 +187,16 @@ const Schedule = () => {
           {/* Season selector */}
           <div className="mt-4">
             <label className="text-green-200 text-sm mr-3">Season:</label>
-            <select 
-              value={selectedSeason}
+            <select
+              value={selectedSeason || ''}
               onChange={(e) => setSelectedSeason(parseInt(e.target.value))}
               className="bg-[#2a2a3d] text-white px-3 py-1 rounded border border-blue-800 focus:border-blue-600 focus:outline-none"
             >
-              <option value={1}>Season 1 - Fall 2024</option>
-              <option value={2}>Season 2 - Summer 2025</option>
-              <option value={3}>Season 3 - Fall 2025</option>
+              {seasons.map(season => (
+                <option key={season.id} value={season.id}>
+                  {season.season_name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

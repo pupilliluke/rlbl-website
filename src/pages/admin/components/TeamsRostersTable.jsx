@@ -22,7 +22,7 @@ const TeamsRostersTable = ({ selectedSeason, apiService }) => {
     try {
       setLoading(true);
       const [teamsData, playersData] = await Promise.all([
-        selectedSeason.id === 3 ? apiService.getTeams('current') : apiService.getTeams(selectedSeason.id),
+        selectedSeason.is_active ? apiService.getTeams('current') : apiService.getTeams(selectedSeason.id),
         apiService.getPlayers()
       ]);
 

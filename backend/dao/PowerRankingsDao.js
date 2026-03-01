@@ -19,6 +19,20 @@ class PowerRankingsDao extends BaseDao {
     return r.rows;
   }
 
+  async listBySeason(seasonId) {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `SELECT pr.*, ts.display_name, t.team_name
+         FROM power_rankings pr
+         JOIN team_seasons ts ON pr.team_season_id = ts.id
+         JOIN teams t ON ts.team_id = t.id
+        WHERE pr.season_id = $1
+        ORDER BY pr.week DESC, pr.rank ASC`,
+      [seasonId]
+    );
+    return r.rows;
+  }
+
   async upsertRow({ seasonId, week, teamSeasonId, rank, reasoning = null }) {
     const { query } = require('../../lib/database');
     const r = await query(

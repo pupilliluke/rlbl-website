@@ -4,11 +4,19 @@ const PowerRankingsDao = require('../dao/PowerRankingsDao');
 
 const powerRankingsDao = new PowerRankingsDao();
 
-// GET /weeklys - Get all power rankings
+// GET /weekly - Get all power rankings (optionally filtered by season)
 router.get('/', async (req, res) => {
   try {
-    const rankings = await powerRankingsDao.findAll();
-    res.json(rankings);
+    const seasonId = req.query.season_id ? parseInt(req.query.season_id) : null;
+
+    if (seasonId) {
+      // Filter by season - get latest week for this season
+      const rankings = await powerRankingsDao.listBySeason(seasonId);
+      res.json(rankings);
+    } else {
+      const rankings = await powerRankingsDao.findAll();
+      res.json(rankings);
+    }
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch power rankings', details: error.message });
   }

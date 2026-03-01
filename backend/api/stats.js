@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const PlayerGameStatsDao = require('../dao/PlayerGameStatsDao');
+const SeasonsDao = require('../dao/SeasonsDao');
 
 const playerGameStatsDao = new PlayerGameStatsDao();
+const seasonsDao = new SeasonsDao();
 
 // GET /stats - Get aggregated player statistics
 router.get('/', async (req, res) => {
@@ -13,12 +15,17 @@ router.get('/', async (req, res) => {
     let seasonId = null;
     if (season && season !== 'career') {
       if (season === 'current') {
-        seasonId = 3; // Current season
+        // Get active season from database instead of hardcoding
+        const activeSeason = await seasonsDao.getActive();
+        seasonId = activeSeason?.id || null;
       } else if (season && season.startsWith('season')) {
         const seasonNumber = season.replace('season', '');
         seasonId = parseInt(seasonNumber);
       } else if (season === 'season2_playoffs') {
         seasonId = 2; // Season 2 for playoffs
+      } else if (!isNaN(parseInt(season))) {
+        // Handle numeric season IDs directly
+        seasonId = parseInt(season);
       }
     }
     // For 'career' or no season, seasonId stays null to show all data

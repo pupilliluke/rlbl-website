@@ -51,6 +51,20 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
     );
   }
 
+  if (field === "is_active" || field === "is_playoffs") {
+    return (
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value || false}
+          onChange={(e) => handleFormChange(field, e.target.checked)}
+          className="w-5 h-5 rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500"
+        />
+        <span className="text-white">{value ? 'Yes' : 'No'}</span>
+      </label>
+    );
+  }
+
   if (field.includes("date")) {
     return (
       <input
@@ -148,6 +162,13 @@ export const getDefaultFormData = (activeTab) => {
         losses: 0,
         streak: '',
         comment: ''
+      };
+    case 'seasons':
+      return {
+        season_name: '',
+        start_date: '',
+        end_date: '',
+        is_active: false
       };
     default:
       return {};
