@@ -46,14 +46,9 @@ export default function Standings() {
         }
       } catch (err) {
         console.error('Failed to fetch seasons:', err);
-        // Fallback to manual season options
-        const fallbackSeasons = [
-          { id: 3, season_name: 'Season 3', is_active: true },
-          { id: 2, season_name: 'Season 2', is_active: false },
-          { id: 1, season_name: 'Season 1', is_active: false }
-        ];
-        setSeasons(fallbackSeasons);
-        setSelectedSeason(3);
+        // Fallback - empty seasons, let user know to check connection
+        setSeasons([]);
+        setSelectedSeason(null);
       } finally {
         setSeasonsLoading(false);
       }
@@ -172,7 +167,7 @@ export default function Standings() {
               <th className="py-3 md:py-4 px-3 md:px-4 text-left font-bold text-white">Team</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">W</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">L</th>
-              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">OTG</th>
+              <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white" title="Overtime Losses">OTL</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">FF</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white border-l-2 border-gray-500">GF</th>
               <th className="py-3 md:py-4 px-3 md:px-4 text-center font-bold text-white">GA</th>
@@ -215,8 +210,8 @@ export default function Standings() {
                     </button>
                   </td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-green-400 font-semibold">{team.wins}</td>
-                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.losses}</td>
-                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{(team.overtime_wins || 0) + (team.overtime_losses || 0)}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.regulation_losses || 0}</td>
+                  <td className="py-3 md:py-4 px-3 md:px-4 text-center text-yellow-400 font-semibold">{team.overtime_losses || 0}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-red-400 font-semibold">{team.forfeits || 0}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-blue-400 border-l-2 border-gray-500">{team.points_for}</td>
                   <td className="py-3 md:py-4 px-3 md:px-4 text-center text-orange-400">{team.points_against}</td>

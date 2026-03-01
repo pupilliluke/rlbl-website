@@ -81,6 +81,76 @@ export const apiService = {
 
   // Seasons
   getSeasons: () => apiCall('/seasons'),
+  getActiveSeason: () => apiCall('/seasons/active'),
+
+  createSeason: async (seasonData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/seasons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(seasonData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create season:', error);
+      throw error;
+    }
+  },
+
+  updateSeason: async (id, seasonData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/seasons/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(seasonData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update season ${id}:`, error);
+      throw error;
+    }
+  },
+
+  activateSeason: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/seasons/${id}/activate`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to activate season ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteSeason: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/seasons/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete season ${id}:`, error);
+      throw error;
+    }
+  },
 
   // Schedule - using our new games API
   getGames: (seasonId = null) => {
@@ -121,7 +191,11 @@ export const apiService = {
   },
 
   // Power Rankings
-  getPowerRankings: () => apiCall('/weekly'),
+  getPowerRankings: (seasonId) => {
+    const endpoint = seasonId ? `/weekly?season_id=${seasonId}` : '/weekly';
+    return apiCall(endpoint);
+  },
+  getPowerRankingsByWeek: (seasonId, week) => apiCall(`/weekly/season/${seasonId}/week/${week}`),
 
   // Season endpoints
   getTeamSeasons: (seasonId = null) => {
@@ -135,6 +209,61 @@ export const apiService = {
   getTeamSeasonData: (seasonId) => {
     const endpoint = seasonId ? `/team_seasons?season=${seasonId}` : '/team_seasons';
     return apiCall(endpoint);
+  },
+
+  // Team Season CRUD operations
+  createTeamSeason: async (teamSeasonData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/team-seasons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(teamSeasonData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Failed to create team season:', error);
+      throw error;
+    }
+  },
+
+  updateTeamSeason: async (id, teamSeasonData) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/team-seasons/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(teamSeasonData),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to update team season ${id}:`, error);
+      throw error;
+    }
+  },
+
+  deleteTeamSeason: async (id) => {
+    try {
+      const response = await fetch(`${ADMIN_API_BASE_URL}/team-seasons/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to delete team season ${id}:`, error);
+      throw error;
+    }
   },
 
   // Roster memberships endpoints

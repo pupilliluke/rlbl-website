@@ -26,9 +26,12 @@ const StandingsTable = ({
     );
   }
 
-  // Group standings by conference for Season 3
+  // Group standings by conference if teams have conference data
   const groupedStandings = () => {
-    if (seasonId === 3 && standingsData && standingsData.length > 0) {
+    // Check if any team has conference data
+    const hasConferenceData = standingsData && standingsData.some(team => team.conference);
+
+    if (hasConferenceData && standingsData.length > 0) {
       const grouped = { 'West': [], 'East': [], 'Other': [] };
 
       standingsData.forEach((team, index) => {

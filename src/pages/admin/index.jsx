@@ -322,6 +322,7 @@ const Admin = () => {
       case 'gameStats': return gameStatsData;
       case 'gameResults': return gameResultsData;
       case 'powerRankings': return powerRankingsData;
+      case 'seasons': return seasonsData;
       default: return [];
     }
   };
@@ -348,6 +349,9 @@ const Admin = () => {
         break;
       case 'powerRankings':
         setPowerRankingsData(newData);
+        break;
+      case 'seasons':
+        setSeasonsData(newData);
         break;
       default:
         break;
@@ -377,6 +381,9 @@ const Admin = () => {
           break;
         case 'powerRankings':
           newItem = await apiService.createPowerRanking(formData);
+          break;
+        case 'seasons':
+          newItem = await apiService.createSeason(formData);
           break;
         default:
           throw new Error(`Add not implemented for ${activeTab}`);
@@ -442,6 +449,9 @@ const Admin = () => {
         case 'powerRankings':
           updatedItem = await apiService.updatePowerRanking(formData.id, formData);
           break;
+        case 'seasons':
+          updatedItem = await apiService.updateSeason(formData.id, formData);
+          break;
         default:
           throw new Error(`Update not implemented for ${activeTab}`);
       }
@@ -495,6 +505,9 @@ const Admin = () => {
           break;
         case 'powerRankings':
           await apiService.deletePowerRanking(item.id);
+          break;
+        case 'seasons':
+          await apiService.deleteSeason(item.id);
           break;
         default:
           throw new Error(`Delete not implemented for ${activeTab}`);
@@ -1045,6 +1058,7 @@ const Admin = () => {
                 { key: 'schedule', label: '📅 Schedule', icon: '📅' },
                 { key: 'gameStats', label: '📈 Game Stats', icon: '📈' },
                 { key: 'powerRankings', label: '👑 Weekly', icon: '👑' },
+                { key: 'seasons', label: '📆 Seasons', icon: '📆' },
                 { key: 'stream', label: '📺 Stream', icon: '📺' }
               ].map(({ key, label, icon }) => (
                 <button
