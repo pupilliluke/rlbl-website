@@ -18,8 +18,12 @@ router.get('/', async (req, res) => {
       const seasonId = parseInt(seasonParam);
       teams = await teamsDao.getTeamsBySeason(seasonId);
     } else if (seasonParam === 'current') {
-      // Return teams for current/active season (season 3 is currently active)
-      teams = await teamsDao.getTeamsBySeason(3);
+      // Return teams for current/active season (query DB for active season)
+      const SeasonsDao = require('../dao/SeasonsDao');
+      const seasonsDao = new SeasonsDao();
+      const activeSeason = await seasonsDao.getActive();
+      const activeSeasonId = activeSeason ? activeSeason.id : 3; // Fallback to 3 if no active season
+      teams = await teamsDao.getTeamsBySeason(activeSeasonId);
     } else if (seasonParam === 'career') {
       // Return all teams from all seasons (career stats should include everyone)
       teams = await teamsDao.getAllTeamsFromAllSeasons();
