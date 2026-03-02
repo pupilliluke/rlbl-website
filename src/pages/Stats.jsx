@@ -251,12 +251,21 @@ const Stats = () => {
       .sort((a, b) => {
         let aValue = a[sortBy];
         let bValue = b[sortBy];
-        
-        if (typeof aValue === "string") {
+
+        // Handle null/undefined values - push them to the end
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        // Handle string comparisons
+        if (typeof aValue === "string" && typeof bValue === "string") {
           aValue = aValue.toLowerCase();
           bValue = bValue.toLowerCase();
         }
-        
+
+        // Compare values
+        if (aValue === bValue) return 0;
+
         if (sortOrder === "desc") {
           return bValue > aValue ? 1 : -1;
         } else {
