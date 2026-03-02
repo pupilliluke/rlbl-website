@@ -455,7 +455,8 @@ const GameResultsTable = ({
           epic_saves: stats.epic_saves || 0,
           demos: stats.demos || 0,
           mvps: stats.mvps || 0,
-          points: stats.points || 0
+          points: stats.points || 0,
+          otg: stats.otg || 0
         };
 
         console.log('Preparing to save stats for player', playerId, 'game', gameId, ':', statData);
