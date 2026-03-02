@@ -5,18 +5,18 @@ class PlayerGameStatsDao extends BaseDao {
     super('player_game_stats');
   }
 
-  async upsertRow({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0 }) {
+  async upsertRow({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0, otg = 0 }) {
     const { query } = require('../../lib/database');
     const r = await query(
-      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves, otg)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (game_id, player_id) DO UPDATE
          SET team_season_id = EXCLUDED.team_season_id,
              points = EXCLUDED.points, goals = EXCLUDED.goals, assists = EXCLUDED.assists,
              saves = EXCLUDED.saves, shots = EXCLUDED.shots, mvps = EXCLUDED.mvps,
-             demos = EXCLUDED.demos, epic_saves = EXCLUDED.epic_saves
+             demos = EXCLUDED.demos, epic_saves = EXCLUDED.epic_saves, otg = EXCLUDED.otg
        RETURNING *`,
-      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves]
+      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves, otg]
     );
     return r.rows[0];
   }
@@ -53,13 +53,13 @@ class PlayerGameStatsDao extends BaseDao {
     return r.rows[0] || null;
   }
 
-  async createPlayerGameStat({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0 }) {
+  async createPlayerGameStat({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0, otg = 0 }) {
     const { query } = require('../../lib/database');
     const r = await query(
-      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves, otg)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves]
+      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves, otg]
     );
     return r.rows[0];
   }

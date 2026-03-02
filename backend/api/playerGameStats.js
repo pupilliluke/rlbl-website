@@ -144,12 +144,13 @@ router.post('/', async (req, res) => {
       shots = 0,
       mvps = 0,
       demos = 0,
-      epic_saves = 0
+      epic_saves = 0,
+      otg = 0
     } = req.body;
-    
+
     if (!game_id || !player_id || !team_season_id) {
-      return res.status(400).json({ 
-        error: 'game_id, player_id, and team_season_id are required' 
+      return res.status(400).json({
+        error: 'game_id, player_id, and team_season_id are required'
       });
     }
 
@@ -157,23 +158,23 @@ router.post('/', async (req, res) => {
     try {
       const { query } = require('../../lib/database');
       const rosterCheck = await query(
-        `SELECT rm.id 
-         FROM roster_memberships rm 
+        `SELECT rm.id
+         FROM roster_memberships rm
          WHERE rm.player_id = $1 AND rm.team_season_id = $2`,
         [player_id, team_season_id]
       );
-      
+
       if (rosterCheck.rows.length === 0) {
         // Get player and team names for better error message
         const [playerInfo, teamInfo] = await Promise.all([
           query('SELECT player_name FROM players WHERE id = $1', [player_id]),
           query('SELECT ts.display_name FROM team_seasons ts WHERE ts.id = $1', [team_season_id])
         ]);
-        
+
         const playerName = playerInfo.rows[0]?.player_name || `Player ${player_id}`;
         const teamName = teamInfo.rows[0]?.display_name || `Team ${team_season_id}`;
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: `Validation failed: ${playerName} is not on ${teamName}'s roster for this season. Please check roster memberships.`,
           player_id,
           team_season_id,
@@ -182,9 +183,9 @@ router.post('/', async (req, res) => {
       }
     } catch (validationError) {
       console.error('Roster validation error:', validationError);
-      return res.status(500).json({ 
-        error: 'Failed to validate roster membership', 
-        details: validationError.message 
+      return res.status(500).json({
+        error: 'Failed to validate roster membership',
+        details: validationError.message
       });
     }
 
@@ -199,7 +200,8 @@ router.post('/', async (req, res) => {
       shots: parseInt(shots),
       mvps: parseInt(mvps),
       demos: parseInt(demos),
-      epicSaves: parseInt(epic_saves)
+      epicSaves: parseInt(epic_saves),
+      otg: parseInt(otg)
     };
 
     const stats = await playerGameStatsDao.upsertRow(statsData);
@@ -230,12 +232,13 @@ router.put('/upsert', async (req, res) => {
       shots = 0,
       mvps = 0,
       demos = 0,
-      epic_saves = 0
+      epic_saves = 0,
+      otg = 0
     } = req.body;
-    
+
     if (!game_id || !player_id || !team_season_id) {
-      return res.status(400).json({ 
-        error: 'game_id, player_id, and team_season_id are required' 
+      return res.status(400).json({
+        error: 'game_id, player_id, and team_season_id are required'
       });
     }
 
@@ -243,23 +246,23 @@ router.put('/upsert', async (req, res) => {
     try {
       const { query } = require('../../lib/database');
       const rosterCheck = await query(
-        `SELECT rm.id 
-         FROM roster_memberships rm 
+        `SELECT rm.id
+         FROM roster_memberships rm
          WHERE rm.player_id = $1 AND rm.team_season_id = $2`,
         [player_id, team_season_id]
       );
-      
+
       if (rosterCheck.rows.length === 0) {
         // Get player and team names for better error message
         const [playerInfo, teamInfo] = await Promise.all([
           query('SELECT player_name FROM players WHERE id = $1', [player_id]),
           query('SELECT ts.display_name FROM team_seasons ts WHERE ts.id = $1', [team_season_id])
         ]);
-        
+
         const playerName = playerInfo.rows[0]?.player_name || `Player ${player_id}`;
         const teamName = teamInfo.rows[0]?.display_name || `Team ${team_season_id}`;
-        
-        return res.status(400).json({ 
+
+        return res.status(400).json({
           error: `Validation failed: ${playerName} is not on ${teamName}'s roster for this season. Please check roster memberships.`,
           player_id,
           team_season_id,
@@ -268,9 +271,9 @@ router.put('/upsert', async (req, res) => {
       }
     } catch (validationError) {
       console.error('Roster validation error:', validationError);
-      return res.status(500).json({ 
-        error: 'Failed to validate roster membership', 
-        details: validationError.message 
+      return res.status(500).json({
+        error: 'Failed to validate roster membership',
+        details: validationError.message
       });
     }
 
@@ -285,7 +288,8 @@ router.put('/upsert', async (req, res) => {
       shots: parseInt(shots),
       mvps: parseInt(mvps),
       demos: parseInt(demos),
-      epicSaves: parseInt(epic_saves)
+      epicSaves: parseInt(epic_saves),
+      otg: parseInt(otg)
     };
 
     const stats = await playerGameStatsDao.upsertRow(statsData);
@@ -313,9 +317,10 @@ router.put('/:id', async (req, res) => {
       shots,
       mvps,
       demos,
-      epic_saves
+      epic_saves,
+      otg
     } = req.body;
-    
+
     const updateData = {};
     if (points !== undefined) updateData.points = parseInt(points);
     if (goals !== undefined) updateData.goals = parseInt(goals);
@@ -325,6 +330,7 @@ router.put('/:id', async (req, res) => {
     if (mvps !== undefined) updateData.mvps = parseInt(mvps);
     if (demos !== undefined) updateData.demos = parseInt(demos);
     if (epic_saves !== undefined) updateData.epic_saves = parseInt(epic_saves);
+    if (otg !== undefined) updateData.otg = parseInt(otg);
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
