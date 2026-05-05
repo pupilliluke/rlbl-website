@@ -1,70 +1,82 @@
-# Getting Started with Create React App
+# RLBL — Rocket League Business League
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Web app for tracking the RLBL: standings, stats, schedule, weekly results, team rosters, season history, and an admin panel for managing it all.
 
-## Available Scripts
+## Tech stack
 
-In the project directory, you can run:
+- **Frontend**: React 18 (Create React App) + Tailwind + react-router
+- **Backend**: Express on Node 22
+- **Database**: Postgres on [Neon](https://neon.tech)
+- **Deploy**: Vercel (single project — frontend bundle + serverless API in `api/index.js`)
 
-### `npm start`
+## Repo layout
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+src/                  React app
+  pages/              Route-level components (one per URL)
+    admin/            Admin panel (one folder, multiple sub-tabs)
+  components/         Reusable UI
+  services/           apiService.js — single client for the backend
+  utils/              formatters, slugify, etc.
+backend/              Express API
+  api/                Route modules per resource (teams, players, games, ...)
+  dao/                One DAO per table, all extend BaseDao
+  migrations/         SQL files — one per schema change
+  utils/              standingsCalculator (LP/OTL/forfeits)
+  server.js           Local dev entry; also exports app for Vercel
+api/index.js          Vercel serverless adapter — wraps backend/api
+lib/database.js       pg Pool factory (DATABASE_URL or fallback)
+public/               Static assets + REQUESTS.html status page
+docs/                 You are here
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 5-minute quickstart
 
-### `npm test`
+```bash
+# 1. Install
+npm install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# 2. Configure (see docs/SETUP.md for the .env template)
 
-### `npm run build`
+# 3. Run frontend + backend together
+npm run dev
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Frontend at `http://localhost:3000`, backend at `http://localhost:5000/api`.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Documentation map
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Read in this order if you're new:
 
-### `npm run eject`
+| Doc | What it covers |
+|---|---|
+| [docs/SETUP.md](docs/SETUP.md) | Local dev setup — env vars, install, run |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How data flows; the two-table-per-entity model |
+| [docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) | How to use every admin tab + shortcuts |
+| [docs/API.md](docs/API.md) | Endpoint catalog grouped by resource |
+| [docs/DATABASE.md](docs/DATABASE.md) | Schema, migrations, how to run one |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Vercel deploy, env vars in prod |
+| [docs/RUNBOOKS.md](docs/RUNBOOKS.md) | "How do I add a new season?" / "fix a build break" / etc. |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Known issues + fixes |
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Status of in-flight bugs and feature requests lives in [public/REQUESTS.html](public/REQUESTS.html) (also live at `<deployed-url>/REQUESTS.html`).
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Older one-off docs from prior handoffs are preserved in [docs/archive/](docs/archive/).
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Common scripts
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+| Script | Purpose |
+|---|---|
+| `npm run dev` | Frontend (3000) + backend (5000) together |
+| `npm start` | Frontend only |
+| `npm run server` | Backend only |
+| `npm run build` | Production frontend build into `build/` |
 
-## Learn More
+## Deployed environment
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Prod**: any push to `main` triggers a Vercel deploy. The same Vercel project serves both the static React bundle and the `/api/*` routes.
+- **Database**: Neon Postgres. Same database for prod and local dev (see Setup).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## License
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Private project.
