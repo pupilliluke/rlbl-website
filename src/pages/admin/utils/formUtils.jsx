@@ -1,4 +1,5 @@
 import React from "react";
+import SearchableSelect from "../components/SearchableSelect";
 
 export const renderFormField = (field, value, type = "text", handleFormChange, teams = [], seasons = []) => {
   const baseClasses = "w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:border-blue-500 focus:outline-none";
@@ -8,35 +9,27 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
     const label = field === "home_team_season_id" ? "Home Team" :
                   field === "away_team_season_id" ? "Away Team" : "Team";
     return (
-      <select
-        value={value || ''}
-        onChange={(e) => handleFormChange(field, e.target.value)}
-        className={baseClasses}
-      >
-        <option value="">Select {label}</option>
-        {teams.map((team) => (
-          <option key={team.id || team.team_season_id} value={team.id || team.team_season_id}>
-            {team.display_name || team.team_name}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value ?? ''}
+        onChange={(v) => handleFormChange(field, v)}
+        options={teams}
+        getValue={(team) => team.id ?? team.team_season_id}
+        getLabel={(team) => team.display_name || team.team_name || `Team ${team.id ?? ''}`}
+        placeholder={`Select ${label}`}
+      />
     );
   }
 
   if (field === "season_id" && seasons.length > 0) {
     return (
-      <select
-        value={value || ''}
-        onChange={(e) => handleFormChange(field, e.target.value)}
-        className={baseClasses}
-      >
-        <option value="">Select Season</option>
-        {seasons.map((season) => (
-          <option key={season.id} value={season.id}>
-            {season.season_name || season.name}
-          </option>
-        ))}
-      </select>
+      <SearchableSelect
+        value={value ?? ''}
+        onChange={(v) => handleFormChange(field, v)}
+        options={seasons}
+        getValue={(s) => s.id}
+        getLabel={(s) => s.season_name || s.name || `Season ${s.id}`}
+        placeholder="Select Season"
+      />
     );
   }
 
