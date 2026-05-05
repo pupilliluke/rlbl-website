@@ -274,7 +274,9 @@ export const apiService = {
   getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
   getRosterMembershipsByTeamSeason: (teamSeasonId) => apiCall(`/roster-memberships/team-season/${teamSeasonId}`),
   getAllRosterMemberships: () => apiCall('/roster-memberships'),
-  
+  deletePlayerFromSeason: (playerId, seasonId) =>
+    apiCall(`/roster-memberships/player/${playerId}/season/${seasonId}`, 'DELETE'),
+
   // Roster CRUD operations
   createRosterMembership: async (membershipData) => {
     try {

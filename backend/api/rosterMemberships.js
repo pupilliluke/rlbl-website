@@ -126,4 +126,19 @@ router.delete('/player/:playerId/team-season/:teamSeasonId', async (req, res) =>
   }
 });
 
+// DELETE /roster-memberships/player/:playerId/season/:seasonId - Remove player from all rosters in a season
+router.delete('/player/:playerId/season/:seasonId', async (req, res) => {
+  try {
+    const playerId = parseInt(req.params.playerId);
+    const seasonId = parseInt(req.params.seasonId);
+    if (isNaN(playerId) || isNaN(seasonId)) {
+      return res.status(400).json({ error: 'playerId and seasonId must be integers' });
+    }
+    const deleted = await rosterMembershipsDao.deleteByPlayerAndSeason(playerId, seasonId);
+    res.json({ message: 'Player removed from season rosters', count: deleted.length, deleted });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove player from season', details: error.message });
+  }
+});
+
 module.exports = router;

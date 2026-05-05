@@ -10,6 +10,7 @@ import TeamsRostersTable from "./components/TeamsRostersTable";
 import EditFormModal from "./modals/EditFormModal";
 import GameEditModal from "./modals/GameEditModal";
 import BulkAddModal from "./components/BulkAddModal";
+import DeleteConfirmModal from "./components/DeleteConfirmModal";
 
 // Utils
 import { renderFormField, getDefaultFormData } from "./utils/formUtils";
@@ -31,6 +32,7 @@ const Admin = () => {
   const [showSeasonCloneModal, setShowSeasonCloneModal] = useState(false);
   const [cloneSourceSeasonId, setCloneSourceSeasonId] = useState('');
   const [cloneBusy, setCloneBusy] = useState(false);
+  const [deleteModalConfig, setDeleteModalConfig] = useState(null);
   const teamsSearchInputRef = useRef(null);
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
@@ -680,57 +682,177 @@ const Admin = () => {
     }
   };
 
-  const handleTableDelete = async (index) => {
+  const removeFromCurrentList = (index) => {
+    const currentData = getCurrentData();
+    setCurrentData(currentData.filter((_, i) => i !== index));
+  };
+
+  const handleTableDelete = (index) => {
     const currentData = getCurrentData();
     const item = currentData[index];
+    const seasonName = selectedSeason?.season_name || 'this season';
 
-    if (!window.confirm(`Are you sure you want to delete this ${activeTab.slice(0, -1)}?`)) {
+    if (activeTab === 'players') {
+      const scopedAvailable = !!selectedSeason;
+      const playerName = item.player_name || item.display_name || `Player #${item.id}`;
+      const scopeOptions = [];
+      if (scopedAvailable) {
+        scopeOptions.push({
+          key: 'season',
+          label: `Remove from ${seasonName}`,
+          description: `Removes their roster spot(s) for ${seasonName}. Stats history and other-season rosters are preserved.`,
+          consequences: [`All roster memberships for ${playerName} in ${seasonName}`],
+          destructive: false,
+          action: async () => {
+            await apiService.deletePlayerFromSeason(item.id, selectedSeason.id);
+            await loadTeamPlayerIndex();
+            setDeleteModalConfig(null);
+          }
+        });
+      }
+      scopeOptions.push({
+        key: 'complete',
+        label: 'Delete player completely',
+        description: 'Removes the player and all their data, every season. This cannot be undone.',
+        consequences: [
+          'The player record itself',
+          'Every roster membership across every season',
+          'Every per-game stat line across every season',
+          'All season-level stat rollups for this player'
+        ],
+        destructive: true,
+        action: async () => {
+          await apiService.deletePlayer(item.id);
+          removeFromCurrentList(index);
+          await loadTeamPlayerIndex();
+          setDeleteModalConfig(null);
+        }
+      });
+      setDeleteModalConfig({
+        title: `Delete player "${playerName}"`,
+        entityName: playerName,
+        scopeOptions
+      });
       return;
     }
 
-    try {
-      setLoading(true);
-
-      switch (activeTab) {
-        case 'players':
-          await apiService.deletePlayer(item.id);
-          break;
-        case 'teams':
+    if (activeTab === 'teams') {
+      const teamName = item.team_name || `Team #${item.id}`;
+      const teamSeasonInCurrent = teamsData.find(ts => ts.team_id === item.id);
+      const scopeOptions = [];
+      if (teamSeasonInCurrent && selectedSeason) {
+        scopeOptions.push({
+          key: 'season',
+          label: `Remove from ${seasonName}`,
+          description: `Unlinks this team from ${seasonName}. The team identity and other-season data are preserved.`,
+          consequences: [
+            `Team's roster memberships in ${seasonName}`,
+            `Team's per-game stats in ${seasonName}`,
+            `Team's standings/power-rankings rows in ${seasonName}`,
+            `Will fail if any games reference this team in ${seasonName} (database FK protection).`
+          ],
+          destructive: true,
+          action: async () => {
+            await apiService.deleteTeamSeason(teamSeasonInCurrent.id);
+            await loadTeams();
+            await loadTeamPlayerIndex();
+            setDeleteModalConfig(null);
+          }
+        });
+      }
+      scopeOptions.push({
+        key: 'complete',
+        label: 'Delete team completely',
+        description: 'Removes the base team and every season it appeared in. Cannot be undone.',
+        consequences: [
+          'The base team record',
+          'Every team_seasons row for this team',
+          'All roster memberships and stats tied to those team_seasons',
+          'Will fail if any games reference any of this team\'s team_seasons (database FK protection).'
+        ],
+        destructive: true,
+        action: async () => {
           await apiService.deleteTeam(item.id);
-          break;
-        case 'standings':
-          await apiService.deleteTeamSeason(item.id);
-          break;
-        case 'schedule':
-          await apiService.deleteGame(item.id);
-          break;
-        case 'gameStats':
-          await apiService.deletePlayerGameStats(item.id);
-          break;
-        case 'powerRankings':
-          await apiService.deletePowerRanking(item.id);
-          break;
-        case 'seasons':
-          await apiService.deleteSeason(item.id);
-          break;
-        default:
-          throw new Error(`Delete not implemented for ${activeTab}`);
-      }
-
-      // Update data in place without page refresh
-      const newData = currentData.filter((_, i) => i !== index);
-      setCurrentData(newData);
-
-      // Only refresh dropdowns if needed, preserving UI state
-      if (activeTab === 'teams') {
-        await loadBaseTeams();
-        await loadTeams();
-      }
-    } catch (error) {
-      console.error(`Failed to delete ${activeTab}:`, error);
-    } finally {
-      setLoading(false);
+          removeFromCurrentList(index);
+          await loadBaseTeams();
+          await loadTeams();
+          await loadTeamPlayerIndex();
+          setDeleteModalConfig(null);
+        }
+      });
+      setDeleteModalConfig({
+        title: `Delete team "${teamName}"`,
+        entityName: teamName,
+        scopeOptions
+      });
+      return;
     }
+
+    if (activeTab === 'seasons') {
+      const sName = item.season_name || `Season #${item.id}`;
+      setDeleteModalConfig({
+        title: `Delete season "${sName}"`,
+        entityName: sName,
+        consequences: [
+          'Every team_seasons row in this season',
+          'Every game in this season (and their stat lines)',
+          'Every roster membership tied to this season',
+          'Every standings, power_rankings, bracket, and season_stats row',
+          'This is a total wipe of the season. Cannot be undone.'
+        ],
+        destructive: true,
+        confirmLabel: 'Delete Season',
+        onConfirm: async () => {
+          await apiService.deleteSeason(item.id);
+          removeFromCurrentList(index);
+          setDeleteModalConfig(null);
+        }
+      });
+      return;
+    }
+
+    if (activeTab === 'schedule') {
+      const desc = `Week ${item.week} game (id ${item.id})`;
+      setDeleteModalConfig({
+        title: `Delete ${desc}?`,
+        consequences: [
+          'All player_game_stats rows for this game',
+          'The game itself'
+        ],
+        destructive: false,
+        confirmLabel: 'Delete Game',
+        onConfirm: async () => {
+          await apiService.deleteGame(item.id);
+          removeFromCurrentList(index);
+          setDeleteModalConfig(null);
+        }
+      });
+      return;
+    }
+
+    // Generic single-row delete (gameStats, standings, powerRankings)
+    const action = {
+      gameStats: () => apiService.deletePlayerGameStats(item.id),
+      standings: () => apiService.deleteTeamSeason(item.id),
+      powerRankings: () => apiService.deletePowerRanking(item.id)
+    }[activeTab];
+
+    if (!action) {
+      console.warn(`Delete not implemented for ${activeTab}`);
+      return;
+    }
+
+    setDeleteModalConfig({
+      title: `Delete this ${activeTab.replace(/s$/, '')} entry?`,
+      consequences: ['Just this single row.'],
+      destructive: false,
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        await action();
+        removeFromCurrentList(index);
+        setDeleteModalConfig(null);
+      }
+    });
   };
 
   const handleCancel = () => {
@@ -753,26 +875,22 @@ const Admin = () => {
     setCollapsedWeeks(newCollapsed);
   };
 
-  const handleManageGameStats = async (game) => {
-    // Direct game deletion
-    if (!window.confirm(`Are you sure you want to delete Game ${game.series_game || 1} between ${game.home_display} and ${game.away_display}? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await apiService.deleteGame(game.id);
-
-      // Update local data without full reload to preserve UI state
-      isLocalDataUpdateRef.current = true;
-      const updatedGameResults = gameResultsData.filter(g => g.id !== game.id);
-      setGameResultsData(updatedGameResults);
-    } catch (error) {
-      console.error('Failed to delete game:', error);
-      alert('Failed to delete game. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleManageGameStats = (game) => {
+    setDeleteModalConfig({
+      title: `Delete Game ${game.series_game || 1}: ${game.home_display} vs ${game.away_display}?`,
+      consequences: [
+        `Week ${game.week} game record`,
+        'All player_game_stats rows for this game'
+      ],
+      destructive: false,
+      confirmLabel: 'Delete Game',
+      onConfirm: async () => {
+        await apiService.deleteGame(game.id);
+        isLocalDataUpdateRef.current = true;
+        setGameResultsData(gameResultsData.filter(g => g.id !== game.id));
+        setDeleteModalConfig(null);
+      }
+    });
   };
 
   const handleGameEditSave = async () => {
@@ -788,100 +906,41 @@ const Admin = () => {
     setEditingGame(null);
   };
 
-  const handleGameEditDelete = async () => {
+  const handleGameEditDelete = () => {
     if (!editingGame) return;
-
-    if (!window.confirm(`Are you sure you want to delete Game ${editingGame.series_game || 1} between ${editingGame.home_display} and ${editingGame.away_display}? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await apiService.deleteGame(editingGame.id);
-
-      // Update local data without full reload to preserve UI state
-      isLocalDataUpdateRef.current = true;
-      const updatedGameResults = gameResultsData.filter(g => g.id !== editingGame.id);
-      setGameResultsData(updatedGameResults);
-
-      setShowGameEditModal(false);
-      setEditingGame(null);
-    } catch (error) {
-      console.error('Failed to delete game:', error);
-      alert('Failed to delete game. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    const game = editingGame;
+    setShowGameEditModal(false);
+    setEditingGame(null);
+    setDeleteModalConfig({
+      title: `Delete Game ${game.series_game || 1}: ${game.home_display} vs ${game.away_display}?`,
+      consequences: [
+        `Week ${game.week} game record`,
+        'All player_game_stats rows for this game'
+      ],
+      destructive: false,
+      confirmLabel: 'Delete Game',
+      onConfirm: async () => {
+        await apiService.deleteGame(game.id);
+        isLocalDataUpdateRef.current = true;
+        setGameResultsData(gameResultsData.filter(g => g.id !== game.id));
+        setDeleteModalConfig(null);
+      }
+    });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!formData.id) {
       alert('Cannot delete: No item selected');
       return;
     }
-
-    let confirmMessage = '';
-    let deleteFunction = null;
-
-    switch (activeTab) {
-      case 'players':
-        confirmMessage = `Are you sure you want to delete player "${formData.display_name || formData.player_name}"? This action cannot be undone.`;
-        deleteFunction = () => apiService.deletePlayer(formData.id);
-        break;
-      case 'teams':
-        confirmMessage = `Are you sure you want to delete team "${formData.display_name || formData.team_name}"? This action cannot be undone.`;
-        deleteFunction = () => apiService.deleteTeam(formData.id);
-        break;
-      case 'schedule':
-      case 'gameResults':
-        confirmMessage = `Are you sure you want to delete Game ${formData.series_game || 1} between ${formData.home_display} and ${formData.away_display}? This action cannot be undone.`;
-        deleteFunction = () => apiService.deleteGame(formData.id);
-        break;
-      case 'standings':
-        confirmMessage = `Are you sure you want to delete this standing entry? This action cannot be undone.`;
-        deleteFunction = () => apiService.deleteStanding(formData.id);
-        break;
-      case 'powerRankings':
-        confirmMessage = `Are you sure you want to delete this power ranking entry? This action cannot be undone.`;
-        deleteFunction = () => apiService.deletePowerRanking(formData.id);
-        break;
-      case 'gameStats':
-        confirmMessage = `Are you sure you want to delete this game stat entry? This action cannot be undone.`;
-        deleteFunction = () => apiService.deletePlayerGameStats(formData.id);
-        break;
-      default:
-        alert('Delete not supported for this item type');
-        return;
-    }
-
-    if (!window.confirm(confirmMessage)) {
+    const currentData = getCurrentData();
+    const idx = currentData.findIndex(item => item.id === formData.id);
+    if (idx === -1) {
+      alert('Cannot find item to delete');
       return;
     }
-
-    try {
-      setLoading(true);
-      await deleteFunction();
-
-      // Update local data without triggering full reload to preserve UI state
-      const currentData = getCurrentData();
-      const updatedData = currentData.filter(item => item.id !== formData.id);
-      setCurrentData(updatedData);
-
-      // Only refresh dropdowns if needed, preserving UI state
-      if (activeTab === 'teams') {
-        await loadBaseTeams();
-        await loadTeams();
-      }
-
-      // Close modal
-      handleCancel();
-
-    } catch (error) {
-      console.error('Failed to delete item:', error);
-      alert('Failed to delete item. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    handleCancel();              // close the edit modal first
+    handleTableDelete(idx);      // open the unified delete confirmation
   };
 
   const handleAutoGenerateStandings = async () => {
@@ -1510,6 +1569,19 @@ const Admin = () => {
           return { player_name: name, display_name: display || name };
         }}
         onSubmit={handleBulkAddPlayers}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        show={!!deleteModalConfig}
+        title={deleteModalConfig?.title || 'Delete?'}
+        entityName={deleteModalConfig?.entityName}
+        scopeOptions={deleteModalConfig?.scopeOptions}
+        consequences={deleteModalConfig?.consequences}
+        destructive={deleteModalConfig?.destructive}
+        confirmLabel={deleteModalConfig?.confirmLabel}
+        onCancel={() => setDeleteModalConfig(null)}
+        onConfirm={deleteModalConfig?.onConfirm}
       />
 
       {/* Season Clone Modal */}

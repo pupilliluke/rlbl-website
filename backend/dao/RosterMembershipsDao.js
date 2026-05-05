@@ -41,6 +41,20 @@ class RosterMembershipsDao extends BaseDao {
     );
     return r.rows;
   }
+
+  async deleteByPlayerAndSeason(playerId, seasonId) {
+    const { query } = require('../../lib/database');
+    const r = await query(
+      `DELETE FROM roster_memberships rm
+        USING team_seasons ts
+        WHERE rm.team_season_id = ts.id
+          AND rm.player_id = $1
+          AND ts.season_id = $2
+       RETURNING rm.id`,
+      [playerId, seasonId]
+    );
+    return r.rows;
+  }
 }
 
 module.exports = RosterMembershipsDao;
