@@ -119,7 +119,13 @@ export const apiService = {
         body: JSON.stringify(seasonData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -134,7 +140,13 @@ export const apiService = {
         method: 'POST',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -149,7 +161,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -252,7 +270,13 @@ export const apiService = {
         body: JSON.stringify(teamSeasonData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -267,7 +291,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -352,7 +382,13 @@ export const apiService = {
         body: JSON.stringify(statsData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -371,7 +407,13 @@ export const apiService = {
         body: JSON.stringify(statsData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -386,7 +428,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -406,7 +454,13 @@ export const apiService = {
         body: JSON.stringify(playerData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -425,7 +479,13 @@ export const apiService = {
         body: JSON.stringify(playerData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -440,7 +500,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -460,7 +526,13 @@ export const apiService = {
         body: JSON.stringify(teamData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -479,7 +551,13 @@ export const apiService = {
         body: JSON.stringify(teamData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -494,7 +572,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -514,7 +598,13 @@ export const apiService = {
         body: JSON.stringify(standingData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -533,7 +623,13 @@ export const apiService = {
         body: JSON.stringify(standingData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -548,7 +644,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -568,7 +670,13 @@ export const apiService = {
         body: JSON.stringify(gameData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -587,7 +695,13 @@ export const apiService = {
         body: JSON.stringify(gameData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -606,7 +720,13 @@ export const apiService = {
         body: JSON.stringify(gameData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -621,7 +741,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -640,7 +766,13 @@ export const apiService = {
         body: JSON.stringify({ notes }),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -660,7 +792,13 @@ export const apiService = {
         body: JSON.stringify(rankingData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -679,7 +817,13 @@ export const apiService = {
         body: JSON.stringify(rankingData),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -694,7 +838,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -711,7 +861,13 @@ export const apiService = {
     try {
       const response = await fetch(`${API_BASE_URL}/stream-settings/value/${key}`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       return data.success ? data.data.value : null;
@@ -731,7 +887,13 @@ export const apiService = {
         body: JSON.stringify({ value, description }),
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -745,7 +907,13 @@ export const apiService = {
     try {
       const response = await fetch(`${API_BASE_URL}/stream-chat/messages?limit=${limit}&offset=${offset}`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       return data.success ? data.data : { messages: [], totalCount: 0 };
@@ -781,7 +949,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
@@ -796,7 +970,13 @@ export const apiService = {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let serverMessage = '';
+        try {
+          const body = await response.json();
+          serverMessage = body?.error || body?.message || '';
+          if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+        } catch (_) {}
+        throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
       }
       return await response.json();
     } catch (error) {
