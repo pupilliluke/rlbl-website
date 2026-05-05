@@ -140,12 +140,34 @@ router.put('/:id/ranking', async (req, res) => {
 // DELETE /team-seasons/:id - Delete team season
 router.delete('/:id', async (req, res) => {
   try {
-    const teamSeason = await teamSeasonsDao.delete(req.params.id);
+    const tsId = parseInt(req.params.id);
+    const { query } = require('../../lib/database');
+    const blockers = await query(
+      `SELECT id, week, season_id FROM games
+        WHERE home_team_season_id = $1 OR away_team_season_id = $1
+        ORDER BY season_id, week LIMIT 5`,
+      [tsId]
+    );
+    if (blockers.rows.length > 0) {
+      const r = blockers.rows[0];
+      return res.status(409).json({
+        error: 'Team-season has games',
+        details: `Cannot remove this team from the season — ${blockers.rows.length}+ game(s) reference it (e.g., week ${r.week}). Delete those games first.`
+      });
+    }
+
+    const teamSeason = await teamSeasonsDao.delete(tsId);
     if (!teamSeason) {
       return res.status(404).json({ error: 'Team season not found' });
     }
     res.json({ message: 'Team season deleted successfully', teamSeason });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(409).json({
+        error: 'Team-season is referenced by other records',
+        details: 'Delete the referencing games or related rows first.'
+      });
+    }
     res.status(500).json({ error: 'Failed to delete team season', details: error.message });
   }
 });

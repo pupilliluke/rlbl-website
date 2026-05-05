@@ -24,7 +24,13 @@ const apiCall = async (endpoint, method = 'GET', body = null) => {
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      let serverMessage = '';
+      try {
+        const body = await response.json();
+        serverMessage = body?.error || body?.message || '';
+        if (body?.details) serverMessage += (serverMessage ? ' — ' : '') + body.details;
+      } catch (_) {}
+      throw new Error(serverMessage || `HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
     return data;

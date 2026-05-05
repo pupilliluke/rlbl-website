@@ -165,12 +165,38 @@ router.put('/:id', async (req, res) => {
 // DELETE /teams/:id - Delete team
 router.delete('/:id', async (req, res) => {
   try {
-    const team = await teamsDao.delete(req.params.id);
+    const teamId = parseInt(req.params.id);
+    // Pre-check: are any games referencing this team's team_seasons?
+    const { query } = require('../../lib/database');
+    const blockers = await query(
+      `SELECT g.id, g.week, g.season_id
+         FROM games g
+         JOIN team_seasons ts ON ts.id IN (g.home_team_season_id, g.away_team_season_id)
+        WHERE ts.team_id = $1
+        ORDER BY g.season_id, g.week
+        LIMIT 5`,
+      [teamId]
+    );
+    if (blockers.rows.length > 0) {
+      const r = blockers.rows[0];
+      return res.status(409).json({
+        error: 'Team has games',
+        details: `Cannot delete this team — ${blockers.rows.length}+ game(s) reference it (e.g., week ${r.week} in season ${r.season_id}). Delete those games first, or use "Remove from <season>" for a scoped delete.`
+      });
+    }
+
+    const team = await teamsDao.delete(teamId);
     if (!team) {
       return res.status(404).json({ error: 'Team not found' });
     }
     res.json({ message: 'Team deleted successfully', team });
   } catch (error) {
+    if (error.code === '23503') {
+      return res.status(409).json({
+        error: 'Team is referenced by other records',
+        details: 'Delete the referencing games or related rows first.'
+      });
+    }
     res.status(500).json({ error: 'Failed to delete team', details: error.message });
   }
 });
