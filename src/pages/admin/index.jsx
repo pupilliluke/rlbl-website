@@ -20,6 +20,7 @@ const Admin = () => {
   // Data state for each tab - loaded from API
   const [playersData, setPlayersData] = useState([]);
   const [teamsData, setTeamsData] = useState([]);
+  const [baseTeamsData, setBaseTeamsData] = useState([]);
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
   const [gameStatsData, setGameStatsData] = useState([]);
@@ -166,12 +167,43 @@ const Admin = () => {
     await Promise.all([
       loadPlayers(),
       loadTeams(),
+      loadBaseTeams(),
       loadStandings(),
       loadGames(),
       loadPowerRankings(),
       loadStats(),
       loadGameResults()
     ]);
+  };
+
+  const loadBaseTeams = async () => {
+    try {
+      const baseTeams = await apiService.getTeams();
+      setBaseTeamsData(baseTeams);
+    } catch (error) {
+      console.error('Failed to load base teams:', error);
+    }
+  };
+
+  const handleLinkTeamToSeason = async (baseTeam) => {
+    if (!selectedSeason) return;
+    try {
+      setLoading(true);
+      await apiService.createTeamSeason({
+        season_id: selectedSeason.id,
+        team_id: baseTeam.id,
+        display_name: baseTeam.team_name,
+        primary_color: baseTeam.color || null,
+        secondary_color: baseTeam.secondary_color || null,
+        conference: null
+      });
+      await loadTeams();
+    } catch (error) {
+      console.error('Failed to link team to season:', error);
+      alert('Failed to link team to season: ' + (error.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadPlayers = async () => {
@@ -316,7 +348,7 @@ const Admin = () => {
   const getCurrentData = () => {
     switch (activeTab) {
       case 'players': return playersData;
-      case 'teams': return teamsData;
+      case 'teams': return baseTeamsData;
       case 'standings': return standingsData.overall || [];
       case 'schedule': return scheduleData;
       case 'gameStats': return gameStatsData;
@@ -333,7 +365,7 @@ const Admin = () => {
         setPlayersData(newData);
         break;
       case 'teams':
-        setTeamsData(newData);
+        setBaseTeamsData(newData);
         break;
       case 'standings':
         setStandingsData(prev => ({ ...prev, overall: newData }));
@@ -368,7 +400,7 @@ const Admin = () => {
           newItem = await apiService.createPlayer(formData);
           break;
         case 'teams':
-          newItem = await apiService.createTeam({ ...formData, season_id: selectedSeason.id });
+          newItem = await apiService.createTeam(formData);
           break;
         case 'standings':
           newItem = await apiService.createTeamSeason(formData);
@@ -396,7 +428,7 @@ const Admin = () => {
 
       // Only refresh dropdowns if needed, preserving UI state
       if (activeTab === 'teams') {
-        await loadTeams(); // Refresh teams dropdown
+        await loadBaseTeams();
       }
     } catch (error) {
       console.error(`Failed to add ${activeTab}:`, error);
@@ -464,7 +496,8 @@ const Admin = () => {
 
       // Only refresh dropdowns/selectors if needed, without affecting UI state
       if (activeTab === 'teams') {
-        await loadTeams(); // Refresh teams dropdown
+        await loadBaseTeams();
+        await loadTeams();
       }
 
       setEditingItem(null);
@@ -519,7 +552,8 @@ const Admin = () => {
 
       // Only refresh dropdowns if needed, preserving UI state
       if (activeTab === 'teams') {
-        await loadTeams(); // Refresh teams dropdown
+        await loadBaseTeams();
+        await loadTeams();
       }
     } catch (error) {
       console.error(`Failed to delete ${activeTab}:`, error);
@@ -664,7 +698,8 @@ const Admin = () => {
 
       // Only refresh dropdowns if needed, preserving UI state
       if (activeTab === 'teams') {
-        await loadTeams(); // Refresh teams dropdown
+        await loadBaseTeams();
+        await loadTeams();
       }
 
       // Close modal
@@ -958,6 +993,24 @@ const Admin = () => {
       );
     }
 
+    const teamsTabExtraActions = activeTab === 'teams' && selectedSeason
+      ? (item) => {
+          const linkedTeamIds = new Set(teamsData.map(t => t.team_id));
+          const alreadyLinked = linkedTeamIds.has(item.id);
+          return [{
+            label: alreadyLinked ? `✓ In ${selectedSeason.season_name}` : `+ Link to ${selectedSeason.season_name}`,
+            disabled: alreadyLinked,
+            title: alreadyLinked
+              ? `Already linked to ${selectedSeason.season_name}. Manage in Teams & Rosters tab.`
+              : `Add this team to ${selectedSeason.season_name}`,
+            className: alreadyLinked
+              ? 'bg-gray-600 cursor-default'
+              : 'bg-purple-600 hover:bg-purple-700',
+            onClick: () => handleLinkTeamToSeason(item)
+          }];
+        }
+      : undefined;
+
     return (
       <div className="space-y-6">
         <DataTable
@@ -968,6 +1021,7 @@ const Admin = () => {
           selectedSeason={selectedSeason}
           onEdit={handleEdit}
           onDelete={handleTableDelete}
+          extraActions={teamsTabExtraActions}
         />
       </div>
     );
@@ -978,26 +1032,26 @@ const Admin = () => {
   }
 
   const currentData = getCurrentData();
-  const currentKeys = currentData.length > 0 
-    ? Object.keys(currentData[0]).filter(key => 
-        !key.includes('id') && 
-        key !== 'id' &&
-        key !== 'total_home_goals' &&
-        key !== 'total_away_goals' &&
-        // Hide team columns for players tab
-        !(activeTab === 'players' && (key === 'team_name' || key === 'team_color')) &&
-        // Hide specific columns from teams tab
-        !(activeTab === 'teams' && (
-          key === 'original_team_name' || 
-          key === 'team_name' || 
-          key === 'alt_logo_url' || 
-          key === 'primary_color' || 
-          key === 'ranking' || 
-          key === 'season_id' || 
-          key === 'season_name'
-        ))
-      )
-    : [];
+  const seedKeys = currentData.length > 0
+    ? Object.keys(currentData[0])
+    : Object.keys(formData || {});
+  const currentKeys = seedKeys.filter(key =>
+    !key.includes('id') &&
+    key !== 'id' &&
+    key !== 'total_home_goals' &&
+    key !== 'total_away_goals' &&
+    // Hide team columns for players tab
+    !(activeTab === 'players' && (key === 'team_name' || key === 'team_color')) &&
+    // Hide specific columns from teams tab
+    !(activeTab === 'teams' && (
+      key === 'original_team_name' ||
+      key === 'alt_logo_url' ||
+      key === 'primary_color' ||
+      key === 'ranking' ||
+      key === 'season_id' ||
+      key === 'season_name'
+    ))
+  );
 
   return (
     <div className="min-h-screen bg-gradient-executive relative page-with-navbar overflow-x-hidden">

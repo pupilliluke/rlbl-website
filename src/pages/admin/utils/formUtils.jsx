@@ -131,8 +131,6 @@ export const getDefaultFormData = (activeTab) => {
     case 'teams':
       return {
         team_name: '',
-        display_name: '',
-        abbreviation: '',
         color: '#000000',
         secondary_color: '#ffffff',
         logo_url: ''

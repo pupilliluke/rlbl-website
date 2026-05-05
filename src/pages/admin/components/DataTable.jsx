@@ -1,13 +1,14 @@
 import React from "react";
 
-const DataTable = ({ 
-  activeTab, 
-  currentData, 
-  loading, 
-  loadingStates, 
-  selectedSeason, 
-  onEdit, 
-  onDelete 
+const DataTable = ({
+  activeTab,
+  currentData,
+  loading,
+  loadingStates,
+  selectedSeason,
+  onEdit,
+  onDelete,
+  extraActions
 }) => {
   if (!currentData || currentData.length === 0) {
     return (
@@ -98,7 +99,7 @@ const DataTable = ({
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </th>
                 ))}
-                <th className="px-4 py-3 text-center font-bold text-white w-32">Actions</th>
+                <th className="px-4 py-3 text-center font-bold text-white w-48">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -108,7 +109,18 @@ const DataTable = ({
                   <tr key={itemKey} className="border-b border-gray-600 hover:bg-gray-700/50 transition-all duration-300">
                     {filteredKeys.map((key) => renderCellValue(key, item[key], itemKey))}
                     <td className="px-4 py-3 text-center">
-                      <div className="flex gap-2 justify-center">
+                      <div className="flex gap-2 justify-center flex-wrap">
+                        {extraActions && (typeof extraActions === 'function' ? extraActions(item, index) : extraActions).map((action, ai) => (
+                          <button
+                            key={`extra-${ai}`}
+                            onClick={() => action.onClick(item, index)}
+                            disabled={action.disabled}
+                            title={action.title}
+                            className={`${action.className || 'bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed'} text-white px-3 py-1 rounded text-sm transition-all duration-300`}
+                          >
+                            {action.label}
+                          </button>
+                        ))}
                         <button
                           onClick={() => onEdit(item, index)}
                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-all duration-300"
