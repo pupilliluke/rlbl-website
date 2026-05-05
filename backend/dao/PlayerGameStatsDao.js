@@ -333,9 +333,7 @@ class PlayerGameStatsDao extends BaseDao {
       }
     }
   }
-}
 
-// Get single-season high records (best single season by any player)
   async getSeasonHighRecords() {
     const { query } = require('../../lib/database');
     const sql = `
