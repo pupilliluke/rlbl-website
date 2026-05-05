@@ -170,4 +170,26 @@ router.get('/export/:seasonId', async (req, res) => {
   }
 });
 
+// GET /stats/records/season-high - Get best single-season records
+router.get('/records/season-high', async (req, res) => {
+  try {
+    const records = await playerGameStatsDao.getSeasonHighRecords();
+    res.json(records);
+  } catch (error) {
+    console.error('Failed to fetch season-high records:', error);
+    res.status(500).json({ error: 'Failed to fetch season-high records', details: error.message });
+  }
+});
+
+// GET /stats/records/game-high - Get best single-game records
+router.get('/records/game-high', async (req, res) => {
+  try {
+    const records = await playerGameStatsDao.getGameHighRecords();
+    res.json(records);
+  } catch (error) {
+    console.error('Failed to fetch game-high records:', error);
+    res.status(500).json({ error: 'Failed to fetch game-high records', details: error.message });
+  }
+});
+
 module.exports = router;

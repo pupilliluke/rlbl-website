@@ -5,18 +5,18 @@ class PlayerGameStatsDao extends BaseDao {
     super('player_game_stats');
   }
 
-  async upsertRow({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0 }) {
+  async upsertRow({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0, otg = 0 }) {
     const { query } = require('../../lib/database');
     const r = await query(
-      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves, otg)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        ON CONFLICT (game_id, player_id) DO UPDATE
          SET team_season_id = EXCLUDED.team_season_id,
              points = EXCLUDED.points, goals = EXCLUDED.goals, assists = EXCLUDED.assists,
              saves = EXCLUDED.saves, shots = EXCLUDED.shots, mvps = EXCLUDED.mvps,
-             demos = EXCLUDED.demos, epic_saves = EXCLUDED.epic_saves
+             demos = EXCLUDED.demos, epic_saves = EXCLUDED.epic_saves, otg = EXCLUDED.otg
        RETURNING *`,
-      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves]
+      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves, otg]
     );
     return r.rows[0];
   }
@@ -53,13 +53,13 @@ class PlayerGameStatsDao extends BaseDao {
     return r.rows[0] || null;
   }
 
-  async createPlayerGameStat({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0 }) {
+  async createPlayerGameStat({ gameId, playerId, teamSeasonId, points = 0, goals = 0, assists = 0, saves = 0, shots = 0, mvps = 0, demos = 0, epicSaves = 0, otg = 0 }) {
     const { query } = require('../../lib/database');
     const r = await query(
-      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      `INSERT INTO player_game_stats(game_id, player_id, team_season_id, points, goals, assists, saves, shots, mvps, demos, epic_saves, otg)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves]
+      [gameId, playerId, teamSeasonId, points, goals, assists, saves, shots, mvps, demos, epicSaves, otg]
     );
     return r.rows[0];
   }
@@ -332,6 +332,130 @@ class PlayerGameStatsDao extends BaseDao {
         return this.getPlayerStatsWithTeams();
       }
     }
+  }
+}
+
+// Get single-season high records (best single season by any player)
+  async getSeasonHighRecords() {
+    const { query } = require('../../lib/database');
+    const sql = `
+      WITH season_totals AS (
+        SELECT
+          p.id as player_id,
+          p.player_name,
+          g.season_id,
+          s.season_name,
+          COALESCE(ts.display_name, t.team_name) as team_name,
+          SUM(pgs.points) as total_points,
+          SUM(pgs.goals) as total_goals,
+          SUM(pgs.assists) as total_assists,
+          SUM(pgs.saves) as total_saves,
+          SUM(pgs.shots) as total_shots,
+          SUM(pgs.mvps) as total_mvps,
+          SUM(pgs.demos) as total_demos,
+          SUM(pgs.epic_saves) as total_epic_saves,
+          SUM(pgs.otg) as total_otg,
+          COUNT(pgs.game_id) as games_played
+        FROM player_game_stats pgs
+        JOIN players p ON pgs.player_id = p.id
+        JOIN games g ON pgs.game_id = g.id
+        JOIN seasons s ON g.season_id = s.id
+        LEFT JOIN team_seasons ts ON pgs.team_season_id = ts.id
+        LEFT JOIN teams t ON ts.team_id = t.id
+        WHERE g.is_playoffs = false
+        GROUP BY p.id, p.player_name, g.season_id, s.season_name, ts.display_name, t.team_name
+      )
+      SELECT
+        'points' as stat_type, player_name, season_name, team_name, total_points as value
+        FROM season_totals WHERE total_points = (SELECT MAX(total_points) FROM season_totals)
+      UNION ALL
+      SELECT
+        'goals' as stat_type, player_name, season_name, team_name, total_goals as value
+        FROM season_totals WHERE total_goals = (SELECT MAX(total_goals) FROM season_totals)
+      UNION ALL
+      SELECT
+        'assists' as stat_type, player_name, season_name, team_name, total_assists as value
+        FROM season_totals WHERE total_assists = (SELECT MAX(total_assists) FROM season_totals)
+      UNION ALL
+      SELECT
+        'saves' as stat_type, player_name, season_name, team_name, total_saves as value
+        FROM season_totals WHERE total_saves = (SELECT MAX(total_saves) FROM season_totals)
+      UNION ALL
+      SELECT
+        'shots' as stat_type, player_name, season_name, team_name, total_shots as value
+        FROM season_totals WHERE total_shots = (SELECT MAX(total_shots) FROM season_totals)
+      UNION ALL
+      SELECT
+        'mvps' as stat_type, player_name, season_name, team_name, total_mvps as value
+        FROM season_totals WHERE total_mvps = (SELECT MAX(total_mvps) FROM season_totals)
+      UNION ALL
+      SELECT
+        'demos' as stat_type, player_name, season_name, team_name, total_demos as value
+        FROM season_totals WHERE total_demos = (SELECT MAX(total_demos) FROM season_totals)
+      UNION ALL
+      SELECT
+        'games_played' as stat_type, player_name, season_name, team_name, games_played as value
+        FROM season_totals WHERE games_played = (SELECT MAX(games_played) FROM season_totals)
+    `;
+    const result = await query(sql);
+    return result.rows;
+  }
+
+  // Get single-game high records (best single game by any player)
+  async getGameHighRecords() {
+    const { query } = require('../../lib/database');
+    const sql = `
+      WITH game_records AS (
+        SELECT
+          p.id as player_id,
+          p.player_name,
+          pgs.game_id,
+          g.week,
+          g.game_date,
+          s.season_name,
+          COALESCE(ts.display_name, t.team_name) as team_name,
+          pgs.points,
+          pgs.goals,
+          pgs.assists,
+          pgs.saves,
+          pgs.shots,
+          pgs.mvps,
+          pgs.demos,
+          pgs.epic_saves,
+          pgs.otg
+        FROM player_game_stats pgs
+        JOIN players p ON pgs.player_id = p.id
+        JOIN games g ON pgs.game_id = g.id
+        JOIN seasons s ON g.season_id = s.id
+        LEFT JOIN team_seasons ts ON pgs.team_season_id = ts.id
+        LEFT JOIN teams t ON ts.team_id = t.id
+      )
+      SELECT
+        'points' as stat_type, player_name, season_name, team_name, week, points as value
+        FROM game_records WHERE points = (SELECT MAX(points) FROM game_records)
+      UNION ALL
+      SELECT
+        'goals' as stat_type, player_name, season_name, team_name, week, goals as value
+        FROM game_records WHERE goals = (SELECT MAX(goals) FROM game_records)
+      UNION ALL
+      SELECT
+        'assists' as stat_type, player_name, season_name, team_name, week, assists as value
+        FROM game_records WHERE assists = (SELECT MAX(assists) FROM game_records)
+      UNION ALL
+      SELECT
+        'saves' as stat_type, player_name, season_name, team_name, week, saves as value
+        FROM game_records WHERE saves = (SELECT MAX(saves) FROM game_records)
+      UNION ALL
+      SELECT
+        'shots' as stat_type, player_name, season_name, team_name, week, shots as value
+        FROM game_records WHERE shots = (SELECT MAX(shots) FROM game_records)
+      UNION ALL
+      SELECT
+        'demos' as stat_type, player_name, season_name, team_name, week, demos as value
+        FROM game_records WHERE demos = (SELECT MAX(demos) FROM game_records)
+    `;
+    const result = await query(sql);
+    return result.rows;
   }
 }
 

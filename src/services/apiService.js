@@ -190,6 +190,10 @@ export const apiService = {
     }
   },
 
+  // Records - Season-High and Game-High
+  getSeasonHighRecords: () => apiCall('/stats/records/season-high'),
+  getGameHighRecords: () => apiCall('/stats/records/game-high'),
+
   // Power Rankings
   getPowerRankings: (seasonId) => {
     const endpoint = seasonId ? `/weekly?season_id=${seasonId}` : '/weekly';

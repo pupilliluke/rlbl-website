@@ -502,12 +502,12 @@ export default function Standings() {
         <div className="mt-8 text-center text-gray-400 text-sm">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
             <div><strong>W</strong> - Wins</div>
-            <div><strong>L</strong> - Losses</div>
-            <div><strong>OTG</strong> - Overtime Games</div>
+            <div><strong>L</strong> - Regulation Losses</div>
+            <div><strong>OTL</strong> - Overtime Losses</div>
             <div><strong>FF</strong> - Forfeits</div>
             <div><strong>GF</strong> - Goals For</div>
             <div><strong>GA</strong> - Goals Against</div>
-            <div><strong>Diff</strong> - Point Differential</div>
+            <div><strong>Diff</strong> - Goal Differential</div>
             <div><strong>LP</strong> - League Points</div>
             <div><strong>Win%</strong> - Win Percentage</div>
           </div>

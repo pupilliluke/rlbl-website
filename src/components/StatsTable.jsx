@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { formatPlayerName } from '../utils/formatters.js';
 
-function StatsTable({ data, viewType }) {
+function StatsTable({ data, viewType, onSort, sortBy, sortOrder }) {
   // Define column structure with categories
   const getColumnConfig = () => {
     if (viewType === 'players') {
@@ -148,16 +148,29 @@ function StatsTable({ data, viewType }) {
           </tr>
           {/* Column Headers Row */}
           <tr className="bg-gradient-to-r from-gray-900/60 via-gray-800/60 to-gray-900/60 border-b-2 border-blue-500/30">
-            {allColumns.map((col) => (
-              <th
-                key={col.key}
-                className={`px-4 py-3 text-left font-bold text-gray-200 cursor-pointer transition-all whitespace-nowrap select-none group border-r border-white/10 ${col.className || ''}`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="group-hover:text-blue-300 transition-colors">{col.label}</span>
-                </div>
-              </th>
-            ))}
+            {allColumns.map((col) => {
+              const isSorted = sortBy === col.key;
+              const sortIcon = isSorted ? (sortOrder === 'desc' ? '↓' : '↑') : '↕';
+
+              return (
+                <th
+                  key={col.key}
+                  onClick={() => col.sortable && onSort && onSort(col.key)}
+                  className={`px-4 py-3 text-left font-bold text-gray-200 transition-all whitespace-nowrap select-none group border-r border-white/10 ${col.className || ''} ${
+                    col.sortable ? 'cursor-pointer hover:bg-white/5' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="group-hover:text-blue-300 transition-colors">{col.label}</span>
+                    {col.sortable && (
+                      <span className={`text-xs transition-opacity ${isSorted ? 'opacity-100 text-blue-400' : 'opacity-50 group-hover:opacity-100'}`}>
+                        {sortIcon}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
