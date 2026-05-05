@@ -17,8 +17,19 @@ const EditFormModal = ({
 }) => {
   if (!show) return null;
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+    } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (loading) return;
+      (showAddForm ? onAdd : onSave)();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" tabIndex="-1">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" tabIndex="-1" onKeyDown={handleKeyDown}>
       <div className={`bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-h-[90vh] overflow-y-auto ${
         activeTab === 'schedule' || activeTab === 'gameResults' ? 'max-w-4xl' : 'max-w-2xl'
       }`}>

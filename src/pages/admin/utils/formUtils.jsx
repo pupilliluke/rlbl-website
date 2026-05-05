@@ -129,7 +129,15 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
   );
 };
 
-export const getDefaultFormData = (activeTab) => {
+const nextSundayISO = () => {
+  const d = new Date();
+  const daysUntilSunday = (7 - d.getDay()) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilSunday);
+  return d.toISOString().split('T')[0];
+};
+
+export const getDefaultFormData = (activeTab, ctx = {}) => {
+  const { selectedSeason, scheduleData = [], seasonsData = [] } = ctx;
   switch (activeTab) {
     case 'players':
       return {
@@ -161,15 +169,17 @@ export const getDefaultFormData = (activeTab) => {
         goal_differential: 0,
         points: 0
       };
-    case 'schedule':
+    case 'schedule': {
+      const maxWeek = scheduleData.reduce((m, g) => Math.max(m, g.week || 0), 0);
       return {
-        season_id: '',
+        season_id: selectedSeason?.id || '',
         home_team_season_id: '',
         away_team_season_id: '',
-        game_date: '',
-        week: 0,
+        game_date: nextSundayISO(),
+        week: maxWeek + 1,
         is_playoffs: false
       };
+    }
     case 'powerRankings':
       return {
         team_season_id: '',
@@ -181,13 +191,18 @@ export const getDefaultFormData = (activeTab) => {
         streak: '',
         comment: ''
       };
-    case 'seasons':
+    case 'seasons': {
+      const maxNum = seasonsData.reduce((m, s) => {
+        const match = (s.season_name || '').match(/(\d+)/);
+        return match ? Math.max(m, parseInt(match[1])) : m;
+      }, 0);
       return {
-        season_name: '',
+        season_name: maxNum > 0 ? `Season ${maxNum + 1}` : '',
         start_date: '',
         end_date: '',
         is_active: false
       };
+    }
     default:
       return {};
   }

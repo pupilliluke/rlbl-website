@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import SearchableSelect from "./SearchableSelect";
 
 const TeamsRostersTable = ({ selectedSeason, apiService }) => {
   const [teams, setTeams] = useState([]);
@@ -15,6 +16,8 @@ const TeamsRostersTable = ({ selectedSeason, apiService }) => {
   const [selectedTeamToAdd, setSelectedTeamToAdd] = useState('');
   const [newTeamDisplayName, setNewTeamDisplayName] = useState('');
   const [newTeamConference, setNewTeamConference] = useState('');
+  const [bulkRosterText, setBulkRosterText] = useState('');
+  const [bulkRosterBusy, setBulkRosterBusy] = useState(false);
 
   useEffect(() => {
     if (selectedSeason) {
@@ -117,6 +120,72 @@ const TeamsRostersTable = ({ selectedSeason, apiService }) => {
     setEditingRoster(null);
     setSelectedPlayer('');
     setAvailablePlayers([]);
+    setBulkRosterText('');
+  };
+
+  const handleCreatePlayerInline = async (name) => {
+    const created = await apiService.createPlayer({
+      player_name: name,
+      display_name: name
+    });
+    await loadData();
+    return created;
+  };
+
+  const handleBulkRosterPaste = async (teamSeasonId) => {
+    const lines = bulkRosterText
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+    if (lines.length === 0) return;
+
+    setBulkRosterBusy(true);
+    const currentRoster = rosters[teamSeasonId] || [];
+    const currentPlayerIds = new Set(currentRoster.map(r => r.player_id));
+    const matched = [];
+    const unmatched = [];
+    const skipped = [];
+
+    for (const name of lines) {
+      const norm = name.toLowerCase();
+      const player = players.find(p =>
+        (p.player_name || '').toLowerCase() === norm ||
+        (p.display_name || '').toLowerCase() === norm
+      );
+      if (!player) {
+        unmatched.push(name);
+        continue;
+      }
+      if (currentPlayerIds.has(player.id)) {
+        skipped.push(name);
+        continue;
+      }
+      matched.push(player);
+    }
+
+    let added = 0;
+    let failed = 0;
+    for (const player of matched) {
+      try {
+        await apiService.createRosterMembership({
+          player_id: player.id,
+          team_season_id: teamSeasonId
+        });
+        added++;
+      } catch (e) {
+        failed++;
+      }
+    }
+
+    await loadData();
+    setBulkRosterText('');
+    setBulkRosterBusy(false);
+
+    const parts = [`Added ${added}`];
+    if (skipped.length > 0) parts.push(`${skipped.length} already on roster`);
+    if (unmatched.length > 0) parts.push(`${unmatched.length} not found: ${unmatched.join(', ')}`);
+    if (failed > 0) parts.push(`${failed} failed`);
+    alert(parts.join(' • '));
   };
 
   // Get teams that can be added to this season (not already in season)
@@ -295,38 +364,59 @@ const TeamsRostersTable = ({ selectedSeason, apiService }) => {
 
           {/* Add Player Section */}
           {isEditing && (
-            <div className="mt-4 pt-4 border-t border-gray-600">
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedPlayer}
-                  onChange={(e) => setSelectedPlayer(e.target.value)}
-                  className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 focus:outline-none focus:border-blue-500"
-                  disabled={loading}
-                >
-                  <option value="">Select player to add...</option>
-                  {availablePlayers.map((player) => (
-                    <option key={player.id} value={player.id}>
-                      {player.display_name || player.player_name}
-                    </option>
-                  ))}
-                </select>
+            <div className="mt-4 pt-4 border-t border-gray-600 space-y-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex-1 min-w-[260px]">
+                  <SearchableSelect
+                    value={selectedPlayer}
+                    onChange={(v) => setSelectedPlayer(v)}
+                    options={availablePlayers}
+                    getValue={(p) => p.id}
+                    getLabel={(p) => p.display_name || p.player_name}
+                    placeholder="Search or create a player..."
+                    onCreateNew={handleCreatePlayerInline}
+                    createNewLabel="Create player"
+                  />
+                </div>
 
                 <button
                   onClick={() => handleAddPlayerToRoster(team.team_season_id)}
                   disabled={!selectedPlayer || loading}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded font-medium transition-all duration-300"
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded font-medium"
                 >
                   ➕ Add Player
                 </button>
 
                 <button
                   onClick={cancelEditing}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium transition-all duration-300"
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded font-medium"
                   disabled={loading}
                 >
                   Cancel
                 </button>
               </div>
+
+              <details className="bg-gray-800/50 rounded border border-gray-700 p-3">
+                <summary className="cursor-pointer text-gray-300 text-sm font-medium">
+                  📋 Bulk paste roster (one player name per line)
+                </summary>
+                <div className="mt-3 space-y-2">
+                  <textarea
+                    value={bulkRosterText}
+                    onChange={(e) => setBulkRosterText(e.target.value)}
+                    placeholder={"Joe Schmo\nFastFox\nKoji"}
+                    rows={5}
+                    className="w-full px-3 py-2 rounded bg-gray-900 border border-gray-600 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none font-mono text-sm"
+                  />
+                  <button
+                    onClick={() => handleBulkRosterPaste(team.team_season_id)}
+                    disabled={bulkRosterBusy || !bulkRosterText.trim()}
+                    className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white px-4 py-2 rounded text-sm font-medium"
+                  >
+                    {bulkRosterBusy ? 'Adding...' : 'Add All'}
+                  </button>
+                </div>
+              </details>
             </div>
           )}
         </div>

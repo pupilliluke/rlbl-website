@@ -198,19 +198,19 @@
                         <td>1</td>
                         <td class="issue-title">LP (League Points) calculation is wrong - affects standings accuracy</td>
                         <td class="location">Standings page</td>
-                        <td><span class="status status-confirm">Code Done - Needs DB Migration</span></td>
+                        <td><span class="status status-fixed">Fixed (OTG migration applied)</span></td>
                     </tr>
                     <tr>
                         <td>2</td>
                         <td class="issue-title">OTL not tracked - need W-L-OTL format, OTG flag should give losing team OTL instead of L</td>
                         <td class="location">Standings page</td>
-                        <td><span class="status status-confirm">Code Done - Needs DB Migration</span></td>
+                        <td><span class="status status-fixed">Fixed (OTG migration applied)</span></td>
                     </tr>
                     <tr>
                         <td>3</td>
                         <td class="issue-title">OTG games not showing in standings at all</td>
                         <td class="location">Standings page</td>
-                        <td><span class="status status-confirm">Code Done - Needs DB Migration</span></td>
+                        <td><span class="status status-fixed">Fixed (OTG migration applied)</span></td>
                     </tr>
                     <tr>
                         <td>4</td>
@@ -220,9 +220,9 @@
                     </tr>
                     <tr>
                         <td>5</td>
-                        <td class="issue-title">Season 1 doesn't exist in admin (check if exists in DB seasons table)</td>
+                        <td class="issue-title">Season 1 doesn't exist in admin (seasons table cleaned up - id 1 renamed to "Season 1", id 5 to "Season 4", duplicate is_active resolved)</td>
                         <td class="location">Admin panel / Database</td>
-                        <td><span class="status status-confirm">Database Check</span></td>
+                        <td><span class="status status-fixed">Fixed</span></td>
                     </tr>
                     <tr>
                         <td>6</td>
@@ -232,21 +232,21 @@
                     </tr>
                     <tr>
                         <td>7</td>
-                        <td class="issue-title">Can't add new seasons/playoffs (code verified - test in admin Seasons tab)</td>
-                        <td class="location">Admin panel</td>
-                        <td><span class="status status-confirm">Code OK - Test</span></td>
-                    </tr>
-                    <tr>
-                        <td>8</td>
-                        <td class="issue-title">Can't add/edit teams - wrong teams showing (Styleboyz in S2 but it's S1 team)</td>
+                        <td class="issue-title">Can't add new seasons/playoffs (admin Seasons tab now has smart defaults; Season clone modal added)</td>
                         <td class="location">Admin panel</td>
                         <td><span class="status status-fixed">Fixed</span></td>
                     </tr>
                     <tr>
+                        <td>8</td>
+                        <td class="issue-title">Can't add/edit teams - wrong teams showing (Styleboyz in S2 but it's S1 team) - public Teams page now season-agnostic, Admin Teams tab now shows base teams correctly</td>
+                        <td class="location">Admin panel / Public Teams page</td>
+                        <td><span class="status status-fixed">Fixed</span></td>
+                    </tr>
+                    <tr>
                         <td>9</td>
-                        <td class="issue-title">Player assignment to teams not working (code verified - check team_season exists for S2)</td>
+                        <td class="issue-title">Player assignment to teams not working - now supports searchable player picker, inline player creation, and bulk roster paste in Teams &amp; Rosters tab</td>
                         <td class="location">Admin panel</td>
-                        <td><span class="status status-confirm">Code OK - Verify Data</span></td>
+                        <td><span class="status status-fixed">Fixed</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -270,9 +270,9 @@
                 <tbody>
                     <tr>
                         <td>10</td>
-                        <td class="issue-title">OT Wins/OT Losses not accurate on team pages (same root cause as LP?)</td>
+                        <td class="issue-title">OT Wins/OT Losses not accurate on team pages (same root cause as LP)</td>
                         <td class="location">Team pages</td>
-                        <td><span class="status status-confirm">Code Done - Needs DB Migration</span></td>
+                        <td><span class="status status-fixed">Fixed (OTG migration applied)</span></td>
                     </tr>
                     <tr>
                         <td>11</td>
@@ -400,6 +400,60 @@
                 <li>
                     <span class="arch-number">4</span>
                     <span><strong>Playoffs</strong> &rarr; Flagged separately from regular season</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="priority-section arch">
+            <div class="priority-header">
+                <span class="priority-badge">NEW</span>
+                <span class="priority-title">Admin Setup Speed-Ups (Fly Through Setup)</span>
+            </div>
+            <p class="priority-desc">Recently added shortcuts so seasons/teams/players/games can be set up in minutes, not hours</p>
+            <ul class="arch-list">
+                <li>
+                    <span class="arch-number">A</span>
+                    <span><strong>Bulk add teams</strong> &rarr; Paste one team name per line (optional comma-separated hex color), check "also link to current season", create all in one click. Admin &rarr; Teams &rarr; "Bulk Add Teams"</span>
+                </li>
+                <li>
+                    <span class="arch-number">B</span>
+                    <span><strong>Bulk add players</strong> &rarr; Paste one name per line (optional comma-separated display name), create all at once. Admin &rarr; Players &rarr; "Bulk Add Players"</span>
+                </li>
+                <li>
+                    <span class="arch-number">C</span>
+                    <span><strong>Link all unlinked teams</strong> &rarr; One button takes every base team not yet in the active season and links them in parallel. Shows count of unlinked.</span>
+                </li>
+                <li>
+                    <span class="arch-number">D</span>
+                    <span><strong>Smart form defaults</strong> &rarr; New game pre-fills season_id, next-unused week, and next Sunday's date. New season suggests next "Season N" name based on existing.</span>
+                </li>
+                <li>
+                    <span class="arch-number">E</span>
+                    <span><strong>Season clone</strong> &rarr; Pick a source season and copy all its team_seasons (team identity, display name, conference, colors) into the current season in one click. Rosters not copied.</span>
+                </li>
+                <li>
+                    <span class="arch-number">F</span>
+                    <span><strong>Bulk roster paste</strong> &rarr; In Teams &amp; Rosters &rarr; Edit Roster, paste one player name per line. Matches by name (case-insensitive) and adds all matched. Reports unmatched names.</span>
+                </li>
+                <li>
+                    <span class="arch-number">G</span>
+                    <span><strong>Keyboard shortcuts</strong> &rarr; Press <code>/</code> to focus the team search, <code>n</code> to open Add modal (when no other modal is open). <code>Esc</code> closes modals; <code>Ctrl/Cmd + Enter</code> submits.</span>
+                </li>
+                <li>
+                    <span class="arch-number">H</span>
+                    <span><strong>Searchable dropdowns</strong> &rarr; All team and season selectors now support type-to-filter, keyboard navigation (Arrow keys, Enter, Esc), and a clear button. Replaces clunky native selects.</span>
+                </li>
+                <li>
+                    <span class="arch-number">I</span>
+                    <span><strong>Inline player create</strong> &rarr; In the player picker, type a new name &rarr; "+ Create player 'X'" appears at the bottom of the dropdown &rarr; one click creates and selects them.</span>
+                </li>
+                <li>
+                    <span class="arch-number">J</span>
+                    <span><strong>Color picker</strong> &rarr; Color fields now show a native color wheel paired with a hex input. Either updates the value.</span>
+                </li>
+                <li>
+                    <span class="arch-number">K</span>
+                    <span><strong>Search teams by player name</strong> &rarr; Admin Teams tab search box matches both team names and any player ever rostered on that team across all seasons.</span>
                 </li>
             </ul>
         </div>

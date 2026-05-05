@@ -9,6 +9,7 @@ import StandingsTable from "./components/StandingsTable";
 import TeamsRostersTable from "./components/TeamsRostersTable";
 import EditFormModal from "./modals/EditFormModal";
 import GameEditModal from "./modals/GameEditModal";
+import BulkAddModal from "./components/BulkAddModal";
 
 // Utils
 import { renderFormField, getDefaultFormData } from "./utils/formUtils";
@@ -24,6 +25,13 @@ const Admin = () => {
   const [allTeamSeasons, setAllTeamSeasons] = useState([]);
   const [allRosterMemberships, setAllRosterMemberships] = useState([]);
   const [teamSearchQuery, setTeamSearchQuery] = useState('');
+  const [showBulkTeamsModal, setShowBulkTeamsModal] = useState(false);
+  const [showBulkPlayersModal, setShowBulkPlayersModal] = useState(false);
+  const [bulkTeamsLinkToSeason, setBulkTeamsLinkToSeason] = useState(true);
+  const [showSeasonCloneModal, setShowSeasonCloneModal] = useState(false);
+  const [cloneSourceSeasonId, setCloneSourceSeasonId] = useState('');
+  const [cloneBusy, setCloneBusy] = useState(false);
+  const teamsSearchInputRef = useRef(null);
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
   const [gameStatsData, setGameStatsData] = useState([]);
@@ -78,6 +86,28 @@ const Admin = () => {
   // Game Edit Modal states
   const [showGameEditModal, setShowGameEditModal] = useState(false);
   const [editingGame, setEditingGame] = useState(null);
+
+  // Keyboard shortcuts: / to focus team search, n to open Add modal
+  useEffect(() => {
+    const handler = (e) => {
+      const tag = e.target.tagName?.toLowerCase();
+      const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+      const anyModalOpen = showAddForm || editingItem !== null || showGameEditModal || showBulkTeamsModal || showBulkPlayersModal || showSeasonCloneModal;
+      if (isTyping || anyModalOpen) return;
+
+      if (e.key === '/' && activeTab === 'teams' && teamsSearchInputRef.current) {
+        e.preventDefault();
+        teamsSearchInputRef.current.focus();
+      } else if (e.key === 'n' && !e.ctrlKey && !e.metaKey && activeTab !== 'gameResults' && activeTab !== 'teamsRosters' && activeTab !== 'stream') {
+        e.preventDefault();
+        setShowAddForm(true);
+        setFormData(getDefaultFormData(activeTab, { selectedSeason, scheduleData, seasonsData }));
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, showAddForm, editingItem, showGameEditModal, showBulkTeamsModal, showBulkPlayersModal, showSeasonCloneModal, selectedSeason]);
 
   // Auto-collapse all weeks only on initial load, preserve state on subsequent loads
   useEffect(() => {
@@ -220,6 +250,130 @@ const Admin = () => {
       alert('Failed to link team to season: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLinkAllUnlinked = async () => {
+    if (!selectedSeason) return;
+    const linkedTeamIds = new Set(teamsData.map(t => t.team_id));
+    const unlinked = baseTeamsData.filter(t => !linkedTeamIds.has(t.id));
+    if (unlinked.length === 0) {
+      alert('All teams are already linked to ' + selectedSeason.season_name);
+      return;
+    }
+    if (!window.confirm(`Link ${unlinked.length} unlinked team(s) to ${selectedSeason.season_name}?`)) return;
+    try {
+      setLoading(true);
+      const results = await Promise.allSettled(
+        unlinked.map(t => apiService.createTeamSeason({
+          season_id: selectedSeason.id,
+          team_id: t.id,
+          display_name: t.team_name,
+          primary_color: t.color || null,
+          secondary_color: t.secondary_color || null,
+          conference: null
+        }))
+      );
+      const failures = results.filter(r => r.status === 'rejected').length;
+      await loadTeams();
+      await loadTeamPlayerIndex();
+      if (failures > 0) alert(`Linked ${unlinked.length - failures}; ${failures} failed.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkAddTeams = async (rows) => {
+    const successes = [];
+    const failures = [];
+    const created = [];
+    for (const row of rows) {
+      try {
+        const team = await apiService.createTeam(row);
+        successes.push(team);
+        created.push(team);
+      } catch (e) {
+        failures.push({ raw: row.team_name, error: e.message || 'Create failed' });
+      }
+    }
+    if (bulkTeamsLinkToSeason && selectedSeason && created.length > 0) {
+      for (const team of created) {
+        try {
+          await apiService.createTeamSeason({
+            season_id: selectedSeason.id,
+            team_id: team.id,
+            display_name: team.team_name,
+            primary_color: team.color || null,
+            secondary_color: team.secondary_color || null,
+            conference: null
+          });
+        } catch (e) {
+          failures.push({ raw: `link ${team.team_name}`, error: e.message || 'Link failed' });
+        }
+      }
+    }
+    await loadBaseTeams();
+    await loadTeams();
+    await loadTeamPlayerIndex();
+    return { successes, failures };
+  };
+
+  const handleBulkAddPlayers = async (rows) => {
+    const successes = [];
+    const failures = [];
+    for (const row of rows) {
+      try {
+        const player = await apiService.createPlayer(row);
+        successes.push(player);
+      } catch (e) {
+        failures.push({ raw: row.player_name, error: e.message || 'Create failed' });
+      }
+    }
+    await loadPlayers();
+    return { successes, failures };
+  };
+
+  const handleCloneSeason = async () => {
+    if (!selectedSeason || !cloneSourceSeasonId) return;
+    if (parseInt(cloneSourceSeasonId) === selectedSeason.id) {
+      alert("Can't clone a season into itself.");
+      return;
+    }
+    const sourceTeamSeasons = allTeamSeasons.filter(
+      ts => ts.season_id === parseInt(cloneSourceSeasonId)
+    );
+    if (sourceTeamSeasons.length === 0) {
+      alert('No teams found in source season.');
+      return;
+    }
+    const linkedTeamIds = new Set(teamsData.map(t => t.team_id));
+    const toClone = sourceTeamSeasons.filter(ts => !linkedTeamIds.has(ts.team_id));
+    if (toClone.length === 0) {
+      alert('All source teams are already in ' + selectedSeason.season_name);
+      return;
+    }
+    if (!window.confirm(`Clone ${toClone.length} team(s) into ${selectedSeason.season_name}? (Rosters not copied.)`)) return;
+    try {
+      setCloneBusy(true);
+      const results = await Promise.allSettled(
+        toClone.map(ts => apiService.createTeamSeason({
+          season_id: selectedSeason.id,
+          team_id: ts.team_id,
+          display_name: ts.display_name,
+          primary_color: ts.primary_color || null,
+          secondary_color: ts.secondary_color || null,
+          conference: ts.conference || null
+        }))
+      );
+      const failures = results.filter(r => r.status === 'rejected').length;
+      await loadTeams();
+      await loadTeamPlayerIndex();
+      setShowSeasonCloneModal(false);
+      setCloneSourceSeasonId('');
+      if (failures > 0) alert(`Cloned ${toClone.length - failures}; ${failures} failed.`);
+      else alert(`Cloned ${toClone.length} team(s) into ${selectedSeason.season_name}.`);
+    } finally {
+      setCloneBusy(false);
     }
   };
 
@@ -440,7 +594,7 @@ const Admin = () => {
       
       const currentData = getCurrentData();
       setCurrentData([...currentData, newItem]);
-      setFormData(getDefaultFormData(activeTab));
+      setFormData(getDefaultFormData(activeTab, { selectedSeason, scheduleData, seasonsData }));
       setShowAddForm(false);
 
       // Only refresh dropdowns if needed, preserving UI state
@@ -1058,28 +1212,69 @@ const Admin = () => {
       });
     }
 
+    const linkedTeamIds = new Set(teamsData.map(t => t.team_id));
+    const unlinkedCount = baseTeamsData.filter(t => !linkedTeamIds.has(t.id)).length;
+
     return (
       <div className="space-y-6">
         {activeTab === 'teams' && (
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              value={teamSearchQuery}
-              onChange={(e) => setTeamSearchQuery(e.target.value)}
-              placeholder="Search by team name or player..."
-              className="flex-1 max-w-md px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-            />
-            {teamSearchQuery && (
+          <>
+            <div className="flex items-center gap-3 flex-wrap">
+              <input
+                ref={teamsSearchInputRef}
+                type="text"
+                value={teamSearchQuery}
+                onChange={(e) => setTeamSearchQuery(e.target.value)}
+                placeholder="Search by team name or player... (press / to focus)"
+                className="flex-1 min-w-[260px] max-w-md px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+              {teamSearchQuery && (
+                <button
+                  onClick={() => setTeamSearchQuery('')}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm"
+                >
+                  Clear
+                </button>
+              )}
+              <span className="text-gray-400 text-sm">
+                {dataForTable.length} of {baseTeamsData.length} teams
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setTeamSearchQuery('')}
-                className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition-all duration-300"
+                onClick={() => setShowBulkTeamsModal(true)}
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm"
               >
-                Clear
+                📋 Bulk Add Teams
               </button>
-            )}
-            <span className="text-gray-400 text-sm">
-              {dataForTable.length} of {baseTeamsData.length} teams
-            </span>
+              {selectedSeason && unlinkedCount > 0 && (
+                <button
+                  onClick={handleLinkAllUnlinked}
+                  disabled={loading}
+                  className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded text-sm"
+                >
+                  🔗 Link All Unlinked to {selectedSeason.season_name} ({unlinkedCount})
+                </button>
+              )}
+              {selectedSeason && (
+                <button
+                  onClick={() => setShowSeasonCloneModal(true)}
+                  className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm"
+                >
+                  📑 Clone From Season...
+                </button>
+              )}
+            </div>
+          </>
+        )}
+        {activeTab === 'players' && (
+          <div>
+            <button
+              onClick={() => setShowBulkPlayersModal(true)}
+              className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm"
+            >
+              📋 Bulk Add Players
+            </button>
           </div>
         )}
         <DataTable
@@ -1227,7 +1422,7 @@ const Admin = () => {
                   <button
                     onClick={() => {
                       setShowAddForm(true);
-                      setFormData(getDefaultFormData(activeTab));
+                      setFormData(getDefaultFormData(activeTab, { selectedSeason, scheduleData, seasonsData }));
                     }}
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 flex items-center gap-2"
                   >
@@ -1273,6 +1468,97 @@ const Admin = () => {
         onDelete={handleGameEditDelete}
         apiService={apiService}
       />
+
+      {/* Bulk Add Teams Modal */}
+      <BulkAddModal
+        show={showBulkTeamsModal}
+        title="Bulk Add Teams"
+        description="One team name per line. Optional second column (separated by comma) for hex color."
+        placeholder={"Octane\nHotshot,#ff5733\nDiestro,#3366ff"}
+        onCancel={() => setShowBulkTeamsModal(false)}
+        parseLine={(line) => {
+          const [name, color] = line.split(',').map(s => s.trim());
+          if (!name) throw new Error('Empty team name');
+          return { team_name: name, color: color || null };
+        }}
+        onSubmit={handleBulkAddTeams}
+        extraControls={
+          selectedSeason && (
+            <label className="flex items-center gap-2 text-gray-200">
+              <input
+                type="checkbox"
+                checked={bulkTeamsLinkToSeason}
+                onChange={(e) => setBulkTeamsLinkToSeason(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Also link each new team to {selectedSeason.season_name}
+            </label>
+          )
+        }
+      />
+
+      {/* Bulk Add Players Modal */}
+      <BulkAddModal
+        show={showBulkPlayersModal}
+        title="Bulk Add Players"
+        description="One player per line. Optional second column (comma-separated) for display name."
+        placeholder={"Joe Schmo\nFastFox,Fox\nKoji Cosplay"}
+        onCancel={() => setShowBulkPlayersModal(false)}
+        parseLine={(line) => {
+          const [name, display] = line.split(',').map(s => s.trim());
+          if (!name) throw new Error('Empty player name');
+          return { player_name: name, display_name: display || name };
+        }}
+        onSubmit={handleBulkAddPlayers}
+      />
+
+      {/* Season Clone Modal */}
+      {showSeasonCloneModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-xl shadow-2xl border border-gray-600 w-full max-w-md">
+            <div className="px-6 py-4 border-b border-gray-600 bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20">
+              <h3 className="text-xl font-bold text-white">Clone Teams From Another Season</h3>
+              <p className="text-sm text-gray-300 mt-1">
+                Copies team_seasons (team identity + display name + conference) into {selectedSeason?.season_name}. Rosters are not copied.
+              </p>
+            </div>
+            <div className="p-6 space-y-4">
+              <label className="block text-sm text-gray-300">Source season</label>
+              <select
+                value={cloneSourceSeasonId}
+                onChange={(e) => setCloneSourceSeasonId(e.target.value)}
+                className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white focus:border-blue-500 focus:outline-none"
+              >
+                <option value="">Select source...</option>
+                {seasonsData
+                  .filter(s => s.id !== selectedSeason?.id)
+                  .map(s => (
+                    <option key={s.id} value={s.id} className="text-black bg-white">
+                      {s.season_name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-600 flex justify-end gap-3">
+              <button
+                onClick={() => { setShowSeasonCloneModal(false); setCloneSourceSeasonId(''); }}
+                disabled={cloneBusy}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloneSeason}
+                disabled={cloneBusy || !cloneSourceSeasonId}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 text-white rounded flex items-center gap-2"
+              >
+                {cloneBusy && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />}
+                {cloneBusy ? 'Cloning...' : 'Clone'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
