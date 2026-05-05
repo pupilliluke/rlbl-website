@@ -12,7 +12,6 @@ const playerGameStatsRouter = require('./playerGameStats');
 const standingsRouter = require('./standings');
 const powerRankingsRouter = require('./powerRankings');
 const bracketsRouter = require('./brackets');
-const usersRouter = require('./users');
 const statsRouter = require('./stats');
 const streamSettingsRouter = require('./streamSettings');
 const streamChatRouter = require('./streamChat');
@@ -45,7 +44,6 @@ router.get('/', (req, res) => {
       standings: '/api/standings',
       powerRankings: '/api/weekly',
       brackets: '/api/brackets',
-      users: '/api/users',
       stats: '/api/stats',
       streamSettings: '/api/stream-settings',
       streamChat: '/api/stream-chat',
@@ -68,7 +66,6 @@ router.use('/player-game-stats', playerGameStatsRouter);
 router.use('/standings', standingsRouter);
 router.use('/weekly', powerRankingsRouter);
 router.use('/brackets', bracketsRouter);
-router.use('/users', usersRouter);
 router.use('/stats', statsRouter);
 router.use('/stream-settings', streamSettingsRouter);
 router.use('/stream-chat', streamChatRouter);
@@ -91,7 +88,6 @@ router.use('*', (req, res) => {
       standings: '/api/standings',
       powerRankings: '/api/weekly',
       brackets: '/api/brackets',
-      users: '/api/users',
       stats: '/api/stats',
       streamSettings: '/api/stream-settings',
       streamChat: '/api/stream-chat',
