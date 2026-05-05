@@ -70,6 +70,28 @@ export const renderFormField = (field, value, type = "text", handleFormChange, t
     );
   }
 
+  if (field.toLowerCase().includes("color")) {
+    const hex = value || '#000000';
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={hex}
+          onChange={(e) => handleFormChange(field, e.target.value)}
+          className="w-12 h-10 rounded cursor-pointer bg-gray-700 border border-gray-600 p-0"
+          title="Pick a color"
+        />
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => handleFormChange(field, e.target.value)}
+          placeholder="#000000"
+          className={baseClasses}
+        />
+      </div>
+    );
+  }
+
   if (field.includes("date")) {
     return (
       <input
