@@ -257,7 +257,7 @@ const Stats = () => {
       // Display total games as team games (not divided by players)
       displayGames: team.totalGames > 0 ? Math.round(team.totalGames / team.players) : 0
     }));
-  }, [teams, processedStats, selectedSeason]);
+  }, [teams, processedStats, selectedSeason, isActiveSeason]);
 
   // Sort and filter data
   const sortedData = useMemo(() => {
@@ -302,7 +302,7 @@ const Stats = () => {
         }
       })
       .slice(0, showCount);
-  }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount, selectedConference, selectedSeason]);
+  }, [viewType, teamStats, processedStats, sortBy, sortOrder, filter, showCount, selectedConference, isActiveSeason]);
 
   // Export current view to CSV
   const exportToCSV = () => {
