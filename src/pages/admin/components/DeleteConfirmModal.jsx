@@ -29,12 +29,14 @@ const DeleteConfirmModal = ({
   const [selectedKey, setSelectedKey] = useState(scopeOptions?.[0]?.key || null);
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (show) {
       setSelectedKey(scopeOptions?.[0]?.key || null);
       setTyped("");
       setBusy(false);
+      setErrorMessage("");
     }
   }, [show, scopeOptions]);
 
@@ -51,6 +53,7 @@ const DeleteConfirmModal = ({
 
   const handleSubmit = async () => {
     if (!typeMatches || busy) return;
+    setErrorMessage("");
     setBusy(true);
     try {
       if (scopeOptions && selectedOption) {
@@ -59,7 +62,7 @@ const DeleteConfirmModal = ({
         await onConfirm();
       }
     } catch (e) {
-      alert('Delete failed: ' + (e.message || 'Unknown error'));
+      setErrorMessage(e.message || 'Unknown error');
     } finally {
       setBusy(false);
     }
@@ -82,6 +85,20 @@ const DeleteConfirmModal = ({
         </div>
 
         <div className="p-6 space-y-4">
+          {errorMessage && (
+            <div className="rounded-lg border-2 border-red-500 bg-red-900/30 p-4 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="text-2xl leading-none">🚫</span>
+                <div className="flex-1">
+                  <div className="font-bold text-red-300 mb-1 text-base">Delete blocked</div>
+                  <div className="text-red-100 whitespace-pre-wrap">{errorMessage}</div>
+                  <div className="mt-2 text-xs text-red-200/80">
+                    Adjust the scope above, delete the blocking rows first, or click Cancel.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {scopeOptions && scopeOptions.length > 1 && (
             <div className="space-y-2">
               <div className="text-sm text-gray-300 font-semibold">Choose what to delete:</div>
@@ -98,7 +115,7 @@ const DeleteConfirmModal = ({
                     <input
                       type="radio"
                       checked={selectedKey === opt.key}
-                      onChange={() => setSelectedKey(opt.key)}
+                      onChange={() => { setSelectedKey(opt.key); setErrorMessage(""); }}
                       className="mt-1"
                     />
                     <div className="flex-1">
