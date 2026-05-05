@@ -27,6 +27,36 @@ const Stats = () => {
   const [selectedSeason, setSelectedSeason] = useState("career");
   const [selectedConference, setSelectedConference] = useState("all");
   const [playoffFilter, setPlayoffFilter] = useState("all"); // 'all', 'regular', 'playoffs'
+  const [allSeasons, setAllSeasons] = useState([]);
+
+  useEffect(() => {
+    apiService.getSeasons()
+      .then(seasons => {
+        const sorted = [...seasons].sort((a, b) => {
+          if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+          const aDate = a.start_date ? new Date(a.start_date).getTime() : 0;
+          const bDate = b.start_date ? new Date(b.start_date).getTime() : 0;
+          return bDate - aDate;
+        });
+        setAllSeasons(sorted);
+      })
+      .catch(err => console.error('Failed to load seasons:', err));
+  }, []);
+
+  // Derived helpers — selectedSeason is either 'career' or a season id (as string)
+  const selectedSeasonObj = selectedSeason !== 'career'
+    ? allSeasons.find(s => String(s.id) === String(selectedSeason)) || null
+    : null;
+  const isActiveSeason = selectedSeasonObj?.is_active === true;
+  const seasonShortLabel = selectedSeason === 'career'
+    ? 'CAREER'
+    : (() => {
+        const m = selectedSeasonObj?.season_name?.match(/\d+/);
+        return m ? `S${m[0]}` : 'SEASON';
+      })();
+  const seasonFullLabel = selectedSeason === 'career'
+    ? 'CAREER STATS'
+    : (selectedSeasonObj?.season_name?.toUpperCase() || 'SEASON');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,10 +131,9 @@ const Stats = () => {
   const teamStats = useMemo(() => {
     const teamMap = {};
     
-    // For current season or career, use teams from API since they may not have game stats yet
-    const currentSeasonModes = ['current', 'career', 'season3'];
-    const isCurrentSeason = currentSeasonModes.includes(selectedSeason);
-    
+    // For active season or career, use teams from API since they may not have game stats yet
+    const isCurrentSeason = selectedSeason === 'career' || isActiveSeason;
+
     if (isCurrentSeason && teams.length > 0) {
       // Use teams from the API (for Season 3 and current season)
       teams.forEach(team => {
@@ -241,7 +270,7 @@ const Stats = () => {
         const nameMatch = name.toLowerCase().includes(filter.toLowerCase());
 
         // Conference filter
-        if (selectedConference !== "all" && selectedSeason === 'current') {
+        if (selectedConference !== "all" && isActiveSeason) {
           const itemConference = getItemConference(item);
           return nameMatch && itemConference === selectedConference;
         }
@@ -541,7 +570,7 @@ const Stats = () => {
       XLSX.utils.book_append_sheet(wb, ws, 'Player Stats');
 
       // Generate file and download
-      const seasonLabel = selectedSeason === 'career' ? 'career' : selectedSeason.replace('season', 'season_');
+      const seasonLabel = selectedSeason === 'career' ? 'career' : `season_${selectedSeason}`;
       const playoffLabel = playoffFilter === 'playoffs' ? '_playoffs' : playoffFilter === 'regular' ? '_regular' : '';
       const conferenceLabel = selectedConference !== 'all' ? `_${selectedConference}` : '';
 
@@ -639,7 +668,7 @@ const Stats = () => {
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       XLSX.utils.book_append_sheet(wb, ws, 'Team Stats');
 
-      const seasonLabel = selectedSeason === 'career' ? 'career' : selectedSeason.replace('season', 'season_');
+      const seasonLabel = selectedSeason === 'career' ? 'career' : `season_${selectedSeason}`;
       const playoffLabel = playoffFilter === 'playoffs' ? '_playoffs' : playoffFilter === 'regular' ? '_regular' : '';
       const conferenceLabel = selectedConference !== 'all' ? `_${selectedConference}` : '';
 
@@ -768,11 +797,7 @@ const Stats = () => {
                     ? 'text-4xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
                     : 'text-2xl text-orange-400'
                 }`}>
-                  {selectedSeason === 'career' ? 'CAREER' :
-                   selectedSeason === 'current' ? 'S3' :
-                   selectedSeason === 'season2' ? 'S2' :
-                   selectedSeason === 'season2_playoffs' ? 'S2 PO' :
-                   selectedSeason === 'season1' ? 'S1' : 'SEASON'}
+                  {seasonShortLabel}
                 </div>
                 <div className={`text-xs font-semibold ${
                   selectedSeason === 'career' ? 'text-yellow-200' : 'text-white'
@@ -1156,20 +1181,16 @@ const Stats = () => {
                   ? 'bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 bg-clip-text text-transparent'
                   : 'text-blue-400'
               }`}>
-                {selectedSeason === 'career' ? 'CAREER STATS' :
-                 selectedSeason === 'current' ? 'SEASON 3' :
-                 selectedSeason === 'season2' ? 'SEASON 2 - SPRING 25' :
-                 selectedSeason === 'season2_playoffs' ? 'SEASON 2 PLAYOFFS' :
-                 selectedSeason === 'season1' ? 'SEASON 1 - FALL 24' : 'SEASON'}
+                {seasonFullLabel}
               </div>
               <div className="flex items-center justify-center gap-4 text-sm">
                 {selectedSeason === 'career' && (
                   <span className="text-yellow-300 font-semibold">All-Time Records</span>
                 )}
-                {selectedSeason === 'current' && (
+                {isActiveSeason && (
                   <span className="text-green-400 font-semibold">Current Season</span>
                 )}
-                {selectedConference !== 'all' && selectedSeason === 'current' && (
+                {selectedConference !== 'all' && isActiveSeason && (
                   <>
                     <span className="text-gray-500">•</span>
                     <span className="text-purple-400 font-semibold">{selectedConference} Conference</span>
@@ -1222,15 +1243,16 @@ const Stats = () => {
                 onChange={(e) => setSelectedSeason(e.target.value)}
                 className="px-6 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
               >
-                <option value="current" className="text-black bg-white">Season 3 (Current)</option>
                 <option value="career" className="text-black bg-white">Career Stats (All-Time)</option>
-                <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
-                <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
-                <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
+                {allSeasons.map(s => (
+                  <option key={s.id} value={String(s.id)} className="text-black bg-white">
+                    {s.season_name}{s.is_active ? ' (Current)' : ''}
+                  </option>
+                ))}
               </select>
 
-              {/* Conference Filter - Only show for Season 3 */}
-              {selectedSeason === 'current' && (
+              {/* Conference Filter - Only show for the active season */}
+              {isActiveSeason && (
                 <select
                   value={selectedConference}
                   onChange={(e) => setSelectedConference(e.target.value)}
