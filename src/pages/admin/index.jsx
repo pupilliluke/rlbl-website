@@ -12,6 +12,7 @@ import GameEditModal from "./modals/GameEditModal";
 import BulkAddModal from "./components/BulkAddModal";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
 import AdminGuideModal from "./components/AdminGuideModal";
+import Tip from "./components/Tip";
 
 // Utils
 import { renderFormField, getDefaultFormData } from "./utils/formUtils";
@@ -35,7 +36,19 @@ const Admin = () => {
   const [cloneBusy, setCloneBusy] = useState(false);
   const [deleteModalConfig, setDeleteModalConfig] = useState(null);
   const [showAdminGuide, setShowAdminGuide] = useState(false);
+  const [tipsEnabled, setTipsEnabled] = useState(() => {
+    try {
+      const stored = localStorage.getItem('adminTipsEnabled');
+      return stored === null ? true : stored === 'true';
+    } catch {
+      return true;
+    }
+  });
   const teamsSearchInputRef = useRef(null);
+
+  useEffect(() => {
+    try { localStorage.setItem('adminTipsEnabled', String(tipsEnabled)); } catch {}
+  }, [tipsEnabled]);
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
   const [gameStatsData, setGameStatsData] = useState([]);
@@ -1397,6 +1410,17 @@ const Admin = () => {
                 >
                   <span>📖</span> Help
                 </button>
+                <button
+                  onClick={() => setTipsEnabled(v => !v)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 mb-2 sm:mb-4 transition-colors ${
+                    tipsEnabled
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      : 'bg-gray-600 hover:bg-gray-700 text-gray-200'
+                  }`}
+                  title={tipsEnabled ? 'Click to hide all tips' : 'Click to show contextual tips'}
+                >
+                  <span>💡</span> Tips: {tipsEnabled ? 'ON' : 'OFF'}
+                </button>
               </div>
               <p className="text-base sm:text-lg lg:text-xl text-white font-light">
                 Full CRUD management for all league data and operations
@@ -1503,6 +1527,26 @@ const Admin = () => {
               </div>
             )}
 
+            {/* Per-tab tip */}
+            {(() => {
+              const tipMap = {
+                gameResults: <>Click <strong>Manage Stats</strong> on a game to enter per-player stats. Mark <strong>OTG</strong> on whoever scored the OT goal — it drives the W/L/OTL calc.</>,
+                teamsRosters: <>Use <strong>📋 Bulk paste roster</strong> in Edit Roster to add a whole team at once. Type a name not in the list to inline-create a new player.</>,
+                players: <>Use <strong>📋 Bulk Add Players</strong> for many at once. Delete here gives you a choice: scoped to current season or completely (every season).</>,
+                teams: <>Press <strong>/</strong> to focus search, <strong>n</strong> to add. Search matches team name OR any player ever on that team. <strong>+ Link to Season</strong> button puts a base team into the active season.</>,
+                standings: <>Click <strong>⚡ Auto-Generate</strong> to rebuild standings from games + stats. Manual edits get overwritten by the next Auto-Generate.</>,
+                schedule: <>Add New pre-fills <strong>season_id</strong>, next-unused week, and next Sunday's date. For Bo3 series, use Game Results' <strong>Add Series Game</strong>.</>,
+                gameStats: <>This is the flat stats view. It's usually easier to enter stats via <strong>Game Results → Manage Stats</strong> instead.</>,
+                powerRankings: <>Editorial weekly rankings — these don't auto-update from games. Edit each week manually.</>,
+                seasons: <>Only one season should be <strong>is_active</strong>. The active season drives every "current season" lookup. Smart defaults suggest <strong>Season N+1</strong>.</>,
+                stream: <>Twitch URL goes here. <strong>Delete All Chats</strong> is permanent.</>
+              };
+              const tip = tipMap[activeTab];
+              return tip ? (
+                <Tip enabled={tipsEnabled} className="mb-4">{tip}</Tip>
+              ) : null;
+            })()}
+
             {/* Content */}
             {renderTabContent()}
           </div>
@@ -1526,6 +1570,7 @@ const Admin = () => {
         }
         currentKeys={currentKeys}
         activeTab={activeTab}
+        tipsEnabled={tipsEnabled}
       />
 
       {/* Game Edit Modal */}
@@ -1594,6 +1639,7 @@ const Admin = () => {
         consequences={deleteModalConfig?.consequences}
         destructive={deleteModalConfig?.destructive}
         confirmLabel={deleteModalConfig?.confirmLabel}
+        tipsEnabled={tipsEnabled}
         onCancel={() => setDeleteModalConfig(null)}
         onConfirm={deleteModalConfig?.onConfirm}
       />

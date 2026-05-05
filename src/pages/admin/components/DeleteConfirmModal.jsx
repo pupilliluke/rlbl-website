@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Tip from "./Tip";
 
 /**
  * Delete confirmation modal with optional scope toggle.
@@ -24,7 +25,8 @@ const DeleteConfirmModal = ({
   destructive = false,
   onCancel,
   onConfirm,
-  confirmLabel = "Delete"
+  confirmLabel = "Delete",
+  tipsEnabled = false
 }) => {
   const [selectedKey, setSelectedKey] = useState(scopeOptions?.[0]?.key || null);
   const [typed, setTyped] = useState("");
@@ -85,6 +87,9 @@ const DeleteConfirmModal = ({
         </div>
 
         <div className="p-6 space-y-4">
+          <Tip enabled={tipsEnabled} tone={isDestructive ? "warn" : "info"}>
+            Pick the scope that matches your intent. <strong>Scoped</strong> options preserve other-season data; <strong>Complete</strong> deletes wipe every season. If a delete is FK-blocked, fix the blockers (usually games) and retry.
+          </Tip>
           {errorMessage && (
             <div className="rounded-lg border-2 border-red-500 bg-red-900/30 p-4 text-sm">
               <div className="flex items-start gap-2">

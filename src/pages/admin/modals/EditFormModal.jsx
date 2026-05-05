@@ -1,19 +1,21 @@
 import React from "react";
+import Tip from "../components/Tip";
 
-const EditFormModal = ({ 
-  show, 
-  formData, 
-  editingItem, 
-  showAddForm, 
-  loading, 
-  onCancel, 
-  onSave, 
-  onAdd, 
+const EditFormModal = ({
+  show,
+  formData,
+  editingItem,
+  showAddForm,
+  loading,
+  onCancel,
+  onSave,
+  onAdd,
   onDelete,
-  onFormChange, 
-  renderFormField, 
+  onFormChange,
+  renderFormField,
   currentKeys,
-  activeTab
+  activeTab,
+  tipsEnabled = false
 }) => {
   if (!show) return null;
 
@@ -38,7 +40,10 @@ const EditFormModal = ({
             {showAddForm ? "Add New Entry" : "Edit Entry"}
           </h3>
         </div>
-        <div className="p-6">
+        <div className="p-6 space-y-4">
+          <Tip enabled={tipsEnabled}>
+            <strong>Ctrl/Cmd + Enter</strong> submits, <strong>Esc</strong> cancels. Color fields show a swatch you can click. Some forms pre-fill smart defaults (e.g., next-unused week for a new game).
+          </Tip>
           {activeTab === 'schedule' || activeTab === 'gameResults' ? (
             // Grid layout for games
             <div className="grid grid-cols-3 gap-4">
@@ -63,6 +68,11 @@ const EditFormModal = ({
                 </div>
               ))}
             </div>
+          )}
+          {!showAddForm && onDelete && (
+            <Tip enabled={tipsEnabled} tone="warn" icon="🗑️">
+              The Delete button below opens a scoped confirmation. Players & teams give you a choice: remove from the current season only, or delete completely (every season).
+            </Tip>
           )}
         </div>
         <div className="sticky bottom-0 bg-gray-800 border-t border-gray-600 px-6 py-4 flex gap-3 justify-between">
