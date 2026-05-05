@@ -273,6 +273,7 @@ export const apiService = {
   // Roster memberships endpoints
   getRosterMemberships: (teamId, seasonId) => apiCall(`/roster-memberships/team/${teamId}/season/${seasonId}`),
   getRosterMembershipsByTeamSeason: (teamSeasonId) => apiCall(`/roster-memberships/team-season/${teamSeasonId}`),
+  getAllRosterMemberships: () => apiCall('/roster-memberships'),
   
   // Roster CRUD operations
   createRosterMembership: async (membershipData) => {

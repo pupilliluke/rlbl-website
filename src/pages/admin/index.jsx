@@ -21,6 +21,9 @@ const Admin = () => {
   const [playersData, setPlayersData] = useState([]);
   const [teamsData, setTeamsData] = useState([]);
   const [baseTeamsData, setBaseTeamsData] = useState([]);
+  const [allTeamSeasons, setAllTeamSeasons] = useState([]);
+  const [allRosterMemberships, setAllRosterMemberships] = useState([]);
+  const [teamSearchQuery, setTeamSearchQuery] = useState('');
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
   const [gameStatsData, setGameStatsData] = useState([]);
@@ -168,6 +171,7 @@ const Admin = () => {
       loadPlayers(),
       loadTeams(),
       loadBaseTeams(),
+      loadTeamPlayerIndex(),
       loadStandings(),
       loadGames(),
       loadPowerRankings(),
@@ -182,6 +186,19 @@ const Admin = () => {
       setBaseTeamsData(baseTeams);
     } catch (error) {
       console.error('Failed to load base teams:', error);
+    }
+  };
+
+  const loadTeamPlayerIndex = async () => {
+    try {
+      const [teamSeasons, memberships] = await Promise.all([
+        apiService.getTeamSeasons(),
+        apiService.getAllRosterMemberships()
+      ]);
+      setAllTeamSeasons(teamSeasons);
+      setAllRosterMemberships(memberships);
+    } catch (error) {
+      console.error('Failed to load team-player index:', error);
     }
   };
 
@@ -1011,11 +1028,63 @@ const Admin = () => {
         }
       : undefined;
 
+    let dataForTable = getCurrentData();
+    if (activeTab === 'teams' && teamSearchQuery.trim()) {
+      const q = teamSearchQuery.trim().toLowerCase();
+
+      // Build base team id -> Set<player names ever rostered>
+      const teamSeasonToBaseTeam = new Map(
+        allTeamSeasons.map(ts => [ts.id, ts.team_id])
+      );
+      const baseTeamPlayers = new Map();
+      for (const m of allRosterMemberships) {
+        const baseTeamId = teamSeasonToBaseTeam.get(m.team_season_id);
+        if (baseTeamId == null) continue;
+        const player = playersData.find(p => p.id === m.player_id);
+        const name = player?.player_name || player?.display_name;
+        if (!name) continue;
+        if (!baseTeamPlayers.has(baseTeamId)) baseTeamPlayers.set(baseTeamId, new Set());
+        baseTeamPlayers.get(baseTeamId).add(name);
+      }
+
+      dataForTable = dataForTable.filter(team => {
+        if ((team.team_name || '').toLowerCase().includes(q)) return true;
+        const players = baseTeamPlayers.get(team.id);
+        if (!players) return false;
+        for (const name of players) {
+          if (name.toLowerCase().includes(q)) return true;
+        }
+        return false;
+      });
+    }
+
     return (
       <div className="space-y-6">
+        {activeTab === 'teams' && (
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={teamSearchQuery}
+              onChange={(e) => setTeamSearchQuery(e.target.value)}
+              placeholder="Search by team name or player..."
+              className="flex-1 max-w-md px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+            />
+            {teamSearchQuery && (
+              <button
+                onClick={() => setTeamSearchQuery('')}
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm transition-all duration-300"
+              >
+                Clear
+              </button>
+            )}
+            <span className="text-gray-400 text-sm">
+              {dataForTable.length} of {baseTeamsData.length} teams
+            </span>
+          </div>
+        )}
         <DataTable
           activeTab={activeTab}
-          currentData={getCurrentData()}
+          currentData={dataForTable}
           loading={loading}
           loadingStates={loadingStates}
           selectedSeason={selectedSeason}
