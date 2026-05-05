@@ -17,52 +17,61 @@ export default function Teams() {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedSeason, setSelectedSeason] = useState("current");
+  const [allSeasons, setAllSeasons] = useState([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState(null);
   const [selectedConference, setSelectedConference] = useState("all");
 
+  const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || null;
+  const isActiveSeason = !!selectedSeason?.is_active;
+
   useEffect(() => {
+    const loadSeasons = async () => {
+      try {
+        const seasons = await apiService.getSeasons();
+        const sorted = [...seasons].sort((a, b) => {
+          if (a.is_active !== b.is_active) return a.is_active ? -1 : 1;
+          const aDate = a.start_date ? new Date(a.start_date).getTime() : 0;
+          const bDate = b.start_date ? new Date(b.start_date).getTime() : 0;
+          return bDate - aDate;
+        });
+        setAllSeasons(sorted);
+        const active = sorted.find(s => s.is_active);
+        setSelectedSeasonId(active ? active.id : (sorted[0]?.id ?? null));
+      } catch (err) {
+        console.error('Failed to load seasons:', err);
+      }
+    };
+    loadSeasons();
+  }, []);
+
+  useEffect(() => {
+    if (selectedSeasonId == null) return;
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching teams and players data from API for season:', selectedSeason);
-        
-        let teamsData, playersData;
-        
-        // Use team_seasons endpoint for specific seasons to get historical data
-        if (selectedSeason === 'season1') {
-          teamsData = await apiService.getTeamSeasonData(1);
-        } else if (selectedSeason === 'season2') {
-          teamsData = await apiService.getTeamSeasonData(2);
-        } else if (selectedSeason === 'season2_playoffs') {
-          teamsData = await apiService.getTeamSeasonData(2);
-        } else {
-          // For current/career, use teams endpoint with conference filtering
-          teamsData = await apiService.getTeams(selectedSeason, selectedConference);
-        }
-        
-        playersData = await apiService.getPlayers();
-        
-        console.log('Teams data received:', teamsData);
-        console.log('Players data received:', playersData);
-        
+        const teamsData = await apiService.getTeams(selectedSeasonId, selectedConference);
+        const playersData = await apiService.getPlayers();
         setTeams(teamsData);
         setPlayers(playersData);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch teams data:', err);
-        console.error('Error details:', err.message);
         setError(err.message);
-        // Use fallback data
-        console.log('Using fallback data due to API error');
         setTeams(fallbackData.teams);
         setPlayers(fallbackData.players);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [selectedSeason, selectedConference]);
+  }, [selectedSeasonId, selectedConference]);
+
+  const seasonShortLabel = (() => {
+    if (!selectedSeason) return 'RL';
+    const match = selectedSeason.season_name?.match(/\d+/);
+    return match ? `S${match[0]}` : 'RL';
+  })();
+  const seasonDisplayName = selectedSeason?.season_name || 'Teams';
 
   // Circular Stadium Layout Function
   function renderCircularLayout(teamsData, conference) {
@@ -215,9 +224,7 @@ export default function Teams() {
             fontFamily: 'Arial, sans-serif'
           }}
         >
-          {selectedSeason === 'current' ? 'S3' :
-           selectedSeason === 'season2' ? 'S2' :
-           selectedSeason === 'season1' ? 'S1' : 'RL'}
+          {seasonShortLabel}
         </text>
 
         {/* Conference/subtitle text */}
@@ -435,7 +442,7 @@ export default function Teams() {
 
   // Group teams by conference for display
   const groupedByConference = () => {
-    if (selectedSeason === 'current' && selectedConference === "all") {
+    if (isActiveSeason && selectedConference === "all") {
       const grouped = { 'West': [], 'East': [], 'Other': [] };
 
       teams.forEach(team => {
@@ -482,19 +489,20 @@ export default function Teams() {
               <div className="flex flex-col items-start md:items-end">
                 <label className="text-xs text-gray-300 mb-1">Season</label>
                 <select
-                  value={selectedSeason}
-                  onChange={(e) => setSelectedSeason(e.target.value)}
+                  value={selectedSeasonId ?? ''}
+                  onChange={(e) => setSelectedSeasonId(parseInt(e.target.value))}
                   className="px-4 py-2 rounded-xl bg-gray-800 border border-gray-600 text-white hover:shadow-lg transition-all duration-300 focus:border-blue-400 focus:outline-none min-w-[200px]"
                 >
-                  <option value="current" className="text-black bg-white">Season 3</option>
-                  <option value="season2" className="text-black bg-white">Season 2 - Spring 25</option>
-                  <option value="season2_playoffs" className="text-black bg-white">Season 2 Playoffs</option>
-                  <option value="season1" className="text-black bg-white">Season 1 - Fall 24</option>
+                  {allSeasons.map(s => (
+                    <option key={s.id} value={s.id} className="text-black bg-white">
+                      {s.season_name}{s.is_active ? ' (Current)' : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Conference Filter - Only show for Season 3 */}
-              {selectedSeason === 'current' && (
+              {/* Conference Filter - Only show for the active season */}
+              {isActiveSeason && (
                 <div className="flex flex-col items-start md:items-end">
                   <label className="text-xs text-gray-300 mb-1">Conference</label>
                   <select
@@ -516,24 +524,20 @@ export default function Teams() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="mb-12">
           <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8 text-center">
-            {selectedSeason === 'current' && selectedConference !== 'all' ? `Season 3 - ${selectedConference} Conference` :
-             selectedSeason === 'current' ? 'Season 3 Teams' :
-             selectedSeason === 'season1' ? 'Season 1 Teams' :
-             selectedSeason === 'season2' ? 'Season 2 Teams' :
-             selectedSeason === 'season2_playoffs' ? 'Season 2 Playoff Teams' :
-             'Teams'}
+            {isActiveSeason && selectedConference !== 'all'
+              ? `${seasonDisplayName} - ${selectedConference} Conference`
+              : `${seasonDisplayName} Teams`}
           </h2>
-          
+
           {teams.length === 0 ? (
             <div className="text-center text-gray-400">
-              {selectedSeason === 'current' ? (
+              {isActiveSeason ? (
                 <div className="bg-gray-800/50 rounded-xl p-8 border border-gray-600">
-                  <div className="text-4xl mb-4"></div>
-                  <p className="text-xl text-white mb-2">Season 3 - Summer 25</p>
+                  <p className="text-xl text-white mb-2">{seasonDisplayName}</p>
                   <p>No teams registered yet. Season hasn't started!</p>
                 </div>
               ) : (
-                <p>No teams found for this season. Make sure the API server is running.</p>
+                <p>No teams found for this season.</p>
               )}
             </div>
           ) : (
