@@ -1373,23 +1373,34 @@ const Admin = () => {
   const seedKeys = currentData.length > 0
     ? Object.keys(currentData[0])
     : Object.keys(formData || {});
-  const currentKeys = seedKeys.filter(key =>
-    !key.includes('id') &&
-    key !== 'id' &&
-    key !== 'total_home_goals' &&
-    key !== 'total_away_goals' &&
+  // FK picker fields that have dedicated SearchableSelect renderers in renderFormField.
+  // These are allowed through even though they contain "id".
+  const allowedFkPickers = new Set([
+    'season_id',
+    'team_season_id',
+    'home_team_season_id',
+    'away_team_season_id'
+  ]);
+  const currentKeys = seedKeys.filter(key => {
+    // Always strip the row's primary id and timestamps
+    if (key === 'id' || key === 'created_at' || key === 'updated_at') return false;
+    // Hide internal totals
+    if (key === 'total_home_goals' || key === 'total_away_goals') return false;
     // Hide team columns for players tab
-    !(activeTab === 'players' && (key === 'team_name' || key === 'team_color')) &&
-    // Hide specific columns from teams tab
-    !(activeTab === 'teams' && (
+    if (activeTab === 'players' && (key === 'team_name' || key === 'team_color')) return false;
+    // Hide redundant columns on teams tab
+    if (activeTab === 'teams' && (
       key === 'original_team_name' ||
       key === 'alt_logo_url' ||
       key === 'primary_color' ||
       key === 'ranking' ||
       key === 'season_id' ||
       key === 'season_name'
-    ))
-  );
+    )) return false;
+    // Generic '*_id' filter, but let allow-listed FK pickers through
+    if (key.includes('id') && !allowedFkPickers.has(key)) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-executive relative page-with-navbar overflow-x-hidden">
