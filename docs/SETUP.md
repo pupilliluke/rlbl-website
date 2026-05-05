@@ -18,28 +18,29 @@ This installs both frontend (React) and backend (Express) deps from a single `pa
 
 ## 2. Environment variables
 
-Create a `.env` file at the repo root. Minimum needed:
+Copy the template and fill in real values:
 
 ```bash
-# Postgres connection — get this from Neon dashboard
+cp .env.example .env.local
+```
+
+Then edit `.env.local`:
+
+```bash
+# REQUIRED — get this from Neon dashboard
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/DB?sslmode=require
 
-# Admin panel password (only required to access /admin)
+# REQUIRED — admin panel password
 REACT_APP_ADMIN_PASSWORD=pickanything
+
+# OPTIONAL — backend port (defaults to 5000)
+# PORT=5000
 ```
 
-Optional:
+`.env.local` is gitignored. The backend (and Vercel adapter) load env vars from `.env.local` first, then `.env` as fallback. `.env.example` is the committed template.
 
-```bash
-NODE_ENV=development     # default
-PORT=5000                # backend port; default 5000
-```
-
-> `lib/database.js` has a hardcoded fallback connection string for legacy reasons.
-> Always set `DATABASE_URL` in `.env` — the fallback is **not** a supported path
-> and will be removed.
-
-`.env` is in `.gitignore`. Don't commit it.
+> The backend will throw a clear error on startup if `DATABASE_URL` is missing.
+> No hardcoded fallback — set the env var or it won't run.
 
 ## 3. Run
 

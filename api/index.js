@@ -1,3 +1,8 @@
+// Load env vars (no-op on Vercel where vars are injected by the platform,
+// but useful when running this entry locally).
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const apiRouter = require('../backend/api');

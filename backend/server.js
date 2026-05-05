@@ -1,3 +1,8 @@
+// Load env vars before anything else requires lib/database.js.
+// .env.local takes precedence over .env.
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
