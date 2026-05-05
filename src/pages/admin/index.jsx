@@ -11,6 +11,7 @@ import EditFormModal from "./modals/EditFormModal";
 import GameEditModal from "./modals/GameEditModal";
 import BulkAddModal from "./components/BulkAddModal";
 import DeleteConfirmModal from "./components/DeleteConfirmModal";
+import AdminGuideModal from "./components/AdminGuideModal";
 
 // Utils
 import { renderFormField, getDefaultFormData } from "./utils/formUtils";
@@ -33,6 +34,7 @@ const Admin = () => {
   const [cloneSourceSeasonId, setCloneSourceSeasonId] = useState('');
   const [cloneBusy, setCloneBusy] = useState(false);
   const [deleteModalConfig, setDeleteModalConfig] = useState(null);
+  const [showAdminGuide, setShowAdminGuide] = useState(false);
   const teamsSearchInputRef = useRef(null);
   const [standingsData, setStandingsData] = useState({ homer: [], garfield: [], overall: [] });
   const [scheduleData, setScheduleData] = useState([]);
@@ -1386,7 +1388,16 @@ const Admin = () => {
         <div className="w-full px-4 sm:px-6 py-8 sm:py-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="w-full sm:w-auto">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-2 sm:mb-4">🛠 Admin Control Center</h1>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-2 sm:mb-4">🛠 Admin Control Center</h1>
+                <button
+                  onClick={() => setShowAdminGuide(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 mb-2 sm:mb-4 transition-colors"
+                  title="Open admin guide"
+                >
+                  <span>📖</span> Help
+                </button>
+              </div>
               <p className="text-base sm:text-lg lg:text-xl text-white font-light">
                 Full CRUD management for all league data and operations
               </p>
@@ -1570,6 +1581,9 @@ const Admin = () => {
         }}
         onSubmit={handleBulkAddPlayers}
       />
+
+      {/* Admin Guide Modal */}
+      <AdminGuideModal show={showAdminGuide} onClose={() => setShowAdminGuide(false)} />
 
       {/* Delete Confirmation Modal */}
       <DeleteConfirmModal
