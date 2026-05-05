@@ -7,24 +7,33 @@ import { createTeamSlug, createPlayerSlug } from "../utils/slugify.js";
 export default function Legacy() {
   const navigate = useNavigate();
   const [selectedSeason, setSelectedSeason] = useState("career");
+  const [activeTab, setActiveTab] = useState("all-time"); // "all-time", "season-high", "game-high"
   const [seasons, setSeasons] = useState([]);
   const [stats, setStats] = useState([]);
   const [standings, setStandings] = useState([]);
+  const [seasonHighRecords, setSeasonHighRecords] = useState([]);
+  const [gameHighRecords, setGameHighRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch available seasons
+  // Fetch available seasons and record data
   useEffect(() => {
-    const fetchSeasons = async () => {
+    const fetchInitialData = async () => {
       try {
-        const seasonsData = await apiService.getSeasons();
+        const [seasonsData, seasonHighData, gameHighData] = await Promise.all([
+          apiService.getSeasons(),
+          apiService.getSeasonHighRecords(),
+          apiService.getGameHighRecords()
+        ]);
         // Filter to only show past seasons (not current)
         const pastSeasons = seasonsData.filter(s => !s.is_active);
         setSeasons(pastSeasons);
+        setSeasonHighRecords(seasonHighData);
+        setGameHighRecords(gameHighData);
       } catch (error) {
-        console.error('Failed to fetch seasons:', error);
+        console.error('Failed to fetch initial data:', error);
       }
     };
-    fetchSeasons();
+    fetchInitialData();
   }, []);
 
   // Fetch data when season changes
@@ -59,6 +68,32 @@ export default function Legacy() {
 
     fetchData();
   }, [selectedSeason]);
+
+  // Helper to get record by stat type
+  const getRecord = (records, statType) => {
+    return records.find(r => r.stat_type === statType);
+  };
+
+  // Record card component for displaying individual records
+  const RecordCard = ({ title, record, icon, color, isGameRecord = false }) => {
+    if (!record) return null;
+    return (
+      <div className={`bg-black/40 rounded-xl p-6 border border-${color}-400/30 hover:border-${color}-400 transition-all duration-300 hover:shadow-xl hover:shadow-${color}-500/30`}>
+        <div className={`text-${color}-400 font-bold text-sm mb-2 uppercase tracking-wide`}>{icon} {title}</div>
+        <button
+          onClick={() => navigate(`/players/${createPlayerSlug(record.player_name, record.player_name)}`)}
+          className={`text-2xl font-black text-white hover:text-${color}-300 transition-colors block mb-1`}
+        >
+          {record.player_name}
+        </button>
+        <div className={`text-3xl font-black text-${color}-400 mb-1`}>{(record.value || 0).toLocaleString()}</div>
+        <div className="text-xs text-gray-400">
+          {record.team_name} {isGameRecord && record.week ? `• Week ${record.week}` : ''}
+          {record.season_name ? ` • ${record.season_name}` : ''}
+        </div>
+      </div>
+    );
+  };
 
   // Calculate top performers
   const topScorer = stats.length > 0 ? stats.reduce((max, p) =>
@@ -102,31 +137,121 @@ export default function Legacy() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Season Selector */}
+        {/* Main Tab Navigation - 3 Sections */}
         <div className="flex justify-center mb-8">
-          <div className="flex bg-[#2a2a3d] rounded-lg overflow-hidden flex-wrap">
-            {seasonOptions.map((season) => (
-              <button
-                key={season.id}
-                onClick={() => setSelectedSeason(season.id)}
-                className={`px-6 py-3 text-sm font-medium transition-colors ${
-                  selectedSeason === season.id
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                }`}
-              >
-                {season.name} {season.year && `- ${season.year}`}
-              </button>
-            ))}
+          <div className="flex bg-[#2a2a3d] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setActiveTab("all-time")}
+              className={`px-8 py-4 text-lg font-bold transition-colors flex items-center gap-2 ${
+                activeTab === "all-time"
+                  ? "bg-gradient-to-r from-yellow-600 to-orange-600 text-white"
+                  : "text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              <TrophyIcon className="w-5 h-5" />
+              All-Time Records
+            </button>
+            <button
+              onClick={() => setActiveTab("season-high")}
+              className={`px-8 py-4 text-lg font-bold transition-colors flex items-center gap-2 ${
+                activeTab === "season-high"
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                  : "text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              <ChartBarIcon className="w-5 h-5" />
+              Season-High Records
+            </button>
+            <button
+              onClick={() => setActiveTab("game-high")}
+              className={`px-8 py-4 text-lg font-bold transition-colors flex items-center gap-2 ${
+                activeTab === "game-high"
+                  ? "bg-gradient-to-r from-green-600 to-teal-600 text-white"
+                  : "text-gray-300 hover:text-white hover:bg-gray-700"
+              }`}
+            >
+              <FireIcon className="w-5 h-5" />
+              Game-High Records
+            </button>
           </div>
         </div>
 
-        {loading ? (
+        {/* Season-High Records Section */}
+        {activeTab === "season-high" && (
+          <div className="mb-12">
+            <div className="bg-gradient-to-br from-blue-900/40 to-purple-900/40 rounded-2xl p-8 border-2 border-blue-400/50 shadow-2xl">
+              <h2 className="text-3xl font-black text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text mb-2 flex items-center gap-3">
+                <ChartBarIcon className="w-8 h-8 text-blue-400" />
+                Season-High Records
+              </h2>
+              <p className="text-gray-400 mb-8">Best single-season performances in RLBL history (regular season only)</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <RecordCard title="Most Points" record={getRecord(seasonHighRecords, 'points')} icon="📊" color="yellow" />
+                <RecordCard title="Most Goals" record={getRecord(seasonHighRecords, 'goals')} icon="⚽" color="green" />
+                <RecordCard title="Most Assists" record={getRecord(seasonHighRecords, 'assists')} icon="🎯" color="blue" />
+                <RecordCard title="Most Saves" record={getRecord(seasonHighRecords, 'saves')} icon="🛡️" color="purple" />
+                <RecordCard title="Most Shots" record={getRecord(seasonHighRecords, 'shots')} icon="🎯" color="cyan" />
+                <RecordCard title="Most MVPs" record={getRecord(seasonHighRecords, 'mvps')} icon="⭐" color="orange" />
+                <RecordCard title="Most Demos" record={getRecord(seasonHighRecords, 'demos')} icon="💥" color="red" />
+                <RecordCard title="Most Games" record={getRecord(seasonHighRecords, 'games_played')} icon="🎮" color="gray" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game-High Records Section */}
+        {activeTab === "game-high" && (
+          <div className="mb-12">
+            <div className="bg-gradient-to-br from-green-900/40 to-teal-900/40 rounded-2xl p-8 border-2 border-green-400/50 shadow-2xl">
+              <h2 className="text-3xl font-black text-transparent bg-gradient-to-r from-green-400 via-teal-400 to-cyan-400 bg-clip-text mb-2 flex items-center gap-3">
+                <FireIcon className="w-8 h-8 text-green-400" />
+                Game-High Records
+              </h2>
+              <p className="text-gray-400 mb-8">Best single-game performances in RLBL history</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <RecordCard title="Most Points" record={getRecord(gameHighRecords, 'points')} icon="📊" color="yellow" isGameRecord={true} />
+                <RecordCard title="Most Goals" record={getRecord(gameHighRecords, 'goals')} icon="⚽" color="green" isGameRecord={true} />
+                <RecordCard title="Most Assists" record={getRecord(gameHighRecords, 'assists')} icon="🎯" color="blue" isGameRecord={true} />
+                <RecordCard title="Most Saves" record={getRecord(gameHighRecords, 'saves')} icon="🛡️" color="purple" isGameRecord={true} />
+                <RecordCard title="Most Shots" record={getRecord(gameHighRecords, 'shots')} icon="🎯" color="cyan" isGameRecord={true} />
+                <RecordCard title="Most Demos" record={getRecord(gameHighRecords, 'demos')} icon="💥" color="red" isGameRecord={true} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* All-Time Records Section */}
+        {activeTab === "all-time" && (
+          <>
+            {/* Season Selector for All-Time view */}
+            <div className="flex justify-center mb-8">
+              <div className="flex bg-[#2a2a3d] rounded-lg overflow-hidden flex-wrap">
+                {seasonOptions.map((season) => (
+                  <button
+                    key={season.id}
+                    onClick={() => setSelectedSeason(season.id)}
+                    className={`px-6 py-3 text-sm font-medium transition-colors ${
+                      selectedSeason === season.id
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-300 hover:text-white hover:bg-gray-700"
+                    }`}
+                  >
+                    {season.name} {season.year && `- ${season.year}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "all-time" && loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto mb-4"></div>
             <p className="text-purple-200">Loading legacy data...</p>
           </div>
-        ) : (
+        ) : activeTab === "all-time" ? (
           <>
             {/* Season Overview */}
             <div className="mb-12">
@@ -534,7 +659,7 @@ export default function Legacy() {
               </div>
             )}
           </>
-        )}
+        ) : null}
 
         {/* Footer */}
         <div className="mt-8 text-center text-gray-400 text-sm">

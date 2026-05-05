@@ -13,6 +13,7 @@ export default function TeamStats() {
   const [standings, setStandings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState("all"); // Week filter: "all" or specific week number
 
   // Fetch all team data
   useEffect(() => {
@@ -371,11 +372,31 @@ export default function TeamStats() {
 
         {/* Team Games/Schedule */}
         <section className="mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold text-green-400 mb-6">🏟️ Games & Schedule</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold text-green-400">🏟️ Games & Schedule</h2>
+            {/* Week Selector Dropdown */}
+            {teamGames.length > 0 && (
+              <select
+                value={selectedWeek}
+                onChange={(e) => setSelectedWeek(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white text-sm font-medium focus:outline-none focus:border-green-500"
+              >
+                <option value="all">All Weeks</option>
+                {[...new Set(teamGames.map(g => g.week).filter(w => w))]
+                  .sort((a, b) => a - b)
+                  .map(week => (
+                    <option key={week} value={week}>Week {week}</option>
+                  ))
+                }
+              </select>
+            )}
+          </div>
           <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 shadow-lg">
             {teamGames.length > 0 ? (
               <div className="space-y-4">
-                {teamGames.map((game, index) => {
+                {teamGames
+                  .filter(game => selectedWeek === "all" || game.week === parseInt(selectedWeek))
+                  .map((game, index) => {
                   // Handle both home_display/away_display and home_team_name/away_team_name
                   const homeTeamName = game.home_display || game.home_team_name;
                   const awayTeamName = game.away_display || game.away_team_name;

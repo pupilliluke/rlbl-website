@@ -45,7 +45,11 @@
       "Bash(git pull:*)",
       "Bash(git config:*)",
       "Bash(pkill:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git status:*)",
+      "Bash(python:*)",
+      "Bash(gh api:*)",
+      "Bash(git check-ignore *)"
     ],
     "deny": [],
     "ask": []

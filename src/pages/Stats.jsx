@@ -1175,7 +1175,7 @@ const Stats = () => {
                     <span className="text-purple-400 font-semibold">{selectedConference} Conference</span>
                   </>
                 )}
-                {playoffFilter !== 'all' && selectedSeason !== 'career' && (
+                {playoffFilter !== 'all' && (
                   <>
                     <span className="text-gray-500">•</span>
                     <span className="text-orange-400 font-semibold">
@@ -1242,18 +1242,16 @@ const Stats = () => {
                 </select>
               )}
 
-              {/* Playoff Filter - Show when a specific season is selected */}
-              {selectedSeason !== 'career' && (
-                <select
-                  value={playoffFilter}
-                  onChange={(e) => setPlayoffFilter(e.target.value)}
-                  className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
-                >
-                  <option value="all" className="text-black bg-white">All Games</option>
-                  <option value="regular" className="text-black bg-white">Regular Season</option>
-                  <option value="playoffs" className="text-black bg-white">Playoffs</option>
-                </select>
-              )}
+              {/* Playoff Filter - Available for all views including career stats */}
+              <select
+                value={playoffFilter}
+                onChange={(e) => setPlayoffFilter(e.target.value)}
+                className="px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-500 text-sm font-medium text-white hover:shadow-luxury transition-all duration-300"
+              >
+                <option value="all" className="text-black bg-white">All Games</option>
+                <option value="regular" className="text-black bg-white">Regular Season</option>
+                <option value="playoffs" className="text-black bg-white">Playoffs</option>
+              </select>
 
               {/* Export Button */}
               <button
