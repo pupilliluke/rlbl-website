@@ -95,12 +95,45 @@ If all three work, you're done with setup.
 
 For anything else, see [dev/TROUBLESHOOTING.md](dev/TROUBLESHOOTING.md).
 
-## What to read next
+## Getting around the project
+
+Everything written about this project lives in the [`docs/`](.) folder at the root of the repo. It's split by audience:
+
+```
+docs\
+├── NEW_ADMIN_QUICKSTART.md   ← you are here
+├── admin\                    ← read this stuff first
+│   ├── FOR_ADMINS.md         ← intro to running the league
+│   ├── ADMIN_GUIDE.md        ← every admin tab, every shortcut
+│   ├── RUNBOOKS.md           ← recipes (start a season, mark a forfeit, etc.)
+│   └── TROUBLESHOOTING.md    ← admin-fixable problems
+└── dev\                      ← only when changing code or schema
+    ├── ARCHITECTURE.md       ← the data model — read before changing code
+    ├── SETUP.md, API.md, DATABASE.md, DEPLOY.md, RUNBOOKS.md, TROUBLESHOOTING.md
+```
+
+Browse the folder when you're not sure what exists. Filenames are descriptive — you don't need to memorize them.
+
+## Use Claude Code to navigate the project
+
+The fastest way to learn this codebase is to install [Claude Code](https://claude.com/claude-code), open it in the project folder, and just ask it questions. There's a `CLAUDE.md` at the root that already tells Claude you're a league admin (not a developer) and to default to admin-UI fixes — so you don't have to explain the project from scratch.
+
+Things you can ask:
+
+- *"Where do I edit a team's logo for the current season?"*
+- *"Explain how the standings page works — what data does it pull?"*
+- *"A team's record is wrong. Walk me through fixing it."*
+- *"What happens if I delete a base team in the Teams tab?"*
+- *"Show me what's in the docs folder and what each file is for."*
+
+[admin/FOR_ADMINS.md](admin/FOR_ADMINS.md) has more example prompts under "Working with Claude" — copy/paste them and adjust to your situation.
+
+## What to read next (if you skip Claude)
 
 - [admin/FOR_ADMINS.md](admin/FOR_ADMINS.md) — what the site does and how to run the league day-to-day.
 - [admin/ADMIN_GUIDE.md](admin/ADMIN_GUIDE.md) — every admin tab, every shortcut.
 - [dev/ARCHITECTURE.md](dev/ARCHITECTURE.md) — read this before changing any code that touches teams, players, or games.
-- [/CLAUDE.md](../CLAUDE.md) — how to work with Claude Code on this repo.
+- [/CLAUDE.md](../CLAUDE.md) — the file that tells Claude how to behave on this repo.
 
 ## Important reminders
 
