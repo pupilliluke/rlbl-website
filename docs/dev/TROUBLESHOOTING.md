@@ -1,6 +1,8 @@
-# Troubleshooting
+# Developer Troubleshooting
 
-Known issues and their fixes. If you hit something not listed here, add it after you solve it.
+Code-level, build-level, and infra issues. If you hit something not listed here, add it after you solve it.
+
+For admin/data-level issues (login, standings, deletes), see [`../admin/TROUBLESHOOTING.md`](../admin/TROUBLESHOOTING.md).
 
 ## Vercel build fails: ESLint warnings treated as errors
 
@@ -65,20 +67,10 @@ node -e "const D = require('./backend/dao/PlayerGameStatsDao'); const d = new D(
 
 **Causes (in priority order):**
 
-1. **`DATABASE_URL` not set or wrong.** Check `.env`. Test the connection string in Neon's SQL Editor first.
+1. **`DATABASE_URL` not set or wrong.** Check `.env.local`. Test the connection string in Neon's SQL Editor first.
 2. **SSL not enabled.** Neon requires `?sslmode=require` in the URL or `ssl: { rejectUnauthorized: false }` in the Pool config (already handled in `lib/database.js`).
 3. **Neon project paused** (free tier auto-pauses after inactivity). Hit any endpoint or open the Neon console to wake it.
 4. **Local Postgres on the wrong port.** If you're running local Postgres instead of Neon, default port is 5432.
-
-## Admin login rejects every password
-
-**Symptom:** AdminAuth modal says "Invalid password" no matter what you enter.
-
-**Causes:**
-
-1. `REACT_APP_ADMIN_PASSWORD` not set in `.env`.
-2. `.env` was edited *after* the dev server started — restart `npm start`.
-3. In prod: env var was changed in Vercel without redeploying (`REACT_APP_*` vars are baked at build time).
 
 ## Admin Teams tab "Add" modal is blank
 
@@ -87,16 +79,6 @@ node -e "const D = require('./backend/dao/PlayerGameStatsDao'); const d = new D(
 **Why:** Old behavior — the modal derived its fields from `currentData[0]` keys. Empty table → empty fields.
 
 **Fix:** Already shipped. The modal now falls back to `Object.keys(formData)` from `getDefaultFormData(activeTab)`. If you see this regress, check the `currentKeys` derivation in `src/pages/admin/index.jsx`.
-
-## Standings show wrong LP after editing scores
-
-**Symptom:** A team's LP doesn't match expected after you edited a game.
-
-**Fix:** Standings rows are not auto-updated when you edit a game. Go to Admin → Standings → ⚡ Auto-Generate. This runs `standingsCalculator.js` against current games + stats.
-
-If LP is still wrong, check:
-- Did the OT game have a player with `otg > 0`? Without it, the calculator treats it as regulation.
-- Is there a forfeit flag set when there shouldn't be?
 
 ## "Vercel deploy hung at Building"
 

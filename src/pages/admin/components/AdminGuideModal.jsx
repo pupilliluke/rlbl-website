@@ -271,7 +271,7 @@ const AdminGuideModal = ({ show, onClose }) => {
             </div>
 
             <div className="text-center text-xs text-gray-500 pt-4 border-t border-gray-800">
-              Need more? See <Code>docs/ADMIN_GUIDE.md</Code> in the repo for the full reference.
+              Need more? See <Code>docs/admin/ADMIN_GUIDE.md</Code> in the repo for the full reference.
             </div>
           </div>
         </div>

@@ -54,6 +54,9 @@ keys/
 database.env
 db.env
 *.sql.env
+docs/NeonDatabaseLogin.md
+docs/**/*Login*.md
+docs/**/*Credentials*.md
 
 # Cloud provider credentials
 .aws/

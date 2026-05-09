@@ -2,6 +2,8 @@
 
 Complete tour of the admin panel at `/admin`. Login is the password you set in `REACT_APP_ADMIN_PASSWORD`.
 
+> The admin page also has a built-in **Admin Guide** button (top of the page) that opens an in-app help modal covering the same material. Use whichever is more convenient.
+
 ## Tabs
 
 The top of the admin page has a season picker (dropdown, top-right) and tabs along the top:
@@ -27,7 +29,7 @@ This used to be a 30-step process. Today, with the speed-ups shipped, it's 5 ste
 
 Seasons tab → **Add New** (or press `n`). The form pre-fills `season_name` to `"Season N+1"` based on existing rows. Set `start_date`. Hit **Add**.
 
-After creation, **set it active**: edit it, check `is_active`, save. Only one season should be active at a time. (See [DATABASE.md](DATABASE.md) for why.)
+After creation, **set it active**: edit it, check `is_active`, save. Only one season should be active at a time. (See [DATABASE.md](../dev/DATABASE.md) for why.)
 
 ### 2. Bring teams into the season
 
@@ -72,10 +74,10 @@ For series (Bo3): use Game Results tab → existing series get an "Add Series Ga
 
 Hierarchical view of a season's games grouped by week, then by series. For each game:
 - Edit scores (home/away)
-- Mark forfeits (checkboxes — see [RUNBOOKS.md](RUNBOOKS.md) for the LP impact)
+- Mark forfeits (checkboxes — see [RUNBOOKS.md](RUNBOOKS.md) and the LP table in [DATABASE.md](../dev/DATABASE.md) for the impact)
 - Edit per-player stats: open a game → add a row per player → set goals/assists/saves/shots/MVPs/demos/OTG.
 
-**Important**: `OTG` (Overtime Goal) on any player in a game flags the game as overtime. This drives the LP/OTL calculation. See [DATABASE.md](DATABASE.md).
+**Important**: `OTG` (Overtime Goal) on any player in a game flags the game as overtime. This drives the LP/OTL calculation. See [DATABASE.md](../dev/DATABASE.md).
 
 ### Teams & Rosters
 

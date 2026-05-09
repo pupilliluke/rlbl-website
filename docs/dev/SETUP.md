@@ -92,4 +92,4 @@ NODE_ENV=production npm run server
 ## What's next
 
 - Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the data model before changing anything.
-- Read [ADMIN_GUIDE.md](ADMIN_GUIDE.md) before doing season setup work.
+- Read [../admin/ADMIN_GUIDE.md](../admin/ADMIN_GUIDE.md) before doing season setup work.
